@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Protocolos de Atividade</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/protocoloadm.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'SUPER_ADMIN']);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const tabelaBody = document.getElementById('tabela-body');
+            if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Carregando protocolos...</td></tr>';
+
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '';
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                const date = new Date(dateStr);
+                const parts = new Intl.DateTimeFormat('pt-BR', options).formatToParts(date);
+                const day = parts.find(p => p.type === 'day').value;
+                const month = parts.find(p => p.type === 'month').value;
+                const year = parts.find(p => p.type === 'year').value;
+                return `${day} ${month.charAt(0).toUpperCase() + month.slice(1)},<br>${year}`;
+            };
+
+            const getInitials = (name) => {
+                if (!name) return 'UN';
+                const parts = name.trim().split(' ');
+                if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+                return parts[0].substring(0, 2).toUpperCase();
+            };
+
+            const getRandomColor = (str) => {
+                const colors = ['bg-blue', 'bg-orange', 'bg-green', 'bg-purple', 'bg-red'];
+                let hash = 0;
+                for (let i = 0; i < str.length; i++) {
+                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+                }
+                return colors[Math.abs(hash) % colors.length];
+            };
+
+            apiGet('/coordenador/meus-cursos').then(cursos => {
+                if (cursos && cursos.length > 0) {
+                    const cursoId = cursos[0].id; 
+
+                    apiGet(`/coordenador/submissoes/${cursoId}`).then(resposta => {
+                        if (resposta) {
+                            const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                            const contadores = resposta.contadores || null;
+                            renderTable(subs, contadores);
+                        }
+                    }).catch(() => fallbackTable());
+                } else {
+                    renderTable([], { pendentes: 0, aprovadas: 0, reprovadas: 0, total: 0 });
+                }
+            }).catch(() => fallbackTable());
+
+            function renderTable(subs, contadores) {
+                const kpiPendentes = document.getElementById('kpi-pendentes');
+                const kpiProcessados = document.getElementById('kpi-processados');
+                const tabelaInfo = document.getElementById('tabela-info');
+                const tabelaBody = document.getElementById('tabela-body');
+
+                if (contadores) {
+                    if (kpiPendentes) kpiPendentes.textContent = contadores.pendentes || 0;
+                    if (kpiProcessados) kpiProcessados.textContent = (parseInt(contadores.aprovadas || 0) + parseInt(contadores.reprovadas || 0));
+                } else {
+                    const pendentes = subs.filter(s => s.status && s.status.toLowerCase() === 'submitted').length;
+                    const aprovadas = subs.filter(s => s.status && s.status.toLowerCase() === 'approved').length;
+                    const reprovadas = subs.filter(s => s.status && s.status.toLowerCase() === 'rejected').length;
+                    if (kpiPendentes) kpiPendentes.textContent = pendentes;
+                    if (kpiProcessados) kpiProcessados.textContent = aprovadas + reprovadas;
+                }
+
+                if (!tabelaBody) return;
+                tabelaBody.innerHTML = '';
+
+                if (subs.length === 0) {
+                    tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Nenhum protocolo encontrado.</td></tr>';
+                    if (tabelaInfo) tabelaInfo.textContent = 'Mostrando 0 de 0 protocolos';
+                    return;
+                }
+
+                if (tabelaInfo) tabelaInfo.textContent = `Mostrando 1 a ${Math.min(subs.length, 10)} de ${contadores ? contadores.total : subs.length} protocolos`;
+
+                subs.slice(0, 10).forEach((s, idx) => {
+                    const statusStr = s.status ? s.status.toLowerCase() : 'submitted';
+                    let badgeClass = 'badge-pendente';
+                    let badgeText = 'PENDENTE';
+                    if (statusStr === 'approved') { badgeClass = 'badge-aprovado'; badgeText = 'APROVADO'; }
+                    else if (statusStr === 'rejected') { badgeClass = 'badge-reprovado'; badgeText = 'REPROVADO'; }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="id-cell">#PRT-${s.id || ('00' + idx)}</td>
+                        <td>
+                            <div class="td-aluno">
+                                <div class="avatar-text ${getRandomColor(s.student_name || 'Aluno')}">${getInitials(s.student_name || 'Aluno')}</div>
+                                <strong>${s.student_name || 'Aluno Name'}</strong>
+                            </div>
+                        </td>
+                        <td class="curso-cell">${s.course_name ? s.course_name.substring(0, 3).toUpperCase() : 'CUR'}</td>
+                        <td>${s.category_name || s.title || 'Atividade'}</td>
+                        <td><strong>${s.approved_hours || s.horas_solicitadas || '0'}h</strong></td>
+                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+                        <td class="data-cell">${formatDate(s.submitted_at || s.data_envio)}</td>
+                        <td>
+                            <a href="analise_certificado.html?id=${s.id}" class="btn-ver-detalhes">Ver Detalhes</a>
+                        </td>
+                    `;
+                    tabelaBody.appendChild(tr);
+                });
+            }
+
+            function fallbackTable() {
+                const kpiPendentes = document.getElementById('kpi-pendentes');
+                const kpiProcessados = document.getElementById('kpi-processados');
+                if (kpiPendentes && kpiPendentes.textContent === '...') kpiPendentes.textContent = '0';
+                if (kpiProcessados && kpiProcessados.textContent === '...') kpiProcessados.textContent = '0';
+
+                const tabelaBody = document.getElementById('tabela-body');
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
+            }
+        });
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar Clássica -->
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <!-- Menu preenchido dinamicamente pelo script.js -->
+            <nav class="menu-navegacao"></nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Navbar customizada dessa tela -->
+            <header class="top-header">
+                <nav class="top-nav-links">
+                    <a href="#" class="active">Início</a>
+                    <a href="extrato_certificado.html">Horas (Extrato)</a>
+                    <a href="analise_certificado.html">Certificados</a>
+                    <a href="#">Dúvidas</a>
+                </nav>
+
+                <div class="header-right">
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar aluno ou ID...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header'></i>
+                    <button class="btn-novo-protocolo">Novo Protocolo</button>
+                    <!-- Link bônus solicitado para extrato -->
+                    <a href="extrato_certificado.html" class="btn-extrato"><i class='bx bx-list-ul'></i> Extrato de
+                        Aluno</a>
+                </div>
+            </header>
+
+            <!-- Título e KPIs -->
+            <section class="head-kpis">
+                <div class="head-text">
+                    <span class="label-laranja">GESTÃO ACADÊMICA</span>
+                    <h1>Protocolos de Atividade</h1>
+                    <p>Central de curadoria para validação de horas complementares. Analise, revise e aprove as
+                        solicitações submetidas pelo corpo discente de forma organizada e eficiente seguindo os padrões
+                        Senac.</p>
+                </div>
+                <div class="head-numbers">
+                    <div class="number-box">
+                        <h2 id="kpi-pendentes">...</h2>
+                        <span class="number-label">PENDENTES</span>
+                    </div>
+                    <div class="number-box">
+                        <h2 id="kpi-processados">...</h2>
+                        <span class="number-label">PROCESSADOS</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Área da Tabela Central -->
+            <section class="card-tabela-avancada">
+
+                <!-- Barra de Filtros -->
+                <div class="filters-row">
+                    <div class="filter-box">
+                        <label>FILTRAR POR CURSO</label>
+                        <select>
+                            <option>Todos os Cursos</option>
+                        </select>
+                    </div>
+                    <div class="filter-box">
+                        <label>STATUS</label>
+                        <select>
+                            <option>Todos Status</option>
+                        </select>
+                    </div>
+                    <div class="filter-box">
+                        <label>PERÍODO</label>
+                        <select>
+                            <option>Últimos 30 dias</option>
+                        </select>
+                    </div>
+                    <button class="btn-mais-filtros"><i class='bx bx-filter'></i> Mais Filtros</button>
+                </div>
+
+                <!-- Tabela de Dados -->
+                <table class="tabela-protocolos">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ALUNO</th>
+                            <th>CURSO</th>
+                            <th>TIPO DE ATIVIDADE</th>
+                            <th>HORAS</th>
+                            <th>STATUS</th>
+                            <th>DATA ENVIO</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-body">
+                        <!-- Linhas geradas via JavaScript -->
+                    </tbody>
+                </table>
+
+                <!-- Rodapé da Tabela -->
+                <div class="rodape-tabela">
+                    <span class="info-paginacao" id="tabela-info">Mostrando ... protocolos</span>
+                    <div class="paginacao">
+                        <button class="btn-pag-arrow"><i class='bx bx-chevron-left'></i></button>
+                        <button class="btn-pag numeric active">1</button>
+                        <button class="btn-pag numeric">2</button>
+                        <button class="btn-pag-arrow"><i class='bx bx-chevron-right'></i></button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cards Bottom Widgets -->
+            <section class="bottom-widgets-grid">
+
+                <!-- Card 1: Atenção -->
+                <div class="widget-card widget-atencao">
+                    <div class="w-icon"><i class='bx bx-notepad'></i></div>
+                    <h3>Atenção Necessária</h3>
+                    <p>Existem 12 protocolos com mais de 15 dias sem movimentação. Recomenda-se a análise prioritária
+                        destes itens.</p>
+                    <a href="#" class="widget-link">REVISAR ATRASADOS &rarr;</a>
+                </div>
+
+                <!-- Card 2: Relatório Mensal -->
+                <div class="widget-card widget-relatorio">
+                    <h3>Relatórios Mensais</h3>
+                    <p>Exportar dados consolidados para o MEC e conselhos regionais.</p>
+                </div>
+
+                <!-- Card 3: Guia Curadoria -->
+                <div class="widget-card widget-guia">
+                    <h3>Guia de Curadoria</h3>
+                    <ul class="guia-list">
+                        <li><i class='bx bx-check-circle'></i> Confira a carga horária máxima permitida por categoria.
+                        </li>
+                        <li><i class='bx bx-check-circle'></i> Valide a autenticidade dos certificados digitais
+                            anexados.</li>
+                    </ul>
+                    <a href="#" class="widget-link link-guia">ACESSE O MANUAL DO AVALIADOR <i
+                            class='bx bx-link-external'></i></a>
+                </div>
+
+            </section>
+
+            <!-- Footer Simples -->
+            <footer class="main-footer">
+                <div class="footer-logo">Senac</div>
+                <div class="footer-links">
+                    <a href="#">Privacidade</a>
+                    <a href="#">Termos de Uso</a>
+                    <a href="#">Suporte Técnico</a>
+                </div>
+                <div class="footer-copy">&copy; 2024 Senac Brasil - Portal de Atividades Complementares</div>
+            </footer>
+
+        </main>
+    </div>
+</body>
+
+</html>

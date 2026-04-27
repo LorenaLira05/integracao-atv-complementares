@@ -1,0 +1,349 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+}
+
+h1, h2, h3, .portal-tag {
+    font-family: "Montserrat", sans-serif;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    background: #f8fafc; /* Fallback */
+    overflow: hidden;
+}
+
+.container {
+    display: flex;
+    flex-direction: row-reverse;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* =================================== */
+/* RIGHT PANEL (FORM)                  */
+/* =================================== */
+form {
+    flex: none;
+    width: 550px; /* Fixed width to reduce white space */
+    background: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 50px; /* Adjusted padding */
+    z-index: 2;
+}
+
+form h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #0b1930;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    font-size: 13px;
+    color: #64748b;
+    margin-bottom: 2.5rem;
+}
+
+.label-section {
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 12px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.perfil-selector {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 2rem;
+    width: 100%;
+    max-width: 350px;
+}
+
+.perfil-card input {
+    display: none;
+}
+
+.card-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 10px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.01);
+}
+
+.card-content i {
+    font-size: 24px;
+    color: #64748b;
+    margin-bottom: 8px;
+}
+
+.card-content span {
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    text-align: center;
+}
+
+.perfil-card input:checked + .card-content {
+    border-color: #d4800a;
+    box-shadow: 0 4px 12px rgba(212, 128, 10, 0.08);
+}
+
+.perfil-card input:checked + .card-content i,
+.perfil-card input:checked + .card-content span {
+    color: #0b1930;
+}
+
+.inputbox {
+    margin-bottom: 1.2rem;
+    width: 100%;
+    max-width: 450px;
+}
+
+.inputbox label {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-wrapper input {
+    width: 100%;
+    padding: 15px 40px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #0b1930;
+    background: #f8fafc;
+    outline: none;
+    transition: background 0.2s, box-shadow 0.2s;
+}
+
+.input-wrapper input::placeholder {
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.input-wrapper input:focus {
+    background: #f1f5f9;
+    box-shadow: 0 0 0 2px rgba(11, 25, 48, 0.1);
+}
+
+.icon-left {
+    position: absolute;
+    left: 15px;
+    font-size: 18px;
+    color: #94a3b8;
+    pointer-events: none;
+}
+
+.icon-right {
+    position: absolute;
+    right: 15px;
+    font-size: 18px;
+    color: #94a3b8;
+    cursor: pointer;
+}
+
+.input-wrapper input:focus ~ .icon-left,
+.input-wrapper input:focus ~ .icon-right {
+    color: #0b1930;
+}
+
+.esqueci-a-senha {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    margin-top: 0.5rem;
+    max-width: 450px;
+}
+
+.esqueci-a-senha label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    color: #475569;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.esqueci-a-senha label input[type="checkbox"] {
+    accent-color: #0b1930;
+    width: 15px;
+    height: 15px;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+.esqueci-a-senha a {
+    font-size: 12px;
+    color: #0b1930;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.esqueci-a-senha a:hover {
+    color: #d4800a;
+}
+
+.btn-login {
+    width: 100%;
+    max-width: 450px;
+    padding: 16px;
+    background: #003b7a;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 4rem;
+}
+
+.btn-login:hover {
+    background: #002b5e;
+}
+
+.btn-login i {
+    font-size: 18px;
+}
+
+.footer-login {
+    text-align: center;
+    max-width: 450px;
+}
+
+.footer-login p {
+    font-size: 10px;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 15px;
+}
+
+.footer-icons {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    color: #94a3b8;
+    font-size: 16px;
+}
+
+/* =================================== */
+/* LEFT PANEL (BLUE BACKGROUND)        */
+/* =================================== */
+.logo-panel {
+    flex: 1;
+    position: relative;
+    background: url('/assets/senacpessoas.png') center/cover no-repeat;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 5rem 6rem;
+    z-index: 1;
+}
+
+.logo-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 31, 65, 0.92);
+    z-index: -1;
+}
+
+.logo-content-wrapper {
+    z-index: 2;
+    margin-top: -50px;
+}
+
+.portal-tag {
+    font-size: 11px;
+    font-weight: 800;
+    color: #d4800a;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 1.5rem;
+}
+
+.logo-panel h2 {
+    font-size: 42px;
+    font-weight: 800;
+    color: #ffffff;
+    line-height: 1.1;
+    letter-spacing: -1px;
+}
+
+.linha-laranja {
+    width: 60px;
+    height: 4px;
+    background: #d4800a;
+    margin: 25px 0;
+}
+
+.logo-panel .paragrafo {
+    font-size: 14px;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.6;
+    margin-bottom: 3.5rem;
+    font-weight: 400;
+}
+
+.stats-row {
+    display: flex;
+    gap: 50px;
+}
+
+.stat-item h3 {
+    font-size: 24px;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 5px;
+}
+
+.stat-item p {
+    font-size: 10px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    letter-spacing: 1px;
+}
+
+.logo-bottom {
+    position: absolute;
+    bottom: 3rem;
+    left: 6rem;
+    width: 100px;
+    filter: brightness(0) invert(1);
+}

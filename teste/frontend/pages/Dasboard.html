@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Dashboard Geral</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/dashboard-style.css">
+
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <script>
+        // Guarda de autenticação — só ALUNO ou COORDENADOR pode acessar
+        const auth = protegerPagina(['ALUNO', 'COORDENADOR']);
+        if (!auth) { } // já redirecionou
+
+        // Busca dados do aluno do backend
+        window.addEventListener('DOMContentLoaded', () => {
+            apiGet('/aluno/meus-dados').then(data => {
+                if (data && data.aluno) {
+                    const nomeInfo = document.querySelector('.info-usuario strong');
+                    const smallInfo = document.querySelector('.info-usuario small');
+                    if (nomeInfo) nomeInfo.textContent = data.aluno.nome;
+                    if (smallInfo) smallInfo.textContent = 'ALUNO — ' + (data.aluno.curso_nome || 'Sem curso');
+
+                    // KPIs dinâmicos
+                    const kpis = document.querySelectorAll('.valor-cartao h2');
+                    if (kpis[0]) kpis[0].innerHTML = data.pendentes + ' <span class="sub-valor alerta">Pendentes</span>';
+                    if (kpis[1]) kpis[1].innerHTML = data.total_submissoes + ' <span class="sub-valor estatico">Total</span>';
+
+                    // Horas aprovadas
+                    const horasKpi = document.querySelectorAll('.valor-cartao h2');
+                    if (horasKpi[2]) horasKpi[2].innerHTML = data.horas_aprovadas + ' <small>h aprovadas</small>';
+                }
+            }).catch(() => { });
+        });
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <main class="conteudo-principal">
+
+            <header class="cabecalho-topo">
+                <div class="abas-links">
+                    <a href="analise.html" class="aba">Certificados</a>
+
+                </div>
+
+                <div class="acoes-usuario">
+                    <div class="caixa-busca">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar alunos, protocolos...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header'></i>
+                    <button class="botao-novo">Novo Protocolo</button>
+                </div>
+            </header>
+
+            <section class="secao-boas-vindas">
+                <span class="etiqueta-laranja">VISÃO GERAL ACADÊMICA</span>
+                <h1>Dashboard</h1>
+                <div class="data-atualizacao">
+                    Semestre Letivo 2024.1 <br>
+                    <small>Atualizado há 12 minutos</small>
+                </div>
+            </section>
+
+            <div class="grade-indicadores">
+                <div class="cartao-kpi">
+                    <div class="topo-cartao"><span>PROTOCOLOS PENDENTES</span><i class='bx bx-time-five'></i></div>
+                    <div class="valor-cartao">
+                        <h2>42 <span class="sub-valor alerta">+12% vs. ontem</span></h2>
+                        <div class="barra-progresso">
+                            <div class="preenchimento" style="width: 70%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cartao-kpi">
+                    <div class="topo-cartao"><span>ALUNOS HORAS FALTANTES</span><i class='bx bx-info-circle'></i></div>
+                    <div class="valor-cartao">
+                        <h2>128 <span class="sub-valor estatico">-5% estático</span></h2>
+                        <p class="nota-cartao">Prioridade crítica para formandos 2024.2</p>
+                    </div>
+                </div>
+
+                <div class="cartao-kpi">
+                    <div class="topo-cartao"><span>MÉDIA DE HORAS / CURSO</span><i class='bx bx-line-chart'></i></div>
+                    <div class="valor-cartao">
+                        <h2>84.5 <small>h/semestre</small></h2>
+                        <div class="pontinhos-progresso">
+                            <span class="ponto ativo"></span><span class="ponto ativo"></span><span
+                                class="ponto ativo"></span><span class="ponto"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grade-detalhes">
+                <div class="caixa-grafico">
+                    <h3>Envios por Categoria</h3>
+                    <div class="linha-barra">
+                        <span class="nome-cat">EXTENSÃO</span>
+                        <div class="fundo-barra">
+                            <div class="barra-cor azul" style="width: 85%;"></div>
+                        </div>
+                        <span class="num-cat">142</span>
+                    </div>
+                    <div class="linha-barra">
+                        <span class="nome-cat">PESQUISA</span>
+                        <div class="fundo-barra">
+                            <div class="barra-cor azul-medio" style="width: 60%;"></div>
+                        </div>
+                        <span class="num-cat">86</span>
+                    </div>
+                    <div class="linha-barra">
+                        <span class="nome-cat">CULTURAIS</span>
+                        <div class="fundo-barra">
+                            <div class="barra-cor laranja" style="width: 40%;"></div>
+                        </div>
+                        <span class="num-cat">54</span>
+                    </div>
+                    <div class="linha-barra">
+                        <span class="nome-cat">MONITORIA</span>
+                        <div class="fundo-barra">
+                            <div class="barra-cor cinza" style="width: 75%;"></div>
+                        </div>
+                        <span class="num-cat">112</span>
+                    </div>
+                </div>
+
+                <div class="caixa-atividades">
+                    <h3>Últimas Atividades</h3>
+
+                    <div class="lista-atv">
+                        <div class="item-atv">
+                            <div class="circulo-icone azul">
+                                <i class='bx bx-file'></i>
+                            </div>
+                            <div class="conteudo-atv">
+                                <strong>Ana Beatriz</strong> enviou certificado
+                                <span>Categoria: Extensão - 20h solicitadas.</span>
+                                <div class="botoes-atv">
+                                    <button class="btn-validar">Validar</button>
+                                    <button class="btn-detalhes">Detalhes</button>
+                                </div>
+                            </div>
+                            <span class="tempo-atv">2M AGO</span>
+                        </div>
+
+                        <div class="item-atv">
+                            <div class="circulo-icone laranja">
+                                <i class='bx bx-error-circle'></i>
+                            </div>
+                            <div class="conteudo-atv">
+                                <strong>Alerta de Prazo: Formandos</strong>
+                                <span>15 alunos ainda não atingiram o mínimo de horas culturais.</span>
+                            </div>
+                            <span class="tempo-atv">1H AGO</span>
+                        </div>
+                    </div>
+
+                    <a href="#" class="link-ver-tudo">VER TODO O HISTÓRICO</a>
+                </div>
+            </div>
+    </div>
+    </div>
+    </main>
+    </div>
+</body>
+
+</html>

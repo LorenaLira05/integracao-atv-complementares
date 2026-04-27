@@ -1,0 +1,252 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+
+:root {
+    --azul-senac: #004a8e;
+    --laranja: #d4800a;
+    --fundo: #f8fafc;
+    --borda: #e2e8f0;
+    --texto: #1a2e5a;
+    --texto-light: #64748b;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-color: var(--fundo);
+    font-family: 'Montserrat', sans-serif;
+    color: var(--texto);
+}
+
+/* --- ESTRUTURA BASE (O "DESBUGADOR") --- */
+.layout-geral { display: flex; }
+
+.barra-lateral {
+    width: 260px;
+    height: 100vh;
+    background: white;
+    border-right: 1px solid var(--borda);
+    position: fixed; /* Barra fica parada */
+    left: 0; top: 0;
+    padding: 2rem 0;
+    z-index: 1000;
+}
+
+.conteudo-principal {
+    flex: 1;
+    padding: 2.5rem 4rem;
+    min-height: 100vh;
+}
+
+/* --- HEADER --- */
+.cabecalho-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2.5rem;
+}
+
+.titulo-secao h1 { font-size: 26px; font-weight: 800; }
+.titulo-secao p { font-size: 14px; color: var(--texto-light); }
+
+.btn-salvar-global {
+    background: var(--azul-senac);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* --- GRADE DE CONFIGURAÇÕES --- */
+.grade-config {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 40px;
+}
+
+/* Menu Interno (Lateral da Config) */
+.menu-interno { display: flex; flex-direction: column; gap: 8px; }
+
+.item-nav {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 15px;
+    text-decoration: none;
+    color: var(--texto-light);
+    font-weight: 600;
+    font-size: 14px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.item-nav.active { background: white; color: var(--azul-senac); box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+/* Painel de Dados e Cards */
+.card-config {
+    background: white;
+    border-radius: 12px;
+    border: 1px solid var(--borda);
+    padding: 25px;
+    margin-bottom: 25px;
+}
+
+/* ========================= */
+/* HEADER DO CARD / TÍTULO  */
+/* ========================= */
+
+.header-card {
+font-size: 10px;
+font-weight: 800;
+color: var(--texto-light);
+margin-bottom: 20px;
+letter-spacing: 1px;
+}
+
+/* ========================= */
+/* ÁREA DE UPLOAD DE FOTO    */
+/* ========================= */
+
+.upload-foto {
+display: flex;
+align-items: center;
+gap: 20px;
+margin-bottom: 25px;
+}
+
+/* Círculo onde aparece a foto do usuário */
+.circulo-foto {
+width: 70px;
+height: 70px;
+background: #e2e8f0;
+border-radius: 50%;
+}
+
+/* Botão para trocar a foto */
+.btn-trocar {
+background: white;
+border: 1px solid var(--borda);
+padding: 6px 12px;
+border-radius: 6px;
+font-size: 12px;
+font-weight: 700;
+cursor: pointer;
+}
+
+/* Texto explicativo abaixo do botão */
+.texto-upload span {
+display: block;
+font-size: 11px;
+color: var(--texto-light);
+margin-top: 5px;
+}
+
+/* ========================= */
+/* FORMULÁRIO DE CONFIGURAÇÃO */
+/* ========================= */
+
+.formulario-config {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 20px;
+}
+
+/* Campo individual do formulário */
+.campo label {
+display: block;
+font-size: 11px;
+font-weight: 800;
+margin-bottom: 8px;
+}
+
+.campo input,
+.campo select {
+width: 100%;
+padding: 12px;
+border: 1px solid var(--borda);
+border-radius: 8px;
+background: #f8fafc;
+outline: none;
+}
+
+/* ========================= */
+/* TOGGLE SWITCH (CHAVE)     */
+/* ========================= */
+
+/* Linha onde fica o texto + switch */
+.linha-toggle {
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+
+/* Texto do toggle */
+.texto-toggle strong {
+font-size: 14px;
+display: block;
+}
+
+.texto-toggle p {
+font-size: 12px;
+color: var(--texto-light);
+}
+
+/* Estrutura do switch */
+.switch {
+position: relative;
+width: 44px;
+height: 22px;
+}
+
+/* Esconde o input padrão */
+.switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+
+/* Fundo do switch */
+.switch label {
+position: absolute;
+cursor: pointer;
+inset: 0;
+background: #cbd5e1;
+border-radius: 20px;
+transition: 0.3s;
+}
+
+/* Bolinha do switch */
+.switch label::before {
+content: "";
+position: absolute;
+height: 16px;
+width: 16px;
+left: 3px;
+bottom: 3px;
+background: white;
+border-radius: 50%;
+transition: 0.3s;
+}
+
+/* Switch ativado */
+.switch input:checked + label {
+background: var(--azul-senac);
+}
+
+.switch input:checked + label::before {
+transform: translateX(22px);
+}
+
+/* ========================= */
+/* FOOTER DA PÁGINA          */
+/* ========================= */
+
+.footer-bottom {
+margin-top: 3rem;
+text-align: center;
+font-size: 11px;
+color: var(--texto-light);
+}
+
+

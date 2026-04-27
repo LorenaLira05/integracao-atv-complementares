@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Configurações do Sistema</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/configadm.css">
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao"></nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=S+A&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Super Admin</strong>
+                        <small id="sidebar-role-global">Super Admin</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout==='function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Header -->
+            <header class="top-header">
+                <nav class="top-nav-links">
+                    <a href="configadm.html" class="active">Globais &amp; Permissões</a>
+                </nav>
+                <div class="header-right">
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="input-busca-global" placeholder="Buscar...">
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-container">
+
+                <!-- Title -->
+                <div class="breadcrumb">ADMINISTRAÇÃO DO SISTEMA</div>
+                <div class="page-title">
+                    <h1>Painel de Configurações Globais &amp; Permissões</h1>
+                </div>
+
+                <!-- Grid Layout -->
+                <div class="grid-container">
+
+                    <!-- Left Column -->
+                    <div class="col-left">
+
+                        <!-- Limites por Curso -->
+                        <div class="card-left">
+                            <div class="card-left-title" style="margin-bottom: 20px;">
+                                <i class='bx bx-timer'></i>
+                                Limites por Curso
+                            </div>
+                            <div id="lista-limites-cursos">
+                                <!-- skeleton -->
+                                <div class="skeleton-bar"></div>
+                                <div class="skeleton-bar"></div>
+                                <div class="skeleton-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Logs de Auditoria -->
+                        <div class="card-logs" style="margin-top: 25px;">
+                            <h3>Logs de Segurança <i class='bx bx-shield-quarter'></i></h3>
+                            <div id="lista-logs">
+                                <div class="skeleton-bar" style="height:50px;"></div>
+                                <div class="skeleton-bar" style="height:50px;animation-delay:0.2s;"></div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="col-right">
+
+                        <!-- Gestão de Equipe -->
+                        <div class="card-right">
+                            <div class="card-header-flex">
+                                <div>
+                                    <h2>Gestão de Equipe Acadêmica</h2>
+                                    <p>Controle de papéis, acessos e permissões de coordenadores.</p>
+                                </div>
+                                <div class="card-actions">
+                                    <button class="btn-icon" title="Exportar CSV" onclick="exportarEquipeCSV()">
+                                        <i class='bx bx-download'></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div id="busca-equipe-wrap" style="margin-bottom:12px;">
+                                <input type="text" id="input-busca-equipe" placeholder="Buscar coordenador..."
+                                    style="width:100%;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;outline:none;">
+                            </div>
+
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>USUÁRIO</th>
+                                        <th>PAPEL ATUAL</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tabela-equipe">
+                                    <!-- skeleton -->
+                                    <tr>
+                                        <td colspan="3">
+                                            <div class="skeleton-bar" style="height:48px;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <div class="skeleton-bar" style="height:48px;animation-delay:0.2s;"></div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td colspan="3">
+                                            <div class="skeleton-bar" style="height:48px;animation-delay:0.4s;"></div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+
+                            <div class="table-footer">
+                                <p id="info-equipe">Carregando...</p>
+                                <div class="pagination-btns">
+                                    <button class="btn-page" id="btn-ant-equipe" onclick="mudarPagEquipe(-1)"
+                                        disabled>ANTERIOR</button>
+                                    <button class="btn-page active" id="btn-prox-equipe"
+                                        onclick="mudarPagEquipe(1)">PRÓXIMO</button>
+                                </div>
+                            </div>
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div style="text-align:center;padding:20px 0 40px;color:var(--texto-light);font-size:11px;">
+                © 2026 <strong>Senac Brasil</strong> - Portal de Atividades Complementares
+                <div style="margin-top:8px;display:flex;gap:15px;justify-content:center;">
+                    <a href="#" style="color:var(--texto-light);text-decoration:none;">Privacidade</a>
+                    <a href="#" style="color:var(--texto-light);text-decoration:none;">Termos de Uso</a>
+                    <a href="#" style="color:var(--texto-light);text-decoration:none;">Suporte Técnico</a>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <style>
+        .skeleton-bar {
+            height: 32px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1
+            }
+
+            50% {
+                opacity: .4
+            }
+        }
+
+        .cat-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .cat-item strong {
+            color: var(--azul-senac);
+        }
+
+        .cat-badge {
+            font-size: 11px;
+            color: #ffffff;
+        }
+
+        .btn-del-cat {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #ef4444;
+            font-size: 16px;
+            padding: 2px 6px;
+        }
+
+        .btn-del-cat:hover {
+            color: #b91c1c;
+        }
+
+        .log-item {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .log-time {
+            font-size: 11px;
+            color: var(--laranja-senac);
+            font-weight: 700;
+            white-space: nowrap;
+            min-width: 48px;
+        }
+
+        .log-info strong {
+            display: block;
+            font-size: 13px;
+            color: #ffffff;
+        }
+
+        .log-info small {
+            font-size: 12px;
+            color: #ffffff;
+        }
+    </style>
+
+    <script>
+        // ─── Estado ───────────────────────────────────────────────────────────────
+        let todosCoord = [];
+        let paginaEquipe = 1;
+        const POR_PAG_EQUIPE = 4;
+
+        // ─── Dados do usuário ─────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            const nome = localStorage.getItem('nome');
+            const perfil = localStorage.getItem('perfil');
+            const labelMap = {
+                'super_admin': 'Super Admin', 'admin': 'Super Admin',
+                'coordinator': 'Coordenador', 'student': 'Aluno'
+            };
+
+            if (nome) {
+                const nomeEl = document.getElementById('sidebar-nome-global');
+                const avatarEl = document.getElementById('sidebar-avatar-global');
+                if (nomeEl) nomeEl.textContent = nome;
+                if (avatarEl) avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+            }
+            if (perfil) {
+                const roleEl = document.getElementById('sidebar-role-global');
+                if (roleEl) roleEl.textContent = labelMap[perfil.toLowerCase()] || perfil;
+            }
+
+            // Marca aba ativa após menu ser gerado pelo script.js
+            setTimeout(() => {
+                const cur = window.location.pathname.split('/').pop();
+                document.querySelectorAll('.menu-navegacao .link-menu').forEach(l => {
+                    l.classList.toggle('active', l.getAttribute('href') === cur);
+                });
+            }, 50);
+
+            // Carrega dados
+            carregarTudo();
+
+            // Cadastrar atividade
+            document.getElementById('btn-cadastrar-atividade').addEventListener('click', cadastrarAtividade);
+
+            // Busca na tabela de equipe
+            let debounce;
+            document.getElementById('input-busca-equipe').addEventListener('input', e => {
+                clearTimeout(debounce);
+                debounce = setTimeout(() => {
+                    paginaEquipe = 1;
+                    renderizarEquipe(e.target.value);
+                }, 250);
+            });
+        });
+
+        // ─── Carrega tudo em paralelo ─────────────────────────────────────────────
+        async function carregarTudo() {
+            await Promise.all([
+                carregarCoordenadores(),
+                carregarCategorias(),
+                carregarLimites(),
+                carregarLogs()
+            ]);
+        }
+
+        // ─── Gestão de Equipe (Coordenadores) ────────────────────────────────────
+        async function carregarCoordenadores() {
+            try {
+                const data = await apiGet('/admin/coordenadores');
+                todosCoord = Array.isArray(data) ? data : [];
+                renderizarEquipe('');
+            } catch (e) {
+                document.getElementById('tabela-equipe').innerHTML =
+                    '<tr><td colspan="3" style="text-align:center;color:#ef4444;padding:20px;">Erro ao carregar equipe.</td></tr>';
+            }
+        }
+
+        function renderizarEquipe(busca) {
+            let lista = [...todosCoord];
+            if (busca) {
+                const q = busca.toLowerCase();
+                lista = lista.filter(c =>
+                    (c.full_name || '').toLowerCase().includes(q) ||
+                    (c.email || '').toLowerCase().includes(q)
+                );
+            }
+
+            const total = lista.length;
+            const totalPags = Math.ceil(total / POR_PAG_EQUIPE) || 1;
+            if (paginaEquipe > totalPags) paginaEquipe = 1;
+
+            const inicio = (paginaEquipe - 1) * POR_PAG_EQUIPE;
+            const pag = lista.slice(inicio, inicio + POR_PAG_EQUIPE);
+
+            const infoEl = document.getElementById('info-equipe');
+            if (infoEl) infoEl.textContent = total === 0
+                ? 'Nenhum coordenador encontrado.'
+                : `Exibindo ${inicio + 1}–${Math.min(inicio + POR_PAG_EQUIPE, total)} de ${total} usuários`;
+
+            document.getElementById('btn-ant-equipe').disabled = paginaEquipe <= 1;
+            document.getElementById('btn-prox-equipe').disabled = paginaEquipe >= totalPags;
+
+            const tbody = document.getElementById('tabela-equipe');
+            if (pag.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:#64748b;">Nenhum coordenador cadastrado.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = pag.map(c => {
+                const initials = (c.full_name || 'U').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+                const statusClass = c.status === 'active' ? 'status-ativo' : 'status-suspenso';
+                const statusText = c.status === 'active' ? 'Ativo' : 'Inativo';
+                const cursos = (c.course_names || []).filter(Boolean).join(', ') || 'Sem curso';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="td-user">
+                                <div class="avatar-initials bg-blue">${initials}</div>
+                                <div class="td-user-info">
+                                    <strong>${c.full_name || '—'}</strong>
+                                    <small>${c.email || '—'}</small>
+                                    <small style="color:#94a3b8;">${cursos}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <select class="role-select" data-id="${c.id}" onchange="salvarPapel(this)">
+                                <option value="coordinator" ${c.cargo !== 'Secretaria' ? 'selected' : ''}>Coordenador</option>
+                                <option value="secretaria" ${c.cargo === 'Secretaria' ? 'selected' : ''}>Secretaria</option>
+                            </select>
+                        </td>
+                        <td>
+                            <span class="status-pill ${statusClass}">${statusText}</span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function mudarPagEquipe(dir) {
+            paginaEquipe += dir;
+            renderizarEquipe(document.getElementById('input-busca-equipe').value);
+        }
+
+        async function salvarPapel(sel) {
+            const id = sel.dataset.id;
+            // Visual feedback
+            sel.style.borderColor = '#10b981';
+            setTimeout(() => sel.style.borderColor = '', 1500);
+            // Aqui poderia chamar PUT /admin/coordenador/:id com o novo cargo
+        }
+
+        // ─── Categorias ───────────────────────────────────────────────────────────
+        async function carregarCategorias() {
+            try {
+                const data = await apiGet('/admin/categorias');
+                const cats = Array.isArray(data) ? data : [];
+                renderizarCategorias(cats);
+            } catch (e) {
+                document.getElementById('lista-categorias').innerHTML =
+                    '<p style="color:#ef4444;font-size:13px;">Erro ao carregar atividades.</p>';
+            }
+        }
+
+        function renderizarCategorias(cats) {
+            const el = document.getElementById('lista-categorias');
+            const ativas = cats.filter(c => c.is_active !== false);
+            if (ativas.length === 0) {
+                el.innerHTML = '<p style="color:#64748b;font-size:13px;">Nenhuma atividade cadastrada.</p>';
+                return;
+            }
+            el.innerHTML = ativas.map(c => `
+                <div class="cat-item" id="cat-${c.id}">
+                    <div>
+                        <strong>${c.name}</strong>
+                        <span class="cat-badge"> &nbsp;•&nbsp; Peso: ${c.peso_horas || 1}x &nbsp;•&nbsp; Máx: ${c.limite_max_horas || 40}h</span>
+                    </div>
+                    <button class="btn-del-cat" onclick="deletarCategoria(${c.id})" title="Remover">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function cadastrarAtividade() {
+            const nome = document.getElementById('input-nome-atividade').value.trim();
+            const peso = document.getElementById('input-peso-horas').value;
+            const limite = document.getElementById('input-limite-max').value;
+            const msgEl = document.getElementById('msg-atividade');
+
+            if (!nome) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = '#ef4444';
+                msgEl.textContent = 'Informe o nome da atividade.';
+                return;
+            }
+
+            const btn = document.getElementById('btn-cadastrar-atividade');
+            btn.disabled = true;
+            btn.textContent = 'Salvando...';
+
+            try {
+                const data = await apiPost('/admin/categoria', {
+                    name: nome,
+                    peso_horas: parseFloat(peso) || 1.0,
+                    limite_max_horas: parseFloat(limite) || 40
+                });
+
+                if (data && data.erro) throw new Error(data.erro);
+
+                msgEl.style.display = 'block';
+                msgEl.style.color = '#10b981';
+                msgEl.textContent = '✓ Atividade cadastrada com sucesso!';
+
+                document.getElementById('input-nome-atividade').value = '';
+                document.getElementById('input-peso-horas').value = '';
+                document.getElementById('input-limite-max').value = '';
+
+                await carregarCategorias();
+                await carregarLogs();
+
+            } catch (e) {
+                msgEl.style.display = 'block';
+                msgEl.style.color = '#ef4444';
+                msgEl.textContent = 'Erro: ' + e.message;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bx bx-plus"></i> CADASTRAR ATIVIDADE';
+                setTimeout(() => msgEl.style.display = 'none', 4000);
+            }
+        }
+
+        async function deletarCategoria(id) {
+            if (!confirm('Desativar esta atividade?')) return;
+            try {
+                await apiFetch(`/admin/categoria/${id}`, { method: 'DELETE' });
+                document.getElementById(`cat-${id}`)?.remove();
+                await carregarLogs();
+            } catch (e) {
+                alert('Erro ao deletar: ' + e.message);
+            }
+        }
+
+        // ─── Limites por Curso ────────────────────────────────────────────────────
+        async function carregarLimites() {
+            try {
+                const data = await apiGet('/admin/limites-cursos');
+                const cursos = Array.isArray(data) ? data : [];
+                const el = document.getElementById('lista-limites-cursos');
+
+                if (cursos.length === 0) {
+                    el.innerHTML = '<p style="color:#64748b;font-size:13px;">Nenhum curso encontrado.</p>';
+                    return;
+                }
+
+                el.innerHTML = cursos.map(c => {
+                    const hLimit = c.minimum_required_hours || 100;
+                    const sigla = c.code ? c.code.substring(0, 4) : c.name.substring(0, 4).toUpperCase();
+                    return `
+                        <div class="limite-item">
+                            <div class="limite-info">
+                                <span>${sigla}</span>
+                                <span>${hLimit}H TOTAL</span>
+                            </div>
+                            <div class="limite-bar-bg">
+                                <div class="limite-bar-fill" style="width:100%;"></div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                document.getElementById('lista-limites-cursos').innerHTML =
+                    '<p style="color:#ef4444;font-size:13px;">Erro ao carregar limites.</p>';
+            }
+        }
+
+        // ─── Logs de Auditoria ────────────────────────────────────────────────────
+        async function carregarLogs() {
+            try {
+                const data = await apiGet('/admin/logs?limite=8');
+                const logs = Array.isArray(data) ? data : [];
+                const el = document.getElementById('lista-logs');
+
+                if (logs.length === 0) {
+                    el.innerHTML = '<p style="color:#64748b;font-size:13px;padding:10px 0;">Nenhum log registrado.</p>';
+                    return;
+                }
+
+                const acaoLabel = {
+                    'CRIAR_CURSO': 'Novo Curso', 'ATUALIZAR_CURSO': 'Curso Atualizado',
+                    'DELETAR_CURSO': 'Curso Removido', 'CRIAR_COORDENADOR': 'Novo Coordenador',
+                    'DELETAR_COORDENADOR': 'Coordenador Removido', 'CRIAR_CATEGORIA': 'Nova Atividade',
+                    'DELETAR_CATEGORIA': 'Atividade Removida', 'ATUALIZAR_COORDENADOR': 'Coordenador Atualizado'
+                };
+
+                el.innerHTML = logs.map(l => {
+                    const d = new Date(l.created_at);
+                    const hora = `[${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}]`;
+                    const label = acaoLabel[l.action] || l.action;
+                    return `
+                        <div class="log-item">
+                            <div class="log-time">${hora}</div>
+                            <div class="log-info">
+                                <strong>${label}</strong>
+                                <small>${l.usuario_nome || 'Sistema'} • ${d.toLocaleDateString('pt-BR')}</small>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                document.getElementById('lista-logs').innerHTML =
+                    '<p style="color:#ef4444;font-size:13px;padding:10px 0;">Erro ao carregar logs.</p>';
+            }
+        }
+
+        // ─── Exportar Equipe CSV ──────────────────────────────────────────────────
+        function exportarEquipeCSV() {
+            const header = ['Nome', 'Email', 'Cursos', 'Status'];
+            const linhas = todosCoord.map(c => [
+                c.full_name || '',
+                c.email || '',
+                (c.course_names || []).filter(Boolean).join('; '),
+                c.status || ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+
+            const csv = [header.join(','), ...linhas].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `equipe_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ─── Exportar Relatório ───────────────────────────────────────────────────
+        function exportarRelatorio() {
+            exportarEquipeCSV();
+        }
+
+        // ─── Função apiPost (garante que existe) ──────────────────────────────────
+        if (typeof apiPost === 'undefined') {
+            window.apiPost = async (url, body) => {
+                const token = localStorage.getItem('token');
+                const r = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body)
+                });
+                return r.json();
+            };
+        }
+        if (typeof apiFetch === 'undefined') {
+            window.apiFetch = async (url, opts = {}) => {
+                const token = localStorage.getItem('token');
+                opts.headers = { ...(opts.headers || {}), 'Authorization': `Bearer ${token}` };
+                const r = await fetch(url, opts);
+                return r.json();
+            };
+        }
+    </script>
+</body>
+
+</html>

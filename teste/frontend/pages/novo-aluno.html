@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Novo Aluno</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/novo-aluno.css">
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'SUPER_ADMIN']);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Preencher os cursos vindos da API no formulário
+            apiGet('/admin/cursos').then(cursos => {
+                const selectCurso = document.getElementById('cursoAluno');
+                if (selectCurso && cursos && Array.isArray(cursos)) {
+                    selectCurso.innerHTML = '';
+                    cursos.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.nome_curso || c.nome;
+                        selectCurso.appendChild(opt);
+                    });
+                }
+            }).catch(() => console.error("Erro ao carregar cursos"));
+
+            // Gerar RA automático de exemplo
+            const inputRa = document.getElementById('raAluno');
+            if (inputRa) {
+                const raG = "IND-" + new Date().getFullYear() + "-" + Math.floor(1000 + Math.random() * 9000);
+                inputRa.value = raG;
+            }
+
+            // Ação de envio do formulário para o backend
+            document.getElementById('btnCadastrar').addEventListener('click', async () => {
+                const payload = {
+                    full_name: document.getElementById('nomeCompleto').value,
+                    cpf: document.getElementById('cpfAluno').value,
+                    email: document.getElementById('emailAluno').value,
+                    phone: document.getElementById('telefoneAluno').value,
+                    course_id: document.getElementById('cursoAluno').value,
+                    ra: document.getElementById('raAluno').value,
+                    status_matricula: 'ATIVO' // Ou ativo
+                };
+
+                // Validação básica front-end
+                if (!payload.full_name || !payload.email || !payload.cpf || !payload.course_id) {
+                    alert('Por favor, preencha os campos obrigatórios (Nome, CPF, Email, Curso).');
+                    return;
+                }
+
+                // Disparo para o backend
+                try {
+                    const data = await apiPost('/coordenador/aluno', payload);
+                    if (data && data.erro) {
+                        alert("Erro ao cadastrar: " + data.erro);
+                    } else {
+                        alert("Aluno cadastrado com sucesso!");
+                        window.location.href = 'alunos.html'; // Volta para a tela de lista de alunos
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Erro de conexão ao tentar cadastrar o aluno.");
+                }
+            });
+        });
+    </script>
+
+    <div class="layout-geral">
+                <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+                    
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div class="header-titulo">
+                    Portal do Coordenador
+                    <div class="header-links">
+                        <a href="#" style="color:var(--texto); text-decoration:none;">Visão Geral</a>
+                        <a href="#" style="color:var(--texto-light); text-decoration:none;">Calendário</a>
+                        <a href="#" style="color:var(--texto-light); text-decoration:none;">Suporte</a>
+                    </div>
+                </div>
+
+                <div class="acoes-usuario">
+                    <div class="caixa-busca">
+                        <input type="text" placeholder="Buscar aluno...">
+                        <i class='bx bx-search'></i>
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Perfil" class="foto-perfil">
+                </div>
+            </header>
+
+            <section class="cabecalho-pagina">
+                <div>
+                    <div class="breadcrumb">
+                        <span>ALUNOS</span>
+                        <i class='bx bx-chevron-right'></i>
+                        <span style="color: var(--texto-light);">NOVO CADASTRO</span>
+                    </div>
+                    <h1>Novo Aluno</h1>
+                    <p>Preencha os dados abaixo para registrar o novo estudante no sistema acadêmico. O RA será gerado
+                        automaticamente após a conclusão.</p>
+                </div>
+            </section>
+
+            <section class="form-grid">
+                <!-- Coluna Esquerda -->
+                <div class="col-esq">
+                    <!-- DADOS PESSOAIS -->
+                    <div class="card-form">
+                        <div class="card-header">
+                            <div class="card-icon"><i class='bx bx-user'></i></div>
+                            <div class="card-title">
+                                <strong>DADOS PESSOAIS</strong>
+                                <small>Informações básicas de identificação</small>
+                            </div>
+                        </div>
+
+                        <div class="linha-form ultima">
+                            <div class="grupo-input">
+                                <label>NOME COMPLETO</label>
+                                <input type="text" id="nomeCompleto" placeholder="Digite o nome completo do aluno">
+                            </div>
+                        </div>
+                        <div class="linha-form ultima" style="margin-top:20px;">
+                            <div class="grupo-input">
+                                <label>CPF</label>
+                                <input type="text" id="cpfAluno" placeholder="000.000.000-00">
+                            </div>
+                            <div class="grupo-input">
+                                <label>E-MAIL INSTITUCIONAL</label>
+                                <input type="email" id="emailAluno" placeholder="nome.aluno@senac.edu.br">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ENDEREÇO & CONTATO -->
+                    <div class="card-form">
+                        <div class="card-header">
+                            <div class="card-icon"><i class='bx bx-map-pin'></i></div>
+                            <div class="card-title">
+                                <strong>ENDEREÇO & CONTATO</strong>
+                                <small>Dados de localização e emergência</small>
+                            </div>
+                        </div>
+
+                        <div class="linha-form ultima">
+                            <div class="grupo-input">
+                                <label>TELEFONE</label>
+                                <input type="text" id="telefoneAluno" placeholder="(00) 00000-0000">
+                            </div>
+                            <div class="grupo-input">
+                                <label>CIDADE</label>
+                                <input type="text" id="cidadeAluno" placeholder="Cidade de residência">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita -->
+                <div class="col-dir">
+                    <!-- FOTO DO ALUNO -->
+                    <div class="card-form">
+                        <div class="upload-area">
+                            <div class="box-dash">
+                                <i class='bx bx-camera'></i>
+                                <div class="btn-edit-foto"><i class='bx bx-pencil'
+                                        style="font-size:14px;color:white;"></i></div>
+                            </div>
+                            <strong>FOTO DO ALUNO</strong>
+                            <small>JPG ou PNG, máx 2MB</small>
+                        </div>
+                    </div>
+
+                    <!-- DADOS ACADÊMICOS -->
+                    <div class="card-form">
+                        <div class="card-header">
+                            <div class="card-icon"><i class='bx bx-book-reader'></i></div>
+                            <div class="card-title">
+                                <strong>DADOS ACADÊMICOS</strong>
+                                <small>Gestão e alocação escolar</small>
+                            </div>
+                        </div>
+
+                        <div class="linha-form" style="margin-bottom:20px;">
+                            <div class="grupo-input">
+                                <label>RA (REGISTRO ACADÊMICO)</label>
+                                <input type="text" id="raAluno" disabled
+                                    style="background:#eef2f6;color:#64748b;font-weight:600; cursor:not-allowed;">
+                                <span class="badge-auto">AUTOMÁTICO</span>
+                            </div>
+                        </div>
+
+                        <div class="linha-form" style="margin-bottom:20px;">
+                            <div class="grupo-input">
+                                <label>CURSO</label>
+                                <select id="cursoAluno">
+                                    <option value="">Carregando cursos...</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="linha-form ultima">
+                            <div class="grupo-input">
+                                <label>SEMESTRE</label>
+                                <select id="semestreAluno">
+                                    <option>1º Semestre</option>
+                                    <option>2º Semestre</option>
+                                    <option>3º Semestre</option>
+                                    <option>4º Semestre</option>
+                                    <option>5º Semestre</option>
+                                    <option>6º Semestre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="botoes-acao">
+                        <button id="btnCadastrar" class="btn-cadastrar">Cadastrar Aluno <i
+                                class='bx bx-user-check'></i></button>
+                        <a href="alunos.html" class="btn-cancelar">CANCELAR E VOLTAR</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

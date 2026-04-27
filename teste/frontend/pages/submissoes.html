@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Repositório de Certificados</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/submissoes.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'ALUNO', 'SUPER_ADMIN']);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const gridCards = document.getElementById('certificadosGrid');
+            if (gridCards) gridCards.innerHTML = '<p style="padding:20px;">Carregando repositório...</p>';
+
+            // Formatar data utils
+            const formatDate = (dateStr) => {
+                if (!dateStr) return '';
+                const options = { day: 'numeric', month: 'short', year: 'numeric' };
+                return new Intl.DateTimeFormat('pt-BR', options).format(new Date(dateStr));
+            };
+
+            // Dados do header (nome perfil)
+            const perfilElement = document.querySelector('.profile-text strong');
+            const roleElement = document.querySelector('.profile-text small');
+
+            let perfil = localStorage.getItem('perfil');
+            if (perfilElement) perfilElement.textContent = localStorage.getItem('nome') || 'Usuário';
+            if (roleElement) roleElement.textContent = (perfil || 'USUÁRIO').toUpperCase();
+
+            // Map perfis para role strings simplificados
+            if (Array.isArray(perfil)) perfil = perfil[0];
+            if (typeof perfil === 'string') perfil = perfil.toUpperCase();
+
+            if (perfil === 'COORDENADOR' || perfil === 'COORDINATOR' || perfil === 'SUPER_ADMIN' || perfil === 'SUPER_ADMIN' || perfil === 'ADMIN') {
+                // Backend Coordenador
+                apiGet('/coordenador/meus-cursos').then(cursos => {
+                    if (cursos && cursos.length > 0) {
+                        const cursoId = cursos[0].id;
+                        apiGet(`/coordenador/submissoes/${cursoId}`).then(resposta => {
+                            if (resposta) {
+                                // Pode retornar o objeto com .submissoes ou array plano
+                                const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                                const contadores = resposta.contadores || null;
+                                renderGrid(subs, contadores, cursos.length);
+                            }
+                        }).catch(() => fallbackGrid());
+                    } else {
+                        fallbackGrid();
+                    }
+                }).catch(() => fallbackGrid());
+            } else {
+                // Backend Aluno
+                apiGet('/aluno/submissoes').then(subs => {
+                    if (subs && Array.isArray(subs)) {
+                        renderGrid(subs);
+                    } else {
+                        fallbackGrid();
+                    }
+                }).catch(() => fallbackGrid());
+            }
+
+            function atualizarKpis(subs, contadores, numCursos) {
+                const kpiValues = document.querySelectorAll('.kpi-value');
+                if (!kpiValues || kpiValues.length < 4) return;
+
+                const calcSpace = (total) => {
+                    const mb = total * 2.4;
+                    if (mb >= 1024) return (mb / 1024).toFixed(1) + ' <small>GB</small>';
+                    return mb.toFixed(1) + ' <small>MB</small>';
+                };
+
+                if (contadores) {
+                    kpiValues[0].textContent = contadores.total || subs.length;
+                    kpiValues[1].textContent = contadores.aprovadas || 0;
+                    kpiValues[2].textContent = numCursos !== undefined ? numCursos : 1;
+                    kpiValues[3].innerHTML = calcSpace(contadores.total || subs.length);
+                } else {
+                    const pendentes = subs.filter(s => s.status && s.status.toLowerCase().includes('pendente')).length;
+                    const aprovadas = subs.filter(s => s.status && s.status.toLowerCase().includes('aprovado')).length;
+                    kpiValues[0].textContent = subs.length;
+                    kpiValues[1].textContent = aprovadas;
+                    kpiValues[2].textContent = numCursos || 1;
+                    kpiValues[3].innerHTML = calcSpace(subs.length);
+                }
+            }
+
+            function renderGrid(subs, contadores = null, numCursos = 1) {
+                if (!gridCards) return;
+                atualizarKpis(subs, contadores, numCursos);
+
+                gridCards.innerHTML = '';
+                if (subs.length === 0) {
+                    gridCards.innerHTML = '<p style="padding:20px; color:#64748b;">Nenhum documento encontrado no repositório.</p>';
+                    return;
+                }
+
+                subs.slice(0, 10).forEach((s, idx) => {
+                    const statusStr = s.status ? s.status.toUpperCase() : 'PENDENTE';
+                    const bgBadge = statusStr === 'APPROVED' || statusStr === 'APROVADO' ? '#10b981' :
+                        statusStr === 'REJECTED' || statusStr === 'REPROVADO' ? '#ef4444' : '#f59e0b';
+
+                    const card = document.createElement('div');
+                    card.className = 'cert-card';
+                    card.innerHTML = `
+                        <div class="cert-cover">
+                            <!-- Utilizamos a imagem mockada base do servidor ou fallback -->
+                            <img src="/brain/a2e55989-be1d-4478-a4fb-64744ce80463/certificado_preview_1776627424316.png" class="cert-img" alt="Certificado" onerror="this.src='https://images.unsplash.com/photo-1589330694653-efa64f7b6009?w=300&q=80'">
+                            <span class="badge-id" style="background: ${bgBadge}">ID: #${s.id || ('00' + idx)}</span>
+                            <button class="btn-preview"><i class='bx bx-show'></i></button>
+                        </div>
+                        <div class="cert-info">
+                            <div class="cert-curso">${s.category_name || s.categoria || 'CURSO COMPLEMENTAR'} <span class="dot" style="background: ${bgBadge}"></span></div>
+                            <h3 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${s.student_name || s.nome_aluno || 'Aluno'}">${s.student_name || s.nome_aluno || 'Aluno Name'}</h3>
+                            <div class="cert-meta">
+                                <div class="meta-item"><i class='bx bx-calendar'></i> ${formatDate(s.submitted_at || s.data_envio)}</div>
+                                <div class="meta-item"><i class='bx bx-time'></i> ${s.approved_hours || s.horas_solicitadas || '0'}h</div>
+                            </div>
+                            <div class="cert-actions">
+                                <button class="btn-download">DOWNLOAD PDF</button>
+                                <button class="btn-share"><i class='bx bx-share-alt'></i></button>
+                            </div>
+                        </div>
+                    `;
+                    gridCards.appendChild(card);
+                });
+            }
+
+            function fallbackGrid() {
+                const kpiValues = document.querySelectorAll('.kpi-value');
+                if (kpiValues && kpiValues.length >= 4) {
+                    kpiValues[0].textContent = '0';
+                    kpiValues[1].textContent = '0';
+                    kpiValues[2].textContent = '0';
+                    kpiValues[3].innerHTML = '0 <small>MB</small>';
+                }
+                if (gridCards) gridCards.innerHTML = '<p style="padding:20px; color:#ef4444;">Nenhuma submissão encontrada ou erro ao conectar com o banco de dados.</p>';
+            }
+        });
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar -->
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <!-- Menu preenchido dinamicamente pelo script.js -->
+            <nav class="menu-navegacao"></nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <main class="conteudo-principal">
+
+            <!-- Header -->
+            <header class="cabecalho-submissoes">
+                <div class="titulo-page">
+                    <h2>Repositório de Certificados</h2>
+                    <span class="titulo-muted">| VALIDADOS</span>
+                </div>
+
+                <div class="header-tools">
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar certificado...">
+                    </div>
+                    <i class='bx bx-bell icon-btn'></i>
+                    <i class='bx bx-cog icon-btn'></i>
+                    <div class="header-profile">
+                        <div class="profile-text">
+                            <small>COORDENADOR</small>
+                            <strong>Dr. Marcelo Silva</strong>
+                        </div>
+                        <img src="https://ui-avatars.com/api/?name=M+S&background=cbd5e1&color=fff&rounded=true"
+                            alt="Avatar" class="avatar">
+                    </div>
+                </div>
+            </header>
+
+            <!-- KPIs -->
+            <section class="kpis-row">
+                <div class="kpi-box">
+                    <span class="kpi-label">TOTAL DE CERTIFICADOS</span>
+                    <div class="kpi-value">...</div>
+                    <div class="kpi-bottom text-green" id="kpi-sub-1"></div>
+                </div>
+                <div class="kpi-box">
+                    <span class="kpi-label">VALIDADOS HOJE</span>
+                    <div class="kpi-value">...</div>
+                    <div class="kpi-bottom text-gray" id="kpi-sub-2"></div>
+                </div>
+                <div class="kpi-box">
+                    <span class="kpi-label">CURSOS ATIVOS</span>
+                    <div class="kpi-value">...</div>
+                    <div class="kpi-bottom text-gray" id="kpi-sub-3"></div>
+                </div>
+                <div class="kpi-box">
+                    <span class="kpi-label">ESPAÇO UTILIZADO</span>
+                    <div class="kpi-value">...</div>
+                    <div class="kpi-bottom">
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Main Split Layout -->
+            <div class="main-split">
+
+                <div class="left-content">
+                    <!-- Certificates Grid -->
+                    <div class="certificados-grid" id="certificadosGrid">
+                        <!-- Os dados serão injetados aqui. Abaixo está o HTML base (Mock correspondente à imagem) -->
+                        <div class="cert-card">
+                            <div class="cert-cover">
+
+                                <span class="badge-id laranja">ID: #48293</span>
+                                <button class="btn-preview"><i class='bx bx-show'></i></button>
+                            </div>
+                            <div class="cert-info">
+                                <div class="cert-curso">ARQUITETURA DE SOFTWARE <span class="dot verde"></span></div>
+                                <h3>Ana Beatriz Ferreira</h3>
+                                <div class="cert-meta">
+                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 14 Out, 2023</div>
+                                    <div class="meta-item"><i class='bx bx-time'></i> 200h</div>
+                                </div>
+                                <div class="cert-actions">
+                                    <button class="btn-download">DOWNLOAD PDF</button>
+                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cert-card">
+                            <div class="cert-cover">
+                                <span class="badge-id laranja">ID: #48291</span>
+                                <button class="btn-preview"><i class='bx bx-show'></i></button>
+                            </div>
+                            <div class="cert-info">
+                                <div class="cert-curso">GESTÃO DE PROJETOS <span class="dot verde"></span></div>
+                                <h3>Roberto O. Almeida</h3>
+                                <div class="cert-meta">
+                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 12 Out, 2023</div>
+                                    <div class="meta-item"><i class='bx bx-time'></i> 120h</div>
+                                </div>
+                                <div class="cert-actions">
+                                    <button class="btn-download">DOWNLOAD PDF</button>
+                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cert-card">
+                            <div class="cert-cover">
+                                <span class="badge-id laranja">ID: #48288</span>
+                                <button class="btn-preview"><i class='bx bx-show'></i></button>
+                            </div>
+                            <div class="cert-info">
+                                <div class="cert-curso">DATA SCIENCE EXPERT <span class="dot verde"></span></div>
+                                <h3>Juliana Mendes</h3>
+                                <div class="cert-meta">
+                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 11 Out, 2023</div>
+                                    <div class="meta-item"><i class='bx bx-time'></i> 340h</div>
+                                </div>
+                                <div class="cert-actions">
+                                    <button class="btn-download">DOWNLOAD PDF</button>
+                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="cert-card">
+                            <div class="cert-cover">
+                                <span class="badge-id laranja">ID: #48285</span>
+                                <button class="btn-preview"><i class='bx bx-show'></i></button>
+                            </div>
+                            <div class="cert-info">
+                                <div class="cert-curso">UX/UI DESIGN FOUNDATIONS <span class="dot verde"></span></div>
+                                <h3>Lucas Oliveira</h3>
+                                <div class="cert-meta">
+                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 10 Out, 2023</div>
+                                    <div class="meta-item"><i class='bx bx-time'></i> 80h</div>
+                                </div>
+                                <div class="cert-actions">
+                                    <button class="btn-download">DOWNLOAD PDF</button>
+                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Filters Options Area -->
+                    <div class="filters-panel">
+                        <div class="filters-fields">
+                            <div class="field-box">
+                                <label>CURSO</label>
+                                <select>
+                                    <option>Todos os Cursos</option>
+                                </select>
+                            </div>
+                            <div class="field-box">
+                                <label>PERÍODO</label>
+                                <select>
+                                    <option>Últimos 30 dias</option>
+                                </select>
+                            </div>
+                            <div class="field-box">
+                                <label>STATUS DE VALIDAÇÃO</label>
+                                <div class="toggle-status">
+                                    <button class="btn-toggle active">APROVADOS</button>
+                                    <button class="btn-toggle text">PENDENTES</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="filters-buttons">
+                            <button class="btn-adv-filters"><i class='bx bx-filter'></i> FILTROS AVANÇADOS</button>
+                            <button class="btn-export"><i class='bx bx-download'></i> EXPORTAR LISTA</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar Widget -->
+                <div class="right-widgets">
+
+                    <div class="widget-timeline">
+                        <h4 class="widget-title">ÚLTIMAS VALIDAÇÕES</h4>
+
+                        <div class="timeline-list">
+                            <div class="timeline-item">
+                                <div class="t-icon bg-blue-light text-blue"><i class='bx bx-check-shield'></i></div>
+                                <div class="t-content">
+                                    <strong>Novo certificado aprovado</strong>
+                                    <span class="t-desc">Curso: Arquitetura de Microserviços</span>
+                                    <span class="t-time">HÁ 15 MINUTOS</span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item">
+                                <div class="t-icon bg-blue-light text-blue"><i class='bx bx-file-blank'></i></div>
+                                <div class="t-content">
+                                    <strong>Lote de certificados processado</strong>
+                                    <span class="t-desc">24 documentos movidos para o repositório</span>
+                                    <span class="t-time">HÁ 2 HORAS</span>
+                                </div>
+                            </div>
+
+                            <div class="timeline-item">
+                                <div class="t-icon bg-yellow-light text-yellow"><i class='bx bx-search'></i></div>
+                                <div class="t-content">
+                                    <strong>Busca realizada</strong>
+                                    <span class="t-desc">Filtro aplicado: "Engenharia de Dados"</span>
+                                    <span class="t-time">HÁ 4 HORAS</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button class="btn-history">VER HISTÓRICO COMPLETO</button>
+                    </div>
+
+                    <div class="widget-security">
+                        <h4 class="security-title">SEGURANÇA & BACKUP</h4>
+                        <p class="security-text">Todos os documentos são criptografados e armazenados em redundância
+                            tripla para sua segurança.</p>
+
+                        <div class="security-footer">
+                            <div class="avatars-group">
+                                <img src="https://ui-avatars.com/api/?name=U+A&background=random" class="min-avatar">
+                                <img src="https://ui-avatars.com/api/?name=O+T&background=random" class="min-avatar">
+                                <div class="min-avatar label-plus">+12</div>
+                            </div>
+                            <span class="ativos-text">ATIVOS AGORA</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Footer Pagination -->
+            <footer class="bottom-footer">
+                <div class="showing-txt">EXIBINDO 1-12 DE 1,284 REGISTROS</div>
+                <div class="paginacao">
+                    <button class="btn-pag-arrow"><i class='bx bx-chevron-left'></i></button>
+                    <button class="btn-pag numeric active">1</button>
+                    <button class="btn-pag numeric">2</button>
+                    <button class="btn-pag numeric">3</button>
+                    <button class="btn-pag-arrow"><i class='bx bx-chevron-right'></i></button>
+                </div>
+            </footer>
+
+        </main>
+    </div>
+</body>
+
+</html>

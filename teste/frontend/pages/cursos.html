@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Gestão de Cursos</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN', 'COORDENADOR']);
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div style="margin-top: auto; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+                <a href="#" class="link-menu link-sair" onclick="if(typeof logout === 'function') logout();"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal" style="padding: 40px;">
+            <h1>Cursos (Coordenador)</h1>
+            <p>Página em construção ou aguardando layout...</p>
+        </main>
+    </div>
+</body>
+
+</html>

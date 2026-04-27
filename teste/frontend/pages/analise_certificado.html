@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Análise de Certificado</title>
+    <meta name="description"
+        content="Análise e validação de certificados de atividades complementares - Senac Gestão Acadêmica">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/analise_certificado.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <script>protegerPagina(['COORDENADOR', 'SUPER_ADMIN']);</script>
+
+    <!-- Toast de feedback -->
+    <div id="toast" class="toast">
+        <i class='bx bx-check-circle'></i>
+        <span id="toast-msg">Mensagem</span>
+    </div>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar -->
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Navbar -->
+            <header class="top-header">
+                <nav class="top-nav-links">
+                    <a href="protocoloadm.html">Início</a>
+                    <a href="extrato_certificado.html">Horas</a>
+                    <a href="submissoes.html">Certificados</a>
+                    <a href="extrato_certificado.html">Extrato</a>
+                </nav>
+                <div class="header-right">
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header'></i>
+                </div>
+            </header>
+
+            <!-- Título da Página -->
+            <section class="head-kpis">
+                <div class="head-text">
+                    <h1>Análise de Certificado</h1>
+                    <p class="subtitle-protocol" id="subtitle-protocol">Carregando protocolo...</p>
+                </div>
+                <span id="badge-status" class="badge-status badge-pendente">PENDENTE</span>
+            </section>
+
+            <!-- Loading State -->
+            <div id="loading-state" class="loading-state">
+                <div class="spinner"></div>
+                <span>Carregando dados da submissão...</span>
+            </div>
+
+            <!-- Grid Principal (oculto até carregar) -->
+            <div class="analise-grid" id="analise-grid" style="display:none;">
+
+                <!-- COLUNA ESQUERDA -->
+                <div class="col-esquerda">
+
+                    <!-- Preview do Certificado -->
+                    <div class="box-certificado-preview">
+                        <div class="box-label-header">
+                            <span class="box-label">DOCUMENTO ENVIADO</span>
+                            <a id="btn-ver-arquivo" href="#" target="_blank" class="btn-ver-arquivo">
+                                <i class='bx bx-link-external'></i> Ver Arquivo Original
+                            </a>
+                        </div>
+
+                        <div class="mock-cert">
+                            <i class='bx bx-book-reader cert-icon'></i>
+                            <h2 class="cert-title">CERTIFICADO</h2>
+                            <div class="cert-line"></div>
+                            <p class="cert-body" id="cert-body">
+                                Certificamos que o aluno(a) <strong id="cert-aluno">—</strong>
+                                participou com êxito de <strong id="cert-titulo">—</strong>.
+                            </p>
+                            <div class="cert-footer">
+                                <div class="c-left">
+                                    <small>CARGA HORÁRIA</small>
+                                    <h3 id="cert-horas">—</h3>
+                                </div>
+                                <div class="c-seal">
+                                    <div class="seal-circle" id="cert-initial">S</div>
+                                </div>
+                                <div class="c-right">
+                                    <small>CATEGORIA</small>
+                                    <p id="cert-categoria">—</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Barra OCR (exibida se houver texto extraído) -->
+                        <div class="ocr-info-bar" id="ocr-bar" style="display:none;">
+                            <i class='bx bx-scan'></i>
+                            <span id="ocr-texto">Texto extraído por OCR com <strong id="ocr-conf">—</strong>% de
+                                confiança.</span>
+                        </div>
+                    </div>
+
+                    <!-- Box de Regras -->
+                    <div class="box-regras">
+                        <div class="regras-header">
+                            <i class='bx bxl-stack-overflow text-laranja'></i>
+                            <div>
+                                <h3>Regras de Horas Complementares</h3>
+                                <p>Configure os pesos e categorias para atividades extra-curriculares.</p>
+                            </div>
+                        </div>
+
+                        <div class="regras-cards" id="regras-cards">
+                            <div class="regra-item">
+                                <div class="r-head">
+                                    <small>CARREGANDO</small>
+                                    <i class='bx bx-loader-alt text-laranja'></i>
+                                </div>
+                                <h4>Buscando regras...</h4>
+                                <p>Aguarde</p>
+                            </div>
+                        </div>
+
+                        <div class="nova-regra-form">
+                            <h4>CADASTRAR NOVO TIPO DE ATIVIDADE</h4>
+                            <div class="input-group-row">
+                                <div class="input-col">
+                                    <label>NOME DA ATIVIDADE</label>
+                                    <input type="text" id="nova-categoria-nome" placeholder="Ex: Projeto de Extensão">
+                                </div>
+                                <div class="input-col">
+                                    <label>PESO DA HORA</label>
+                                    <input type="number" id="nova-categoria-peso" placeholder="1.0" step="0.1"
+                                        min="0.1">
+                                </div>
+                            </div>
+                            <button class="btn-salvar-regra" id="btn-salvar-regra" onclick="salvarNovaCategoria()">
+                                <i class='bx bx-save'></i> Salvar Nova Regra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA -->
+                <div class="col-direita">
+
+                    <!-- Informações do Protocolo -->
+                    <div class="box-info-aluno">
+                        <small class="box-label">INFORMAÇÕES DO PROTOCOLO</small>
+                        <div class="aluno-profile">
+                            <div class="avatar-text-initials" id="aluno-avatar">GA</div>
+                            <div class="aluno-details">
+                                <h3 id="aluno-nome">Carregando...</h3>
+                                <p id="aluno-info">RA: — • Curso</p>
+                            </div>
+                        </div>
+                        <div class="info-kpis">
+                            <div class="kpi-mini">
+                                <small>CARGA DECLARADA</small>
+                                <h4 id="kpi-horas">—</h4>
+                            </div>
+                            <div class="kpi-mini">
+                                <small>TIPO DE ATIVIDADE</small>
+                                <span class="badge-blue" id="kpi-tipo">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Parecer do Coordenador -->
+                    <div class="box-parecer">
+                        <small class="box-label">PARECER DO COORDENADOR</small>
+
+                        <div class="parecer-circle-wrap">
+                            <div class="circle-number" id="circle-horas">40</div>
+                            <p class="circle-hint">Horas a serem deferidas.<br>Ajuste conforme necessário.</p>
+                        </div>
+
+                        <div class="input-wrapper">
+                            <label>CARGA HORÁRIA DEFERIDA (HORAS)</label>
+                            <input type="number" id="input-horas" class="input-horas" value="0" min="0" max="999">
+                            <small class="hint-text" id="hint-limite">O limite institucional para esta categoria é
+                                definido pelas regras do curso.</small>
+                        </div>
+
+                        <div class="input-wrapper">
+                            <label>OBSERVAÇÕES</label>
+                            <textarea id="input-obs" placeholder="Justifique o parecer aqui..." rows="4"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Botões de Ação -->
+                    <div class="action-buttons">
+                        <button class="btn-acao btn-reprovar" id="btn-reprovar" onclick="validar('rejected')">
+                            <i class='bx bx-x-circle'></i>
+                            REPROVAR
+                        </button>
+                        <button class="btn-acao btn-aprovar" id="btn-aprovar" onclick="validar('approved')">
+                            <i class='bx bx-check-circle'></i>
+                            APROVAR
+                        </button>
+                        <button class="btn-devolver" id="btn-devolver" onclick="validar('returned_for_adjustment')">
+                            <i class='bx bx-undo'></i> DEVOLVER PARA AJUSTE
+                        </button>
+                    </div>
+
+                    <!-- Aviso Importante -->
+                    <div class="box-warning">
+                        <i class='bx bx-bulb'></i>
+                        <p><strong>IMPORTANTE:</strong> Certificados de cursos online precisam conter obrigatoriamente o
+                            CNPJ da instituição emissora para validação oficial.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer class="main-footer">
+                <div class="footer-links">
+                    <a href="#">Privacidade</a>
+                    <a href="#">Termos de Uso</a>
+                    <a href="#">Suporte Técnico</a>
+                </div>
+                <div class="footer-copy">&copy; 2024 Senac Brasil - Portal de Atividades Complementares</div>
+            </footer>
+
+        </main>
+    </div>
+
+    <script>
+        // ============================================================
+        //  ANALISE DE CERTIFICADO — lógica principal
+        // ============================================================
+
+        let submissaoId = null;
+        let courseId = null;
+
+        // --- Utilitários ---
+
+        function showToast(msg, tipo = 'success') {
+            const t = document.getElementById('toast');
+            const m = document.getElementById('toast-msg');
+            t.className = `toast ${tipo} show`;
+            t.querySelector('i').className = tipo === 'success'
+                ? 'bx bx-check-circle'
+                : 'bx bx-error-circle';
+            m.textContent = msg;
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function atualizarBadgeStatus(status) {
+            const badge = document.getElementById('badge-status');
+            const map = {
+                'submitted': { cls: 'badge-pendente', label: 'PENDENTE' },
+                'approved': { cls: 'badge-aprovado', label: 'APROVADO' },
+                'rejected': { cls: 'badge-reprovado', label: 'REPROVADO' },
+                'returned_for_adjustment': { cls: 'badge-ajuste', label: 'DEVOLVIDO P/ AJUSTE' }
+            };
+            const s = map[status] || { cls: 'badge-pendente', label: status?.toUpperCase() || '—' };
+            badge.className = `badge-status ${s.cls}`;
+            badge.textContent = s.label;
+        }
+
+        function bloqueiarBotoes(status) {
+            // Se já foi processado, desabilita ações
+            const processado = ['approved', 'rejected', 'returned_for_adjustment'].includes(status)
+                && status !== 'submitted';
+            if (processado && status !== 'submitted') {
+                ['btn-aprovar', 'btn-reprovar', 'btn-devolver'].forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.style.opacity = '0.5';
+                        btn.style.cursor = 'not-allowed';
+                    }
+                });
+            }
+        }
+
+        // --- Carrega dados da submissão ---
+
+        async function carregarSubmissao() {
+            const params = new URLSearchParams(window.location.search);
+            submissaoId = params.get('id');
+
+            if (!submissaoId) {
+                // Se não tiver ID na URL, busca a próxima submissão pendente para análise
+                try {
+                    document.getElementById('loading-state').innerHTML = '<div class="spinner"></div><span>Buscando próximo protocolo pendente na fila...</span>';
+                    const cursos = await apiGet('/coordenador/meus-cursos');
+                    const cid = (cursos && cursos.length > 0) ? cursos[0].id : 1;
+                    
+                    const resp = await apiGet(`/coordenador/submissoes/${cid}?status=submitted`);
+                    const subs = Array.isArray(resp) ? resp : (resp.submissoes || []);
+                    
+                    if (subs.length > 0) {
+                        submissaoId = subs[0].id;
+                        // Atualiza a URL sem recarregar a página para manter o estado coerente
+                        window.history.replaceState(null, '', `analise_certificado.html?id=${submissaoId}`);
+                    } else {
+                        document.getElementById('loading-state').innerHTML =
+                            '<i class="bx bx-check-shield" style="font-size:40px;color:#10b981"></i><br><span style="margin-top:10px;display:inline-block">Fila limpa! Não há protocolos pendentes no momento.</span><br><br><a href="protocoloadm.html" style="color:#0056b3;text-decoration:none">Voltar ao painel</a>';
+                        return;
+                    }
+                } catch (e) {
+                    document.getElementById('loading-state').innerHTML =
+                        '<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>Erro ao buscar fila de protocolos.</span>';
+                    return;
+                }
+            }
+
+            try {
+                const data = await apiGet(`/coordenador/submissao/${submissaoId}`);
+
+                if (!data || data.erro) {
+                    document.getElementById('loading-state').innerHTML =
+                        `<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>${data?.erro || 'Erro ao carregar submissão.'}</span>`;
+                    return;
+                }
+
+                preencherTela(data);
+
+                // Busca regras do curso após ter o course_id (virá pelo course_name ou precisamos de outro campo)
+                // Como o backend retorna course_name mas não course_id diretamente na submissão,
+                // usamos o campo user_course_id para derivar ou adaptamos via submissão
+                courseId = data.course_id || null;
+                if (courseId) {
+                    carregarRegras(courseId);
+                } else {
+                    renderRegrasVazias();
+                }
+
+            } catch (err) {
+                document.getElementById('loading-state').innerHTML =
+                    '<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>Falha na conexão com o servidor.</span>';
+            }
+        }
+
+        function preencherTela(d) {
+            // Oculta loading, exibe grid
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('analise-grid').style.display = 'grid';
+
+            // Subtítulo
+            document.getElementById('subtitle-protocol').textContent =
+                `Protocolo #${d.id} • ${d.category_name || 'Atividade Complementar'}`;
+
+            // Badge de status
+            atualizarBadgeStatus(d.status);
+            bloqueiarBotoes(d.status);
+
+            // Certificado (mock visual)
+            document.getElementById('cert-aluno').textContent = d.student_name || '—';
+            document.getElementById('cert-titulo').textContent = d.title || '—';
+            document.getElementById('cert-horas').textContent = `${d.declared_hours || 0}h`;
+            document.getElementById('cert-categoria').textContent = d.category_name || '—';
+
+            const inicial = (d.student_name || 'S').charAt(0).toUpperCase();
+            document.getElementById('cert-initial').textContent = inicial;
+
+            // Link para arquivo original
+            if (d.storage_path) {
+                document.getElementById('btn-ver-arquivo').href = `/uploads/${d.storage_path}`;
+            } else {
+                document.getElementById('btn-ver-arquivo').style.display = 'none';
+            }
+
+            // OCR
+            if (d.ocr_extracted_text) {
+                document.getElementById('ocr-bar').style.display = 'flex';
+                document.getElementById('ocr-conf').textContent =
+                    d.ocr_confidence ? Math.round(d.ocr_confidence * 100) : '—';
+            }
+
+            // Painel do aluno
+            document.getElementById('aluno-nome').textContent = d.student_name || '—';
+            document.getElementById('aluno-info').textContent = `Email: ${d.student_email || '—'} • ${d.course_name || '—'}`;
+            document.getElementById('kpi-horas').textContent = `${d.declared_hours || 0}h`;
+            document.getElementById('kpi-tipo').textContent = d.category_name || '—';
+
+            // Iniciais avatar
+            const iniciais = (d.student_name || '??').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+            document.getElementById('aluno-avatar').textContent = iniciais;
+
+            // Input de horas deferidas
+            const horasSugeridas = d.approved_hours || d.declared_hours || 0;
+            document.getElementById('input-horas').value = horasSugeridas;
+            document.getElementById('circle-horas').textContent = horasSugeridas;
+
+            // Atualiza círculo ao digitar
+            document.getElementById('input-horas').addEventListener('input', function () {
+                document.getElementById('circle-horas').textContent = this.value || 0;
+            });
+
+            // Observação prévia (se já foi validado antes)
+            if (d.comment) {
+                document.getElementById('input-obs').value = d.comment;
+            }
+        }
+
+        // --- Carrega Regras ---
+
+        async function carregarRegras(cid) {
+            const regras = await apiGet(`/coordenador/regras/${cid}`);
+            const container = document.getElementById('regras-cards');
+
+            if (!regras || regras.erro || regras.length === 0) {
+                renderRegrasVazias();
+                return;
+            }
+
+            container.innerHTML = regras.map(r => `
+            <div class="regra-item">
+                <div class="r-head">
+                    <small>CATEGORIA ATIVA</small>
+                    <i class='bx bx-check-circle text-verde'></i>
+                </div>
+                <h4>${r.category_name || '—'}</h4>
+                <p>Mín: ${r.min_hours || 0}h | Máx: ${r.max_hours || '∞'}h ${r.is_required ? '| <strong>Obrigatória</strong>' : ''}</p>
+            </div>
+        `).join('');
+
+            // Atualiza hint de limite (pega o maior max_hours para orientar)
+            const maxGlobal = Math.max(...regras.map(r => r.max_hours || 999));
+            if (maxGlobal < 999) {
+                document.getElementById('hint-limite').textContent =
+                    `O limite institucional máximo para o curso é de ${maxGlobal} horas semestrais.`;
+            }
+        }
+
+        function renderRegrasVazias() {
+            document.getElementById('regras-cards').innerHTML = `
+            <div class="regra-item" style="grid-column:1/-1">
+                <div class="r-head">
+                    <small>SEM REGRAS</small>
+                    <i class='bx bx-info-circle text-laranja'></i>
+                </div>
+                <h4>Nenhuma regra cadastrada</h4>
+                <p>Cadastre uma nova categoria abaixo.</p>
+            </div>
+        `;
+        }
+
+        // --- Validação (Aprovar / Reprovar / Devolver) ---
+
+        async function validar(statusFinal) {
+            const horasInput = document.getElementById('input-horas');
+            const obsInput = document.getElementById('input-obs');
+
+            const approved_hours = parseFloat(horasInput.value);
+            const comment = obsInput.value.trim();
+
+            if (isNaN(approved_hours) || approved_hours < 0) {
+                showToast('Informe uma carga horária válida.', 'error');
+                horasInput.focus();
+                return;
+            }
+
+            if (!comment && statusFinal !== 'approved') {
+                showToast('Adicione uma observação para reprovar ou devolver.', 'error');
+                obsInput.focus();
+                return;
+            }
+
+            const labels = {
+                'approved': 'Aprovando submissão...',
+                'rejected': 'Reprovando submissão...',
+                'returned_for_adjustment': 'Devolvendo para ajuste...'
+            };
+
+            const btnMap = {
+                'approved': document.getElementById('btn-aprovar'),
+                'rejected': document.getElementById('btn-reprovar'),
+                'returned_for_adjustment': document.getElementById('btn-devolver')
+            };
+
+            const btn = btnMap[statusFinal];
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = `<i class='bx bx-loader-alt' style="animation:spin 0.8s linear infinite"></i> ${labels[statusFinal]}`;
+            btn.disabled = true;
+
+            try {
+                const resp = await apiPatch(`/coordenador/validar/${submissaoId}`, {
+                    status_final: statusFinal,
+                    comment,
+                    approved_hours
+                });
+
+                if (resp && resp.mensagem) {
+                    const msgMap = {
+                        'approved': 'Submissão aprovada com sucesso!',
+                        'rejected': 'Submissão reprovada.',
+                        'returned_for_adjustment': 'Devolvida para ajuste ao aluno.'
+                    };
+                    showToast(msgMap[statusFinal], 'success');
+                    atualizarBadgeStatus(statusFinal);
+
+                    // Desabilita todos os botões após ação
+                    ['btn-aprovar', 'btn-reprovar', 'btn-devolver'].forEach(id => {
+                        const b = document.getElementById(id);
+                        if (b) { b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'not-allowed'; }
+                    });
+
+                    // Redireciona para a lista após 2s
+                    setTimeout(() => {
+                        window.location.href = 'protocoloadm.html';
+                    }, 2000);
+
+                } else {
+                    showToast(resp?.erro || 'Erro ao processar validação.', 'error');
+                    btn.innerHTML = textoOriginal;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                showToast('Falha na conexão. Tente novamente.', 'error');
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        // --- Salvar Nova Categoria ---
+
+        async function salvarNovaCategoria() {
+            const nome = document.getElementById('nova-categoria-nome').value.trim();
+            const peso = document.getElementById('nova-categoria-peso').value.trim();
+
+            if (!nome || !peso) {
+                showToast('Preencha nome e peso da atividade.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-salvar-regra');
+            btn.textContent = 'Salvando...';
+            btn.disabled = true;
+
+            const resp = await apiPost('/coordenador/categoria', {
+                name: nome,
+                description: `Peso: ${peso} por hora`
+            });
+
+            if (resp && resp.categoria) {
+                showToast(`Categoria "${nome}" criada com sucesso!`, 'success');
+                document.getElementById('nova-categoria-nome').value = '';
+                document.getElementById('nova-categoria-peso').value = '';
+                // Recarrega regras
+                if (courseId) carregarRegras(courseId);
+            } else {
+                showToast(resp?.erro || 'Erro ao criar categoria.', 'error');
+            }
+
+            btn.innerHTML = '<i class="bx bx-save"></i> Salvar Nova Regra';
+            btn.disabled = false;
+        }
+
+        // --- Init ---
+        document.addEventListener('DOMContentLoaded', carregarSubmissao);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Configura&ccedil;&otilde;es do Sistema</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/configadm.css">
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN']);
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Mock data logic that was in the old configadm.html
+        });
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script: carrega dados do usuário logado na sidebar -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const nome   = localStorage.getItem('nome');
+                const perfil = localStorage.getItem('perfil');
+
+                const labelMap = {
+                    'super_admin': 'Super Admin',
+                    'admin':       'Super Admin',
+                    'coordinator': 'Coordenador',
+                    'coordenador': 'Coordenador',
+                    'student':     'Aluno'
+                };
+
+                if (nome) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = nome;
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nome) + '&background=0056b3&color=fff';
+                }
+
+                if (perfil) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = labelMap[perfil.toLowerCase()] || perfil;
+                }
+
+                // Marca link ativo da sidebar
+                const currentPage = window.location.pathname.split('/').pop();
+                document.querySelectorAll('.menu-navegacao .link-menu').forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === currentPage);
+                });
+            });
+        </script>
+
+        <!-- ===== CONTEUDO PRINCIPAL ===== -->
+        <main class="conteudo-principal" style="padding: 40px; background: #f8fafc;">
+
+            <!-- Header -->
+            <header class="cabecalho-topo"
+                style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <nav class="top-nav-links" style="display: flex; gap: 30px;">
+                        <a href="configadm.html" style="text-decoration: none; color: #64748b; font-weight: 600; font-size: 13px; text-transform: uppercase;">Globais & Permissões</a>
+                        <a href="configadm_sistema.html" style="text-decoration: none; color: #003366; font-weight: 600; font-size: 13px; text-transform: uppercase; border-bottom: 2px solid #f6821f; padding-bottom: 5px;">Sistema & Segurança</a>
+                    </nav>
+                    <div class="titulo-pagina" style="font-size: 24px; font-weight: 800; color: #003366;">
+                        Configura&ccedil;&otilde;es do Sistema</div>
+                </div>
+                <div class="acoes-usuario" style="display: flex; align-items: center; gap: 20px;">
+                    <i class='bx bx-bell icon-header' style="font-size: 24px; color: #64748b;"></i>
+                    <div class="perfil-info-config" style="text-align: right;">
+                        <strong style="display: block; font-size: 14px;">Super Admin</strong>
+                        <small style="font-size: 11px; color: #64748b;">COORDENA&Ccedil;&Atilde;O CENTRAL</small>
+                    </div>
+                    <div class="foto-perfil"><img src="https://ui-avatars.com/api/?name=S+A&background=f6821f&color=fff"
+                            style="width: 40px; border-radius: 50%;"></div>
+                </div>
+            </header>
+
+            <!-- ===== BANNER HERO ===== -->
+            <section class="banner-hero" style="display: flex; gap: 20px; margin-bottom: 30px;">
+                <div class="banner-info"
+                    style="flex: 1; background: white; padding: 40px; border-radius: 12px; position: relative; overflow: hidden; border: 1px solid #e2e8f0;">
+                    <span class="banner-tag"
+                        style="font-size: 10px; font-weight: 700; color: #f6821f; text-transform: uppercase; letter-spacing: 1px;">PAINEL
+                        DE CONTROLE ADMINISTRATIVO</span>
+                    <h1 style="font-size: 28px; color: #003366; margin: 15px 0;">Gerencie as diretrizes sist&ecirc;micas
+                        do Senac.</h1>
+                    <p style="color: #64748b; font-size: 14px; max-width: 80%;">Controle permiss&otilde;es de
+                        usu&aacute;rios, audite logs de seguran&ccedil;a e configure regras de horas complementares em
+                        uma interface centralizada e segura.</p>
+                    <i class='bx bx-shield'
+                        style="position: absolute; right: -20px; top: -20px; font-size: 200px; color: #f8fafc; z-index: 0;"></i>
+                </div>
+                <div class="banner-seguranca"
+                    style="width: 300px; background: #003366; color: white; padding: 40px; border-radius: 12px; display: flex; flex-direction: column; justify-content: center;">
+                    <i class='bx bx-shield-quarter' style="font-size: 30px; color: #f6821f; margin-bottom: 15px;"></i>
+                    <h3 style="font-size: 18px; margin-bottom: 5px;">Estado de Seguran&ccedil;a</h3>
+                    <span style="font-size: 12px; color: rgba(255,255,255,0.7); margin-bottom: 20px;">Monitoramento
+                        ativo em tempo real.</span>
+                    <div style="font-size: 48px; font-weight: 800;">99.8<small style="font-size: 20px;">%</small></div>
+                    <span
+                        style="font-size: 10px; background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; display: inline-block; margin-top: 10px; width: fit-content;">UPTIME
+                        SISTEMA</span>
+                </div>
+            </section>
+
+            <!-- ===== GESTAO DE EQUIPE ===== -->
+            <section class="secao-equipe"
+                style="background: white; border-radius: 12px; padding: 30px; border: 1px solid #e2e8f0; margin-bottom: 30px;">
+                <div class="secao-header"
+                    style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2 style="font-size: 18px; color: #003366;"><i class='bx bx-user'
+                                style="color:#f6821f;margin-right:8px"></i>Gest&atilde;o de Equipe</h2>
+                        <span style="font-size: 13px; color: #64748b;">Controle de acessos e n&iacute;veis de
+                            permiss&atilde;o dos colaboradores.</span>
+                    </div>
+                    <button
+                        style="background: #003366; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer;"><i
+                            class='bx bx-user-plus'></i> Novo Usu&aacute;rio</button>
+                </div>
+
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr>
+                            <th
+                                style="text-align: left; padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
+                                USU&Aacute;RIO</th>
+                            <th
+                                style="text-align: left; padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
+                                CARGO / UNIDADE</th>
+                            <th
+                                style="text-align: left; padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
+                                PERMISS&Otilde;ES</th>
+                            <th
+                                style="text-align: left; padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
+                                STATUS</th>
+                            <th
+                                style="text-align: left; padding: 15px; border-bottom: 1px solid #e2e8f0; font-size: 11px; color: #64748b;">
+                                A&Ccedil;&Otilde;ES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div
+                                        style="width: 40px; height: 40px; background: #e0f2fe; color: #0284c7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        MA</div>
+                                    <div>
+                                        <strong style="display: block; color: #003366;">Marcos Andrade</strong>
+                                        <small style="color: #64748b;">marcos.andrade@senac.br</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">Coordenador Regional (PR)</td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">
+                                <span
+                                    style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #003366;">ACAD&Ecirc;MICO</span>
+                            </td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;"><span
+                                    style="color: #10b981; font-weight: bold; font-size: 12px;">● Ativo</span></td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;"><i class='bx bx-pencil'
+                                    style="color: #64748b; cursor: pointer;"></i></td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div
+                                        style="width: 40px; height: 40px; background: #ffedd5; color: #ea580c; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;">
+                                        LC</div>
+                                    <div>
+                                        <strong style="display: block; color: #003366;">Luciana Costa</strong>
+                                        <small style="color: #64748b;">luciana.costa@senac.br</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">Supervisora Administrativa</td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;">
+                                <span
+                                    style="background: #f1f5f9; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: #64748b;">RELAT&Oacute;RIOS</span>
+                            </td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;"><span
+                                    style="color: #64748b; font-weight: bold; font-size: 12px;">● Inativo</span></td>
+                            <td style="padding: 15px; border-bottom: 1px solid #f1f5f9;"><i class='bx bx-pencil'
+                                    style="color: #64748b; cursor: pointer;"></i></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+                <!-- Logs de Seguranca -->
+                <section class="secao-logs"
+                    style="background: white; border-radius: 12px; padding: 30px; border: 1px solid #e2e8f0;">
+                    <h2 style="font-size: 18px; color: #003366; margin-bottom: 5px;"><i class='bx bx-lock-alt'
+                            style="margin-right:8px"></i>Logs de Seguran&ccedil;a</h2>
+                    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Hist&oacute;rico recente de
+                        a&ccedil;&otilde;es cr&iacute;ticas.</p>
+
+                    <div style="border-left: 2px solid #e2e8f0; padding-left: 15px; margin-bottom: 20px;">
+                        <span style="font-size: 10px; font-weight: bold; color: #64748b;">HOJE, 14:22</span>
+                        <strong style="display: block; font-size: 13px; color: #003366; margin: 4px 0;">Acesso negado:
+                            IP 192.168.1.45</strong>
+                        <p style="font-size: 12px; color: #64748b;">M&uacute;ltiplas tentativas falhas no usu&aacute;rio
+                            "admin_test"</p>
+                    </div>
+
+                    <div style="border-left: 2px solid #10b981; padding-left: 15px; margin-bottom: 20px;">
+                        <span style="font-size: 10px; font-weight: bold; color: #10b981;">HOJE, 11:05</span>
+                        <strong
+                            style="display: block; font-size: 13px; color: #003366; margin: 4px 0;">Altera&ccedil;&atilde;o
+                            de Permiss&atilde;o</strong>
+                        <p style="font-size: 12px; color: #64748b;">SuperAdmin alterou privil&eacute;gios de Marcos
+                            Andrade</p>
+                    </div>
+
+                    <button
+                        style="background: #f8fafc; border: 1px solid #e2e8f0; width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; color: #003366; cursor: pointer;">Ver
+                        Hist&oacute;rico Completo</button>
+                </section>
+
+                <!-- Exportação Consolidada -->
+                <section class="secao-export"
+                    style="background: white; border-radius: 12px; padding: 30px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;">
+                    <div
+                        style="width: 60px; height: 60px; background: #dcfce7; color: #16a34a; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 30px; margin-bottom: 20px;">
+                        <i class='bx bx-export'></i>
+                    </div>
+                    <h2 style="font-size: 20px; color: #003366; margin-bottom: 10px;">Exporta&ccedil;&atilde;o
+                        Consolidada</h2>
+                    <p style="font-size: 14px; color: #64748b; margin-bottom: 30px;">Gere relat&oacute;rios CSV/PDF com
+                        todas as regras e logs de sistema.</p>
+                    <button
+                        style="background: white; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 8px; font-weight: bold; color: #64748b; cursor: pointer; display: flex; align-items: center; gap: 10px;"><i
+                            class='bx bx-download'></i> Exportar Dados</button>
+                </section>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

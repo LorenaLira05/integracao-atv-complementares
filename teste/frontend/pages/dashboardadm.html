@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Dashboard Administrativo</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/dasboardadm.css">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <!-- Carrega APENAS script.js (que já contém apiGet, protegerPagina, logout, etc.) -->
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+    <!-- Guard de rota: redireciona se não tiver perfil permitido -->
+    <script>
+        protegerPagina(['SUPER_ADMIN', 'COORDENADOR', 'COORDINATOR', 'ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <!-- Menu preenchido dinamicamente pelo script.js -->
+            <nav class="menu-navegacao"></nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+            <!-- Header Topo -->
+            <header class="cabecalho-topo">
+                <div class="topo-links">
+                    <a href="#" class="active">Início</a>
+                    <a href="submissoes.html">Certificados</a>
+                    <a href="protocoloadm.html">Protocolos</a>
+                </div>
+                <div class="topo-actions">
+                    <div class="caixa-busca">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="busca-dashboard" placeholder="Buscar alunos, protocolos...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header' onclick="window.location.href='configuracao.html'"
+                        style="cursor:pointer;"></i>
+                    <button class="btn-novo-protocolo" onclick="window.location.href='protocoloadm.html'">Novo
+                        Protocolo</button>
+                </div>
+            </header>
+
+            <!-- Titulo Area -->
+            <section class="secao-titulo">
+                <div class="titulo-esq">
+                    <span class="etiqueta-amarela">VISÃO GERAL ACADÊMICA</span>
+                    <h1>Dashboard</h1>
+                </div>
+                <div class="titulo-dir">
+                    <strong id="label-semestre">Semestre Letivo 2024.1</strong>
+                    <span id="label-atualizacao">Carregando dados...</span>
+                </div>
+            </section>
+
+            <!-- Cards KPI Superiores -->
+            <section class="grid-cards-top">
+                <div class="card-kpi">
+                    <div class="card-kpi-titulo">PROTOCOLOS PENDENTES</div>
+                    <div class="card-kpi-valor">
+                        <span class="valor-azul kpi-dash-valor" id="kpi-pendentes">--</span>
+                        <span class="variacao variacao-positiva" id="kpi-pendentes-sub">aguardando</span>
+                    </div>
+                    <i class='bx bx-clipboard card-kpi-bg-icon'></i>
+                </div>
+
+                <div class="card-kpi">
+                    <div class="card-kpi-titulo">TOTAL DE ALUNOS</div>
+                    <div class="card-kpi-valor">
+                        <span class="valor-escuro kpi-dash-valor" id="kpi-alunos">--</span>
+                        <span class="variacao variacao-neutra" id="kpi-cursos-sub">nos seus cursos</span>
+                    </div>
+                    <div class="card-kpi-footer">
+                        <i class='bx bx-group'></i> <span id="kpi-alunos-footer">Alunos vinculados aos seus
+                            cursos</span>
+                    </div>
+                </div>
+
+                <div class="card-kpi">
+                    <div class="card-kpi-titulo">MÉDIA DE HORAS / CURSO</div>
+                    <div class="card-kpi-valor">
+                        <span class="valor-laranja kpi-dash-valor" id="kpi-media-horas">--</span>
+                        <span class="variacao-texto">h/semestre</span>
+                    </div>
+                    <div class="card-kpi-chart">
+                        <div class="bar bar-laranja" style="width: 25%"></div>
+                        <div class="bar bar-laranja" style="width: 20%"></div>
+                        <div class="bar bar-laranja" style="width: 25%"></div>
+                        <div class="bar bar-cinza" style="width: 30%"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Middle Section -->
+            <section class="grid-middle">
+                <!-- Envios por Categoria -->
+                <div class="card-content">
+                    <div class="card-header">
+                        <h2>Envios por Categoria</h2>
+                        <div class="toggle-periodo">
+                            <button class="active">MENSAL</button>
+                            <button>ANUAL</button>
+                        </div>
+                    </div>
+                    <!-- Skeleton de loading -->
+                    <div class="barras-container" id="barras-container">
+                        <div class="skeleton-line"
+                            style="height:32px; margin-bottom:12px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Últimas Atividades -->
+                <div class="card-content card-atividades">
+                    <div class="card-header">
+                        <h2>Últimas Atividades</h2>
+                    </div>
+                    <div class="lista-atividades" id="lista-atividades">
+                        <!-- Skeleton -->
+                        <div class="skeleton-line"
+                            style="height:60px; margin-bottom:12px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite;">
+                        </div>
+                        <div class="skeleton-line"
+                            style="height:60px; margin-bottom:12px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite 0.3s;">
+                        </div>
+                        <div class="skeleton-line"
+                            style="height:60px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite 0.6s;">
+                        </div>
+                    </div>
+                    <div class="footer-atividades">
+                        <a href="submissoes.html">VER TODAS AS SUBMISSÕES</a>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Bottom Section -->
+            <section class="grid-bottom">
+                <div class="card-relatorio">
+                    <div class="relatorio-conteudo">
+                        <h2>Relatório Consolidado</h2>
+                        <p>Gere a análise completa de desempenho das turmas para o conselho acadêmico.</p>
+                        <a href="relatorios.html" class="btn-baixar">VER RELATÓRIOS <i
+                                class='bx bx-right-arrow-alt'></i></a>
+                    </div>
+                    <div class="relatorio-bg-text">WORK</div>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="rodape-dashboard">
+                <h4>Senac</h4>
+                <div class="rodape-links">
+                    <a href="#">Privacidade</a>
+                    <a href="#">Termos de Uso</a>
+                    <a href="#">Suporte Técnico</a>
+                </div>
+                <p>&copy; 2024 Senac Brasil - Portal de Atividades Complementares</p>
+            </footer>
+        </main>
+    </div>
+
+    <!-- Animação de pulse para os skeletons -->
+    <style>
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+    </style>
+
+    <!-- Script de integração com o backend -->
+    <script>
+        // ─── Atualiza dados da sidebar (nome/avatar do usuário logado) ───
+        document.addEventListener('DOMContentLoaded', () => {
+            const nome = localStorage.getItem('nome');
+            const perfil = localStorage.getItem('perfil');
+
+            if (nome) {
+                const nomeEl = document.getElementById('sidebar-nome-global');
+                if (nomeEl) nomeEl.textContent = nome;
+
+                const avatarEl = document.getElementById('sidebar-avatar-global');
+                if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nome) + '&background=0056b3&color=fff';
+            }
+            if (perfil) {
+                const roleEl = document.getElementById('sidebar-role-global');
+                if (roleEl) {
+                    const labelMap = {
+                        'coordinator': 'Coordenador',
+                        'coordenador': 'Coordenador',
+                        'super_admin': 'Super Admin',
+                        'admin': 'Super Admin',
+                        'student': 'Aluno'
+                    };
+                    roleEl.textContent = labelMap[perfil.toLowerCase()] || perfil;
+                }
+            }
+
+            // ─── Marca link ativo na sidebar ───
+            const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+            document.querySelectorAll('.menu-navegacao .link-menu').forEach(link => {
+                link.classList.toggle('active', link.getAttribute('href') === currentPage);
+            });
+        });
+
+        // ─── Função auxiliar: formata tempo decorrido ───
+        function formatarTempoDecorrido(dataString) {
+            if (!dataString) return '';
+            const data = new Date(dataString);
+            const diffMs = new Date() - data;
+            const diffMins = Math.floor(diffMs / 60000);
+            if (diffMins < 1) return 'agora';
+            if (diffMins < 60) return `${diffMins}min atrás`;
+            const diffHoras = Math.floor(diffMins / 60);
+            if (diffHoras < 24) return `${diffHoras}h atrás`;
+            return `${Math.floor(diffHoras / 24)}d atrás`;
+        }
+
+        // ─── Carrega os dados do dashboard via API ───
+        async function carregarDashboard() {
+            try {
+                const data = await apiGet('/dashboard/coordenador');
+
+                if (!data) {
+                    mostrarErro('Falha na conexão com o servidor. Verifique se o backend está rodando.');
+                    return;
+                }
+                if (data.erro) {
+                    mostrarErro('Erro do servidor: ' + data.erro);
+                    return;
+                }
+
+                // ── 1. KPIs ──
+                const kpiPendentes = document.getElementById('kpi-pendentes');
+                const kpiAlunos = document.getElementById('kpi-alunos');
+                const kpiMediaHoras = document.getElementById('kpi-media-horas');
+                const kpiAlunosFooter = document.getElementById('kpi-alunos-footer');
+                const labelAtualizacao = document.getElementById('label-atualizacao');
+
+                if (kpiPendentes) kpiPendentes.textContent = data.metricas?.pendentes ?? 0;
+                if (kpiAlunos) kpiAlunos.textContent = data.total_alunos ?? 0;
+                if (kpiMediaHoras) kpiMediaHoras.textContent = data.metricas?.media_horas ?? '0.0';
+                if (kpiAlunosFooter) kpiAlunosFooter.textContent = `${data.total_cursos ?? 0} curso(s) vinculado(s)`;
+                if (labelAtualizacao) labelAtualizacao.textContent = 'Atualizado agora';
+
+                // ── 2. Gráfico de barras: Envios por Categoria ──
+                const containerBarras = document.getElementById('barras-container');
+                if (containerBarras) {
+                    if (data.por_categoria && data.por_categoria.length > 0) {
+                        const maxEnvios = Math.max(...data.por_categoria.map(c => parseInt(c.total)));
+                        const cores = ['bg-azul-escuro', 'bg-azul-claro', 'bg-laranja', 'bg-azul-acinzentado', 'bg-azul-escuro'];
+
+                        containerBarras.innerHTML = data.por_categoria.map((cat, index) => {
+                            const total = parseInt(cat.total);
+                            const percent = maxEnvios > 0 ? Math.round((total / maxEnvios) * 100) : 0;
+                            const cor = cores[index % cores.length];
+                            return `
+                                <div class="linha-barra">
+                                    <span class="rotulo-barra">${(cat.categoria || 'GERAL').toUpperCase()}</span>
+                                    <div class="barra-fundo">
+                                        <div class="barra-preenchimento ${cor}" style="width: ${percent}%;"></div>
+                                    </div>
+                                    <span class="valor-barra">${total}</span>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        containerBarras.innerHTML = '<p style="padding: 20px; color: #64748b; text-align:center;">Nenhum envio registrado ainda.</p>';
+                    }
+                }
+
+                // ── 3. Últimas Atividades ──
+                const containerAtividades = document.getElementById('lista-atividades');
+                if (containerAtividades) {
+                    if (data.ultimas_atividades && data.ultimas_atividades.length > 0) {
+                        containerAtividades.innerHTML = data.ultimas_atividades.map(ativ => {
+                            const tempo = formatarTempoDecorrido(ativ.submitted_at);
+
+                            let icone = 'bx-file-blank';
+                            let corIcone = 'icone-azul';
+                            let descStatus = `Categoria: ${ativ.categoria || 'Geral'}`;
+
+                            if (ativ.status === 'approved') {
+                                icone = 'bx-check-circle';
+                                corIcone = 'icone-verde';
+                                descStatus = 'Certificado aprovado com sucesso.';
+                            } else if (ativ.status === 'rejected') {
+                                icone = 'bx-error';
+                                corIcone = 'icone-laranja';
+                                descStatus = 'Certificado rejeitado ou devolvido.';
+                            } else if (ativ.status === 'submitted') {
+                                icone = 'bx-file-blank';
+                                corIcone = 'icone-azul';
+                                descStatus = `Categoria: ${ativ.categoria || 'Geral'} — aguardando análise.`;
+                            }
+
+                            return `
+                                <div class="item-atividade">
+                                    <div class="icone-atividade ${corIcone}"><i class='bx ${icone}'></i></div>
+                                    <div class="info-atividade">
+                                        <div class="atividade-titulo">
+                                            <span>${ativ.nome_aluno || 'Aluno'} enviou certificado</span>
+                                            <span class="tempo">${tempo}</span>
+                                        </div>
+                                        <div class="atividade-desc">${descStatus}</div>
+                                        ${ativ.status === 'submitted' ? `
+                                        <div class="atividade-acoes">
+                                            <button class="btn-validar" onclick="window.location.href='analise_certificado.html?id=${ativ.id}'">Analisar</button>
+                                        </div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        containerAtividades.innerHTML = '<p style="padding: 20px; color: #64748b; text-align:center;">Nenhuma atividade recente.</p>';
+                    }
+                }
+
+            } catch (err) {
+                console.error('Erro ao carregar dashboard:', err);
+                mostrarErro('Erro de conexão com o servidor.');
+            }
+        }
+
+        function mostrarErro(msg) {
+            const containerBarras = document.getElementById('barras-container');
+            const containerAtividades = document.getElementById('lista-atividades');
+            const labelAtualizacao = document.getElementById('label-atualizacao');
+
+            if (labelAtualizacao) labelAtualizacao.textContent = 'Erro ao carregar';
+            if (containerBarras) containerBarras.innerHTML = `<p style="padding:20px;color:#ef4444;">${msg}</p>`;
+            if (containerAtividades) containerAtividades.innerHTML = `<p style="padding:20px;color:#ef4444;">${msg}</p>`;
+
+            ['kpi-pendentes', 'kpi-alunos', 'kpi-media-horas'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '—';
+            });
+        }
+
+        // Inicia o carregamento quando o DOM estiver pronto
+        document.addEventListener('DOMContentLoaded', carregarDashboard);
+    </script>
+</body>
+
+</html>

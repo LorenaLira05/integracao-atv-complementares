@@ -1,0 +1,106 @@
+/* Estilos Unificados da Sidebar */
+.sidebar-dark {
+    width: 260px;
+    background-color: #003366; /* Darker Senac Blue */
+    color: white;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+}
+
+.sidebar-dark .logo-secao {
+    padding: 30px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-dark .logo-img {
+    width: 120px;
+    margin-bottom: 10px;
+    filter: brightness(0) invert(1);
+}
+
+.sidebar-dark .logo-subtext {
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+}
+
+.sidebar-dark .menu-navegacao {
+    padding: 20px 0;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+}
+
+.sidebar-dark .link-menu {
+    display: flex;
+    align-items: center;
+    padding: 15px 30px;
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.sidebar-dark .link-menu i {
+    font-size: 20px;
+    margin-right: 15px;
+}
+
+.sidebar-dark .link-menu:hover, .sidebar-dark .link-menu.active {
+    background-color: rgba(255,255,255,0.1);
+    color: white;
+    border-left: 4px solid #f6821f; /* Laranja Senac */
+}
+
+.sidebar-dark .sidebar-bottom-action {
+    padding: 20px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.sidebar-dark .perfil-sidebar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 0 10px;
+}
+
+.sidebar-dark .perfil-sidebar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.sidebar-dark .perfil-sidebar-info strong {
+    display: block;
+    font-size: 13px;
+    color: white;
+}
+
+.sidebar-dark .perfil-sidebar-info small {
+    font-size: 11px;
+    color: rgba(255,255,255,0.6);
+    text-transform: uppercase;
+}
+
+.sidebar-dark .link-sair {
+    padding: 10px;
+    color: #ef4444; /* Vermelho para sair */
+}
+
+.sidebar-dark .link-sair:hover {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #f87171;
+    border-left: 4px solid #ef4444;
+}

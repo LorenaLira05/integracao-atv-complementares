@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Editar Curso</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/editar_curso.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+</head>
+<body>
+    <script>protegerPagina(['SUPER_ADMIN']);</script>
+
+    <div class="layout-geral">
+        <!-- Sidebar -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu active"><i class='bx bx-book'></i> Cursos</a>
+                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=S+A&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Super Admin</strong>
+                        <small id="sidebar-role-global">SUPER ADMIN</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="if(typeof logout==='function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="conteudo-principal">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="top-header-left">
+                    <h2>Portal Acadêmico</h2>
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar...">
+                    </div>
+                </div>
+                <div class="header-right"></div>
+            </header>
+
+            <div class="page-container">
+                <!-- Breadcrumb -->
+                <div class="breadcrumb">
+                    <a href="cursosuperadm.html">Cursos</a>
+                    <i class='bx bx-chevron-right'></i>
+                    <span>Editar</span>
+                </div>
+
+                <!-- Page Header -->
+                <div class="page-header">
+                    <h1 id="page-title">Editar Curso</h1>
+                    <div class="header-btns">
+                        <button class="btn-excluir-topo" id="btn-excluir-topo">
+                            <i class='bx bx-trash'></i> EXCLUIR CURSO
+                        </button>
+                        <button class="btn-salvar" id="btn-salvar">
+                            <i class='bx bx-save'></i> SALVAR ALTERAÇÕES
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid Principal -->
+                <div class="curso-grid">
+
+                    <!-- Coluna Esquerda: Informações Gerais -->
+                    <div class="card">
+                        <div class="card-section-label">Informações Gerais</div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nome do Curso <span class="req">*</span></label>
+                            <input type="text" class="form-input" id="input-nome" placeholder="Ex: Análise e Desenvolvimento de Sistemas">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Modalidade</label>
+                                <div class="select-wrap">
+                                    <select class="form-select" id="input-modalidade">
+                                        <option value="">Selecione...</option>
+                                        <option value="Presencial">Presencial</option>
+                                        <option value="EAD">EAD</option>
+                                        <option value="Híbrido">Híbrido</option>
+                                    </select>
+                                    <i class='bx bx-chevron-down'></i>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Turno</label>
+                                <div class="select-wrap">
+                                    <select class="form-select" id="input-turno">
+                                        <option value="">Selecione...</option>
+                                        <option value="Matutino">Matutino</option>
+                                        <option value="Vespertino">Vespertino</option>
+                                        <option value="Noturno">Noturno</option>
+                                        <option value="Integral">Integral</option>
+                                    </select>
+                                    <i class='bx bx-chevron-down'></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Código do Curso</label>
+                            <input type="text" class="form-input" id="input-code" placeholder="Ex: ADS, ENG, ADM">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Descrição do Curso</label>
+                            <textarea class="form-textarea" id="input-descricao" placeholder="Descreva os objetivos e características do curso..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Coluna Direita: Configurações Acadêmicas -->
+                    <div>
+                        <div class="card" style="margin-bottom: 20px;">
+                            <div class="card-section-label">Configurações Acadêmicas</div>
+
+                            <div class="kpi-campo">
+                                <label class="form-label">Carga Horária Total <span class="req">*</span></label>
+                                <div class="kpi-input-wrap">
+                                    <input type="number" id="input-horas" placeholder="0" min="0">
+                                    <span class="unidade">horas</span>
+                                </div>
+                            </div>
+
+                            <div class="kpi-campo">
+                                <label class="form-label">Semestres</label>
+                                <div class="kpi-input-wrap">
+                                    <input type="number" id="input-semestres" placeholder="0" min="1" max="20">
+                                    <span class="unidade">sem.</span>
+                                </div>
+                            </div>
+
+                            <div class="kpi-campo">
+                                <label class="form-label">Status do Curso</label>
+                                <div class="status-wrap">
+                                    <div class="status-badge ativo" id="status-badge">
+                                        <div class="status-dot ativo" id="status-dot"></div>
+                                        <span id="status-texto">ATIVO</span>
+                                    </div>
+                                    <button class="btn-alterar-status" id="btn-toggle-status" type="button">ALTERAR</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coordenador Responsável -->
+                        <div class="card">
+                            <div class="card-section-label">Coordenador Responsável</div>
+                            <div class="coord-box">
+                                <div class="coord-box-label">COORDENADOR VINCULADO</div>
+                                <div class="coord-box-nome" id="coord-nome">Sem coordenador</div>
+                                <button class="btn-mudar-coord" type="button" id="btn-mudar-coord">MUDAR COORDENADOR</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Zona de Risco -->
+                <div class="zona-risco-card">
+                    <div class="zona-risco-header">
+                        <i class='bx bx-error'></i>
+                        <span>ZONA DE RISCO</span>
+                    </div>
+                    <div class="zona-risco-body">
+                        <p>A exclusão do curso é permanente e removerá todos os vínculos com disciplinas e alunos ativos. Esta ação não pode ser desfeita.</p>
+                        <button class="btn-excluir-perm" id="btn-excluir-perm">
+                            <i class='bx bx-trash'></i> EXCLUIR PERMANENTEMENTE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class='bx bx-check-circle' id="toast-icon"></i>
+        <span id="toast-msg">Salvo!</span>
+    </div>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const cursoId = params.get('id');
+        let isAtivo = true;
+        let cursoAtual = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Sidebar
+            const nome = localStorage.getItem('nome') || 'Super Admin';
+            const sideNome = document.getElementById('sidebar-nome-global');
+            const sideAvatar = document.getElementById('sidebar-avatar-global');
+            if (sideNome) sideNome.textContent = nome;
+            if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+
+            if (!cursoId) {
+                alert('Nenhum curso selecionado.');
+                window.location.href = 'cursosuperadm.html';
+                return;
+            }
+
+            await carregarCurso();
+
+            document.getElementById('btn-salvar').addEventListener('click', salvar);
+            document.getElementById('btn-excluir-topo').addEventListener('click', excluir);
+            document.getElementById('btn-excluir-perm').addEventListener('click', excluir);
+            document.getElementById('btn-toggle-status').addEventListener('click', toggleStatus);
+        });
+
+        async function carregarCurso() {
+            try {
+                const [cursos, coordenadores] = await Promise.all([
+                    apiGet('/admin/cursos'),
+                    apiGet('/admin/coordenadores')
+                ]);
+
+                cursoAtual = Array.isArray(cursos) ? cursos.find(c => String(c.id) === String(cursoId)) : null;
+
+                if (!cursoAtual) {
+                    alert('Curso não encontrado.');
+                    window.location.href = 'cursosuperadm.html';
+                    return;
+                }
+
+                // Preencher título
+                document.getElementById('page-title').textContent = `Editar Curso: ${cursoAtual.name}`;
+                document.title = `Senac - Editar: ${cursoAtual.name}`;
+
+                // Preencher campos
+                document.getElementById('input-nome').value = cursoAtual.name || '';
+                document.getElementById('input-code').value = cursoAtual.code || '';
+                document.getElementById('input-descricao').value = cursoAtual.description || '';
+                document.getElementById('input-horas').value = cursoAtual.minimum_required_hours || '';
+                document.getElementById('input-semestres').value = cursoAtual.semestres || '';
+
+                if (cursoAtual.modalidade) {
+                    document.getElementById('input-modalidade').value = cursoAtual.modalidade;
+                }
+                if (cursoAtual.turno) {
+                    document.getElementById('input-turno').value = cursoAtual.turno;
+                }
+
+                // Status
+                isAtivo = cursoAtual.is_active !== false;
+                renderizarStatus();
+
+                // Coordenador
+                const coord = Array.isArray(coordenadores)
+                    ? coordenadores.find(c => Array.isArray(c.course_ids) && c.course_ids.includes(cursoAtual.id))
+                    : null;
+                document.getElementById('coord-nome').textContent = coord ? coord.full_name : 'Sem coordenador';
+
+            } catch (err) {
+                console.error(err);
+                mostrarToast('Erro ao carregar curso: ' + err.message, 'error');
+            }
+        }
+
+        function renderizarStatus() {
+            const badge = document.getElementById('status-badge');
+            const dot = document.getElementById('status-dot');
+            const texto = document.getElementById('status-texto');
+            if (isAtivo) {
+                badge.className = 'status-badge ativo';
+                dot.className = 'status-dot ativo';
+                texto.textContent = 'ATIVO';
+            } else {
+                badge.className = 'status-badge inativo';
+                dot.className = 'status-dot inativo';
+                texto.textContent = 'INATIVO';
+            }
+        }
+
+        function toggleStatus() {
+            isAtivo = !isAtivo;
+            renderizarStatus();
+        }
+
+        async function salvar() {
+            const nome = document.getElementById('input-nome').value.trim();
+            if (!nome) {
+                document.getElementById('input-nome').classList.add('error');
+                mostrarToast('O nome do curso é obrigatório.', 'error');
+                return;
+            }
+            document.getElementById('input-nome').classList.remove('error');
+
+            const btn = document.getElementById('btn-salvar');
+            btn.disabled = true;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> SALVANDO...";
+
+            try {
+                const token = localStorage.getItem('token');
+                const body = {
+                    name: nome,
+                    code: document.getElementById('input-code').value.trim(),
+                    description: document.getElementById('input-descricao').value.trim(),
+                    minimum_required_hours: parseInt(document.getElementById('input-horas').value) || 0,
+                    semestres: parseInt(document.getElementById('input-semestres').value) || null,
+                    modalidade: document.getElementById('input-modalidade').value || null,
+                    turno: document.getElementById('input-turno').value || null,
+                    is_active: isAtivo
+                };
+
+                const resp = await fetch(`/admin/curso/${cursoId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const result = await resp.json();
+                if (!resp.ok) throw new Error(result.erro || 'Erro ao salvar');
+
+                mostrarToast('Curso atualizado com sucesso!', 'success');
+                setTimeout(() => window.location.href = 'cursosuperadm.html', 1800);
+            } catch (err) {
+                mostrarToast(err.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = "<i class='bx bx-save'></i> SALVAR ALTERAÇÕES";
+            }
+        }
+
+        async function excluir() {
+            if (!confirm(`Tem certeza que deseja excluir o curso "${cursoAtual?.name}"? Esta ação não pode ser desfeita.`)) return;
+            try {
+                const token = localStorage.getItem('token');
+                const resp = await fetch(`/admin/curso/${cursoId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const result = await resp.json();
+                if (!resp.ok) throw new Error(result.erro || 'Erro ao excluir');
+                mostrarToast('Curso excluído!', 'success');
+                setTimeout(() => window.location.href = 'cursosuperadm.html', 1500);
+            } catch (err) {
+                mostrarToast(err.message, 'error');
+            }
+        }
+
+        function mostrarToast(msg, tipo = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            icon.className = tipo === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+            toast.className = `toast ${tipo}`;
+            document.getElementById('toast-msg').textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+    </script>
+</body>
+</html>

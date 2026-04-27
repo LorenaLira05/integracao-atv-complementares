@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Cadastrar Coordenador</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/editar_coordenador.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <style>
+        /* Ajustes adicionais para tela de criação */
+        .top-header {
+            background: white;
+            padding: 0 40px;
+            height: 70px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #e2e8f0;
+            margin: -30px -40px 30px -40px;
+        }
+        .top-header-left { display: flex; align-items: center; gap: 30px; }
+        .top-header-left h2 { font-size: 16px; font-weight: 700; color: #004587; }
+        .search-wrap {
+            display: flex; align-items: center;
+            background: #f1f5f9; padding: 8px 15px;
+            border-radius: 8px; width: 350px;
+        }
+        .search-wrap i { color: #64748b; margin-right: 10px; }
+        .search-wrap input { border: none; background: transparent; outline: none; font-size: 13px; width: 100%; }
+        .header-right { display: flex; align-items: center; gap: 20px; }
+
+        .avatar-placeholder {
+            width: 120px; height: 120px;
+            background: linear-gradient(135deg, #004587, #0070cc);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 48px; font-weight: 800; color: white;
+            box-shadow: 0 10px 25px rgba(0, 69, 135, 0.25);
+            margin: 0 auto 20px;
+            transition: 0.3s;
+            cursor: default;
+            user-select: none;
+        }
+
+        .badge-novo {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: #e0f2fe; color: #0284c7;
+            padding: 6px 16px; border-radius: 20px;
+            font-size: 10px; font-weight: 800;
+            margin-bottom: 20px;
+        }
+        .badge-novo::before {
+            content: ''; width: 6px; height: 6px;
+            border-radius: 50%; background: #0284c7;
+        }
+
+        .dica-senha {
+            background: #f0fdf4; border: 1px solid #bbf7d0;
+            border-radius: 8px; padding: 12px 16px;
+            font-size: 11px; color: #166534;
+            display: flex; gap: 8px; align-items: flex-start;
+            margin-top: 15px;
+        }
+        .dica-senha i { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+        .cursos-select-wrap {
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .curso-selecionado-item {
+            display: flex; align-items: center; justify-content: space-between;
+            background: #f1f5f9; padding: 10px 14px;
+            border-radius: 8px; font-size: 12px; font-weight: 600;
+            color: #004587;
+        }
+        .curso-selecionado-item button {
+            background: none; border: none; cursor: pointer;
+            color: #94a3b8; font-size: 16px; display: flex; align-items: center;
+        }
+        .curso-selecionado-item button:hover { color: #ef4444; }
+
+        .btn-add-curso {
+            display: flex; align-items: center; gap: 8px;
+            background: #f8fafc; border: 1px dashed #cbd5e1;
+            border-radius: 8px; padding: 10px 16px;
+            font-size: 12px; font-weight: 600; color: #64748b;
+            cursor: pointer; transition: 0.2s; width: 100%;
+        }
+        .btn-add-curso:hover { background: #f1f5f9; border-color: #004587; color: #004587; }
+
+        .curso-dropdown {
+            background: white; border: 1px solid #e2e8f0;
+            border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            max-height: 220px; overflow-y: auto;
+            display: none; flex-direction: column;
+        }
+        .curso-dropdown.open { display: flex; }
+        .curso-dropdown-item {
+            padding: 10px 16px; font-size: 12px; font-weight: 600;
+            color: #1e293b; cursor: pointer; border-bottom: 1px solid #f1f5f9;
+            transition: background 0.15s;
+        }
+        .curso-dropdown-item:hover { background: #f0f9ff; color: #004587; }
+        .curso-dropdown-item:last-child { border-bottom: none; }
+
+        .form-input.error { border-color: #ef4444; background: #fff5f5; }
+        .form-label .required { color: #ef4444; margin-left: 2px; }
+
+        .toast {
+            position: fixed; bottom: 30px; right: 30px;
+            background: #1e293b; color: white;
+            padding: 14px 22px; border-radius: 10px;
+            font-size: 13px; font-weight: 600;
+            display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            transform: translateY(80px); opacity: 0;
+            transition: all 0.35s ease;
+            z-index: 999;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: #166534; }
+        .toast.error { background: #991b1b; }
+        .toast i { font-size: 18px; }
+    </style>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+        <!-- Sidebar -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="coordenadores.html" class="link-menu active"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="top-header-left">
+                    <h2>Portal Acadêmico</h2>
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar...">
+                    </div>
+                </div>
+                <div class="header-right">
+                </div>
+            </header>
+
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <a href="coordenadores.html" style="text-decoration:none; color:var(--texto-light);">COORDENADORES</a>
+                <i class='bx bx-chevron-right'></i>
+                <span class="ativo">NOVO CADASTRO</span>
+            </div>
+
+            <!-- Page Header -->
+            <div class="page-header-edit">
+                <h1>Cadastrar Coordenador</h1>
+                <div class="header-actions-edit">
+                    <button class="btn-danger" type="button" onclick="window.location.href='coordenadores.html'">
+                        <i class='bx bx-arrow-back'></i> CANCELAR
+                    </button>
+                    <button class="btn-primary-edit" type="button" id="btn-salvar">
+                        <i class='bx bx-user-plus'></i> CADASTRAR
+                    </button>
+                </div>
+            </div>
+
+            <!-- Grid -->
+            <div class="edit-grid">
+
+                <!-- Coluna Esquerda -->
+                <div class="left-column">
+                    <!-- Preview Card -->
+                    <div class="edit-card profile-card">
+                        <div class="avatar-placeholder" id="avatar-preview">?</div>
+                        <h2 id="preview-nome" style="color: #94a3b8; font-style: italic;">Nome do Coordenador</h2>
+                        <p class="profile-id">ID: NOVO CADASTRO</p>
+                        <div class="badge-novo">PENDENTE ATIVAÇÃO</div>
+
+                        <div class="profile-stats">
+                            <div class="stat-box">
+                                <span class="stat-num" id="preview-cursos">0</span>
+                                <span class="stat-lbl">CURSOS</span>
+                            </div>
+                            <div class="stat-box">
+                                <span class="stat-num">—</span>
+                                <span class="stat-lbl">ALUNOS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Dica -->
+                    <div class="edit-card history-card">
+                        <div class="history-title">INFORMAÇÕES DO SISTEMA</div>
+                        <div class="dica-senha">
+                            <i class='bx bx-info-circle'></i>
+                            <span>A senha inicial do coordenador será <strong>123456</strong>. Oriente-o a alterá-la no primeiro acesso.</span>
+                        </div>
+                        <div style="margin-top: 20px;">
+                            <div class="history-item">
+                                <div class="history-icon"><i class='bx bx-shield-quarter'></i></div>
+                                <div class="history-info">
+                                    <strong>Acesso ao Portal</strong>
+                                    <p>Liberado após o cadastro</p>
+                                    <small>ROLE: COORDINATOR</small>
+                                </div>
+                            </div>
+                            <div class="history-item">
+                                <div class="history-icon"><i class='bx bx-book-open'></i></div>
+                                <div class="history-info">
+                                    <strong>Vinculação de Cursos</strong>
+                                    <p>Configure na coluna ao lado</p>
+                                    <small>OPCIONAL NA CRIAÇÃO</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coluna Direita -->
+                <div class="right-column">
+
+                    <!-- Dados Pessoais -->
+                    <div class="edit-card">
+                        <div class="section-header">
+                            <div class="section-icon"><i class='bx bx-user'></i></div>
+                            <h3>Dados Pessoais</h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Nome Completo <span class="required">*</span></label>
+                            <input type="text" class="form-input" id="input-nome" placeholder="Ex: Maria Silva Santos">
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">CPF <span class="required">*</span></label>
+                                <input type="text" class="form-input" id="input-cpf" placeholder="000.000.000-00" maxlength="14">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data de Nascimento</label>
+                                <input type="date" class="form-input" id="input-nascimento">
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">E-mail Institucional <span class="required">*</span></label>
+                                <input type="email" class="form-input" id="input-email" placeholder="nome@senac.edu.br">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Telefone</label>
+                                <input type="text" class="form-input" id="input-telefone" placeholder="(11) 98765-4321" maxlength="15">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Vínculo Acadêmico -->
+                    <div class="edit-card">
+                        <div class="section-header">
+                            <div class="section-icon"><i class='bx bx-briefcase'></i></div>
+                            <h3>Vínculo Acadêmico</h3>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Departamento</label>
+                            <div class="select-wrap">
+                                <select class="form-select" id="input-departamento">
+                                    <option value="">Selecione...</option>
+                                    <option>Tecnologia da Informação</option>
+                                    <option>Gestão e Negócios</option>
+                                    <option>Saúde e Bem-estar</option>
+                                    <option>Comunicação e Artes</option>
+                                    <option>Educação</option>
+                                    <option>Hospitalidade e Lazer</option>
+                                </select>
+                                <i class='bx bx-chevron-down'></i>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Cargo</label>
+                                <input type="text" class="form-input" id="input-cargo" placeholder="Ex: Coordenador de Área">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Data de Admissão</label>
+                                <input type="date" class="form-input" id="input-admissao">
+                            </div>
+                        </div>
+
+                        <div class="form-group" style="margin-top: 10px;">
+                            <label class="form-label">Cursos sob Responsabilidade</label>
+                            <div class="cursos-select-wrap" id="cursos-selecionados-lista"></div>
+                            <button class="btn-add-curso" type="button" id="btn-toggle-dropdown">
+                                <i class='bx bx-plus'></i> Adicionar Curso
+                            </button>
+                            <div class="curso-dropdown" id="cursos-dropdown">
+                                <div style="padding: 8px 12px; font-size: 11px; color: #94a3b8; font-weight: 600;">CURSOS DISPONÍVEIS</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Observações -->
+                    <div class="edit-card">
+                        <div class="section-header">
+                            <div class="section-icon"><i class='bx bx-file-blank'></i></div>
+                            <h3>Observações Internas</h3>
+                        </div>
+                        <textarea class="form-textarea" id="input-obs" placeholder="Anotações internas sobre este coordenador (visíveis apenas para administradores)..."></textarea>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class='bx bx-check-circle' id="toast-icon"></i>
+        <span id="toast-msg">Coordenador cadastrado!</span>
+    </div>
+
+    <script>
+        // ── Sidebar ──
+        document.addEventListener('DOMContentLoaded', async () => {
+            const nome = localStorage.getItem('nome') || 'Usuário';
+            const perfil = localStorage.getItem('perfil');
+            const sideNome = document.getElementById('sidebar-nome-global');
+            const sideRole = document.getElementById('sidebar-role-global');
+            const sideAvatar = document.getElementById('sidebar-avatar-global');
+            if (sideNome) sideNome.textContent = nome;
+            if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+            if (sideRole && perfil) {
+                const map = { 'super_admin': 'Super Admin', 'admin': 'Super Admin', 'coordinator': 'Coordenador' };
+                sideRole.textContent = map[perfil.toLowerCase()] || perfil;
+            }
+
+            // Carregar cursos
+            await carregarCursos();
+
+            // Preview ao digitar nome
+            document.getElementById('input-nome').addEventListener('input', atualizarPreview);
+
+            // CPF mask
+            document.getElementById('input-cpf').addEventListener('input', e => {
+                let v = e.target.value.replace(/\D/g, '').substring(0, 11);
+                v = v.replace(/(\d{3})(\d)/, '$1.$2')
+                     .replace(/(\d{3})(\d)/, '$1.$2')
+                     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = v;
+            });
+
+            // Telefone mask
+            document.getElementById('input-telefone').addEventListener('input', e => {
+                let v = e.target.value.replace(/\D/g, '').substring(0, 11);
+                if (v.length > 6) v = `(${v.substring(0,2)}) ${v.substring(2,7)}-${v.substring(7)}`;
+                else if (v.length > 2) v = `(${v.substring(0,2)}) ${v.substring(2)}`;
+                e.target.value = v;
+            });
+
+            // Botão salvar
+            document.getElementById('btn-salvar').addEventListener('click', cadastrar);
+
+            // Dropdown cursos
+            document.getElementById('btn-toggle-dropdown').addEventListener('click', () => {
+                document.getElementById('cursos-dropdown').classList.toggle('open');
+            });
+
+            document.addEventListener('click', e => {
+                const dropdown = document.getElementById('cursos-dropdown');
+                const btn = document.getElementById('btn-toggle-dropdown');
+                if (!dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                }
+            });
+        });
+
+        let todosCursos = [];
+        let cursosSelecionados = []; // [{id, name}]
+
+        async function carregarCursos() {
+            try {
+                const data = await apiGet('/admin/cursos');
+                todosCursos = Array.isArray(data) ? data : [];
+                renderizarDropdown();
+            } catch (e) {
+                console.warn('Erro ao carregar cursos:', e);
+            }
+        }
+
+        function renderizarDropdown() {
+            const dropdown = document.getElementById('cursos-dropdown');
+            const existingItems = dropdown.querySelectorAll('.curso-dropdown-item');
+            existingItems.forEach(el => el.remove());
+
+            const disponiveis = todosCursos.filter(c => !cursosSelecionados.find(s => s.id === c.id));
+            if (disponiveis.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'curso-dropdown-item';
+                empty.style.color = '#94a3b8';
+                empty.textContent = 'Todos os cursos foram adicionados';
+                dropdown.appendChild(empty);
+                return;
+            }
+            disponiveis.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'curso-dropdown-item';
+                item.textContent = c.name;
+                item.addEventListener('click', () => {
+                    cursosSelecionados.push({ id: c.id, name: c.name });
+                    renderizarCursosSelecionados();
+                    renderizarDropdown();
+                    document.getElementById('cursos-dropdown').classList.remove('open');
+                });
+                dropdown.appendChild(item);
+            });
+        }
+
+        function renderizarCursosSelecionados() {
+            const lista = document.getElementById('cursos-selecionados-lista');
+            lista.innerHTML = cursosSelecionados.map((c, i) => `
+                <div class="curso-selecionado-item">
+                    <span><i class='bx bx-book' style="margin-right:6px;font-size:14px;"></i>${c.name}</span>
+                    <button type="button" onclick="removerCurso(${i})"><i class='bx bx-x'></i></button>
+                </div>
+            `).join('');
+            document.getElementById('preview-cursos').textContent = cursosSelecionados.length;
+        }
+
+        function removerCurso(index) {
+            cursosSelecionados.splice(index, 1);
+            renderizarCursosSelecionados();
+            renderizarDropdown();
+        }
+
+        function atualizarPreview() {
+            const nome = document.getElementById('input-nome').value.trim();
+            const previewNome = document.getElementById('preview-nome');
+            const avatarEl = document.getElementById('avatar-preview');
+
+            if (nome) {
+                previewNome.textContent = nome;
+                previewNome.style.color = '#002244';
+                previewNome.style.fontStyle = 'normal';
+                const initials = nome.split(' ').filter(Boolean).map(w => w[0].toUpperCase()).slice(0, 2).join('');
+                avatarEl.textContent = initials;
+            } else {
+                previewNome.textContent = 'Nome do Coordenador';
+                previewNome.style.color = '#94a3b8';
+                previewNome.style.fontStyle = 'italic';
+                avatarEl.textContent = '?';
+            }
+        }
+
+        function mostrarToast(msg, tipo = 'success') {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-msg');
+            icon.className = tipo === 'success' ? 'bx bx-check-circle' : 'bx bx-x-circle';
+            toast.className = `toast ${tipo}`;
+            msgEl.textContent = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3500);
+        }
+
+        async function cadastrar() {
+            const nome = document.getElementById('input-nome').value.trim();
+            const email = document.getElementById('input-email').value.trim();
+            const cpf = document.getElementById('input-cpf').value.trim();
+            const phone = document.getElementById('input-telefone').value.trim();
+            const nascimento = document.getElementById('input-nascimento').value;
+            const departamento = document.getElementById('input-departamento').value;
+            const cargo = document.getElementById('input-cargo').value.trim();
+            const admissao = document.getElementById('input-admissao').value;
+            const obs = document.getElementById('input-obs').value.trim();
+
+            // Validação básica
+            let valido = true;
+            [{ id: 'input-nome', val: nome }, { id: 'input-email', val: email }, { id: 'input-cpf', val: cpf }]
+                .forEach(({ id, val }) => {
+                    const el = document.getElementById(id);
+                    if (!val) { el.classList.add('error'); valido = false; }
+                    else el.classList.remove('error');
+                });
+
+            if (!valido) { mostrarToast('Preencha os campos obrigatórios.', 'error'); return; }
+
+            const btn = document.getElementById('btn-salvar');
+            btn.disabled = true;
+            btn.innerHTML = '<i class=\'bx bx-loader-alt bx-spin\'></i> SALVANDO...';
+
+            try {
+                const body = {
+                    full_name: nome,
+                    email,
+                    cpf,
+                    phone,
+                    departamento,
+                    cargo,
+                    data_nascimento: nascimento || null,
+                    data_admissao: admissao || null,
+                    observacoes_internas: obs,
+                    course_ids: cursosSelecionados.map(c => c.id)
+                };
+
+                const token = localStorage.getItem('token');
+                const resp = await fetch('/admin/coordenador', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(body)
+                });
+
+                const result = await resp.json();
+
+                if (!resp.ok) throw new Error(result.erro || 'Erro ao cadastrar');
+
+                mostrarToast('Coordenador cadastrado com sucesso!', 'success');
+                setTimeout(() => window.location.href = 'coordenadores.html', 2000);
+            } catch (err) {
+                mostrarToast(err.message, 'error');
+                btn.disabled = false;
+                btn.innerHTML = '<i class=\'bx bx-user-plus\'></i> CADASTRAR';
+            }
+        }
+    </script>
+</body>
+
+</html>

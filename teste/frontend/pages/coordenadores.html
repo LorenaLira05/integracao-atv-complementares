@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Gestão de Coordenadores</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/coordenadores.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+
+                <a href="coordenadores.html" class="link-menu active"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <main class="conteudo-principal">
+
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="top-header-left">
+                    <h2>Portal Acadêmico</h2>
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="input-busca-global" placeholder="Buscar coordenador por nome ou curso...">
+                    </div>
+                </div>
+                <div class="header-right">
+                </div>
+            </header>
+
+            <div class="page-container">
+
+
+            <div class="page-header">
+                <div class="page-title">
+                    <h1>3b. Gestão de Coordenadores</h1>
+                    <p>Gerencie o corpo docente de coordenação, atribua cursos e acompanhe o histórico de vínculos
+                        acadêmicos em toda a rede Senac.</p>
+                </div>
+                <button class="btn-cadastrar" onclick="window.location.href='cadastrar_coordenador.html'"><i
+                        class='bx bx-user-plus'></i> Cadastrar Coordenador</button>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <span class="kpi-title">TOTAL ATIVOS</span>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value kpi-valor-numero" id="kpi-total">—</span>
+                        <span class="kpi-badge-green" id="kpi-badge-trend">+5%</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">CURSOS COBERTOS</span>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-cursos-cobertos">—</span>
+                        <span class="kpi-badge-gray" id="kpi-cursos-total">/ —</span>
+                    </div>
+                </div>
+                <div class="kpi-card">
+                    <span class="kpi-title">NOVAS SUBMISSÕES</span>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-submissoes">—</span>
+                        <span class="badge-urgente" id="kpi-submissoes-badge">CARREGANDO</span>
+                    </div>
+                </div>
+                <div class="kpi-card kpi-blue">
+                    <span class="kpi-title">EFICIÊNCIA GERAL</span>
+                    <div class="kpi-value-wrap">
+                        <span class="kpi-value" id="kpi-eficiencia">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tabela-container">
+                <div class="tabela-header">
+                    <h3>Lista de Coordenadores <span class="filtro-badge">Filtro: Todos <i
+                                class='bx bx-chevron-down'></i></span></h3>
+                    <button class="btn-export"><i class='bx bx-download'></i> Exportar Relatório</button>
+                </div>
+
+                <table class="tabela-coordenadores">
+                    <thead>
+                        <tr>
+                            <th>COORDENADOR</th>
+                            <th>CURSO VINCULADO</th>
+                            <th>DATA DE VÍNCULO</th>
+                            <th>STATUS</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--texto-light);">Carregando
+                                coordenadores...</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tabela-footer">
+                    <span class="info-pag">Exibindo 0 coordenadores</span>
+                    <div class="pag-bts">
+                        <button class="btn-pag"><i class='bx bx-chevron-left'></i></button>
+                        <button class="btn-pag active">1</button>
+                        <button class="btn-pag">2</button>
+                        <button class="btn-pag">3</button>
+                        <button class="btn-pag"><i class='bx bx-chevron-right'></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid-inferior">
+
+                <!-- Timeline de logs reais -->
+                <div class="timeline-card">
+                    <h3><i class='bx bx-history'></i> Atividades Recentes de Gestão</h3>
+                    <div id="timeline-logs">
+                        <div style="color:#64748b;font-size:13px;padding:12px 0;">Carregando...</div>
+                    </div>
+                </div>
+
+                <div class="col-right">
+                    <div class="card-dica">
+                        <i class='bx bx-bulb'></i>
+                        <h4>Dica de Gestão</h4>
+                        <p>"Manter os dados de coordenação atualizados garante que as submissões fluam sem interrupções
+                            críticas no final do semestre."</p>
+                        <a href="#">Ver Guia de Melhores Práticas <i class='bx bx-right-arrow-alt'></i></a>
+                    </div>
+
+                    <div class="card-pendentes">
+                        <h4>Cursos sem Coordenador</h4>
+                        <div id="lista-sem-coord">
+                            <div style="color:#64748b;font-size:13px;padding:8px 0;">Carregando...</div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            </div><!-- /.page-container -->
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // ── Sidebar ──
+            const nome = localStorage.getItem('nome') || 'Usuário';
+            const perfil = localStorage.getItem('perfil');
+            const labelMap = { 'super_admin': 'Super Admin', 'admin': 'Super Admin', 'coordinator': 'Coordenador' };
+
+            const nomeSidebar = document.getElementById('sidebar-nome-global');
+            const roleSidebar = document.getElementById('sidebar-role-global');
+            const avatarSidebar = document.getElementById('sidebar-avatar-global');
+            if (nomeSidebar) nomeSidebar.textContent = nome;
+            if (roleSidebar) roleSidebar.textContent = labelMap[perfil?.toLowerCase()] || perfil;
+            if (avatarSidebar) avatarSidebar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+
+            // ── Busca na tabela ──
+            let todosCoord = [];
+            let buscaAtual = '';
+            let debounce;
+
+            function aplicarBusca(valor) {
+                clearTimeout(debounce);
+                debounce = setTimeout(() => {
+                    buscaAtual = valor.toLowerCase();
+                    renderTabela(todosCoord);
+                }, 250);
+            }
+
+            // Input do header global
+            document.getElementById('input-busca-global')?.addEventListener('input', e => aplicarBusca(e.target.value));
+            // Input legado dentro da tabela (se existir)
+            document.querySelector('.busca-input')?.addEventListener('input', e => {
+                document.getElementById('input-busca-global').value = e.target.value;
+                aplicarBusca(e.target.value);
+            });
+
+            // ── Exportar ──
+            document.querySelector('.btn-export')?.addEventListener('click', () => exportarCSV(todosCoord));
+
+            // ── Carrega dados em paralelo ──
+            Promise.all([
+                apiGet('/admin/coordenadores'),
+                apiGet('/admin/limites-cursos'),
+                apiGet('/admin/logs?limite=5')
+            ]).then(([coordenadores, cursos, logs]) => {
+
+                // ── Coordenadores ──
+                todosCoord = Array.isArray(coordenadores) ? coordenadores : [];
+                const totalCursos = Array.isArray(cursos) ? cursos.length : 0;
+
+                // Quantos cursos têm coordenador?
+                const cursosComCoord = new Set();
+                todosCoord.forEach(c => {
+                    const ids = c.course_ids || [];
+                    ids.filter(Boolean).forEach(id => cursosComCoord.add(String(id)));
+                });
+
+                // KPIs
+                const kpiTotal = document.getElementById('kpi-total');
+                const kpiCobCur = document.getElementById('kpi-cursos-cobertos');
+                const kpiCobTot = document.getElementById('kpi-cursos-total');
+                const kpiSub = document.getElementById('kpi-submissoes');
+                const kpiSubBadge = document.getElementById('kpi-submissoes-badge');
+                const kpiEfic = document.getElementById('kpi-eficiencia');
+
+                if (kpiTotal) kpiTotal.textContent = todosCoord.length;
+                if (kpiCobCur) kpiCobCur.textContent = cursosComCoord.size;
+                if (kpiCobTot) kpiCobTot.textContent = `/ ${totalCursos}`;
+
+                // Eficiência = % de cursos cobertos
+                const efic = totalCursos > 0
+                    ? ((cursosComCoord.size / totalCursos) * 100).toFixed(1) + '%'
+                    : '—';
+                if (kpiEfic) kpiEfic.textContent = efic;
+
+                // Submissões pendentes via logs (aproximação)
+                apiGet('/admin/submissoes').then(resp => {
+                    const pendentes = resp?.contadores?.pendentes || 0;
+                    if (kpiSub) kpiSub.textContent = pendentes;
+                    if (kpiSubBadge) {
+                        kpiSubBadge.textContent = pendentes > 0 ? 'URGENTE' : 'OK';
+                        kpiSubBadge.style.background = pendentes > 0 ? '' : '#10b981';
+                    }
+                }).catch(() => {
+                    if (kpiSub) kpiSub.textContent = '—';
+                    if (kpiSubBadge) kpiSubBadge.textContent = '—';
+                });
+
+                // Tabela
+                renderTabela(todosCoord);
+
+                // Cursos sem coordenador
+                if (Array.isArray(cursos)) {
+                    const semCoord = cursos.filter(c => !cursosComCoord.has(String(c.id)));
+                    const listaSemCoord = document.getElementById('lista-sem-coord');
+                    if (listaSemCoord) {
+                        listaSemCoord.innerHTML = semCoord.length === 0
+                            ? '<p style="color:#10b981;font-size:13px;">✓ Todos os cursos possuem coordenador.</p>'
+                            : semCoord.map(c => `
+                                <div class="item-pendente">
+                                    ${c.name} <button class="btn-red" onclick="window.location.href='editar_coordenador.html?curso=${c.id}'">DESIGNAR</button>
+                                </div>`).join('');
+                    }
+                }
+
+                // Timeline de logs
+                const tlEl = document.getElementById('timeline-logs');
+                if (tlEl && Array.isArray(logs) && logs.length > 0) {
+                    const acaoLabel = {
+                        'CRIAR_COORDENADOR': 'Novo Coordenador', 'ATUALIZAR_COORDENADOR': 'Cadastro Atualizado',
+                        'DELETAR_COORDENADOR': 'Coordenador Removido', 'CRIAR_CURSO': 'Novo Curso',
+                        'VALIDAR_SUBMISSAO': 'Submissão Validada', 'CRIAR_CATEGORIA': 'Nova Atividade'
+                    };
+                    const dotColors = { 'CRIAR_COORDENADOR': '', 'ATUALIZAR_COORDENADOR': 'blue', 'DELETAR_COORDENADOR': 'gray' };
+                    tlEl.innerHTML = logs.map(l => {
+                        const d = new Date(l.created_at);
+                        const agora = new Date();
+                        const diffH = Math.round((agora - d) / 3600000);
+                        const quando = diffH < 2 ? 'HOJE, ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+                            : diffH < 25 ? 'ONTEM, ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
+                                : d.toLocaleDateString('pt-BR');
+                        const label = acaoLabel[l.action] || l.action;
+                        const cor = dotColors[l.action] || '';
+                        return `
+                            <div class="tl-item">
+                                <div class="tl-dot ${cor}"></div>
+                                <div class="tl-content">
+                                    <div class="tl-header">
+                                        <strong>${label}</strong>
+                                        <span>${quando}</span>
+                                    </div>
+                                    <p>${l.usuario_nome || 'Sistema'}</p>
+                                </div>
+                            </div>`;
+                    }).join('');
+                } else if (tlEl) {
+                    tlEl.innerHTML = '<p style="color:#64748b;font-size:13px;padding:12px 0;">Nenhuma atividade recente.</p>';
+                }
+
+            }).catch(err => {
+                console.error('Erro ao carregar dados:', err);
+            });
+        });
+
+        function renderTabela(data) {
+            const tbody = document.querySelector('.tabela-coordenadores tbody');
+            if (!tbody) return;
+
+            const buscaAtual = (document.querySelector('.busca-input')?.value || '').toLowerCase();
+            const lista = buscaAtual
+                ? data.filter(c =>
+                    (c.full_name || '').toLowerCase().includes(buscaAtual) ||
+                    (c.email || '').toLowerCase().includes(buscaAtual) ||
+                    (c.course_names || []).join(' ').toLowerCase().includes(buscaAtual)
+                )
+                : data;
+
+            if (lista.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">Nenhum coordenador encontrado.</td></tr>';
+                const infoPag = document.querySelector('.info-pag');
+                if (infoPag) infoPag.textContent = 'Nenhum coordenador encontrado';
+                return;
+            }
+
+            tbody.innerHTML = lista.map(c => {
+                const nome = c.full_name || 'Sem Nome';
+                const email = c.email || '';
+                let cursos = Array.isArray(c.course_names) && c.course_names.length > 0
+                    ? c.course_names.join(', ') : 'Não vinculado';
+                const dataAdm = formatarData(c.data_admissao || c.created_at);
+                const initials = getInitials(nome);
+                const colorCls = initialsColor(nome);
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="user-cell">
+                                <div class="av ${colorCls}">${initials}</div>
+                                <div class="u-info">
+                                    <strong>${nome}</strong>
+                                    <span>${email}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="td-curso"><strong>${cursos}</strong></td>
+                        <td class="td-data">${dataAdm}</td>
+                        <td><span class="status-ativo">ATIVO</span></td>
+                        <td class="acoes-cell">
+                            <a href="editar_coordenador.html?id=${c.id}" class="btn-acao-icon" title="Editar"><i class='bx bx-pencil'></i></a>
+                            <a href="#" class="btn-acao-icon" title="Visualizar"><i class='bx bx-show'></i></a>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            const infoPag = document.querySelector('.info-pag');
+            if (infoPag) infoPag.textContent = `Exibindo ${lista.length} coordenadores`;
+        }
+
+        function exportarCSV(data) {
+            const header = ['Nome', 'Email', 'Cursos', 'Data Admissão'];
+            const linhas = data.map(c => [
+                c.full_name || '', c.email || '',
+                (c.course_names || []).join('; '),
+                c.data_admissao ? new Date(c.data_admissao).toLocaleDateString('pt-BR') : ''
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            const csv = [header.join(','), ...linhas].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `coordenadores_${new Date().toISOString().slice(0, 10)}.csv`;
+            a.click(); URL.revokeObjectURL(url);
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Extrato Acadêmico</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/extrato_certificado.css">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+<body>
+    <div class="layout-geral">
+        
+        <!-- Sidebar -->
+                <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+                    
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+            
+            <!-- Top Header -->
+            <header class="top-header">
+                <nav class="top-nav-links">
+                    <a href="protocoloadm.html">Início</a>
+                    <a href="#" class="active">Horas (Extrato)</a>
+                    <a href="analise_certificado.html">Certificados</a>
+                    <a href="#">Dúvidas</a>
+                </nav>
+                
+                <div class="header-right">
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar aluno ou matrícula...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header'></i>
+                    <div class="user-profile">
+                        <div class="user-info">
+                            <strong>Dr. Ricardo Silva</strong>
+                            <small>COORDENADOR</small>
+                        </div>
+                        <img src="https://ui-avatars.com/api/?name=R+S&background=f6821f&color=fff" alt="User">
+                    </div>
+                </div>
+            </header>
+
+            <div class="page-container">
+                
+                <!-- Title & Breadcrumb -->
+                <div class="breadcrumb">
+                    PORTAL > CERTIFICADOS > <span>EXTRATO DE HORAS</span>
+                </div>
+                
+                <div class="header-action-row">
+                    <div class="page-title">
+                        <h1>Extrato Acadêmico</h1>
+                        <p>Análise detalhada de atividades complementares: <strong>Turma 2024.1 - ADS</strong></p>
+                    </div>
+                    <button class="btn-export">
+                        <i class='bx bx-download'></i> EXPORTAR PDF
+                    </button>
+                </div>
+
+                <!-- KPIs -->
+                <div class="kpis-grid">
+                    
+                    <div class="kpi-card kpi-destaque">
+                        <div class="kpi-label">TOTAL DE HORAS INTEGRALIZADAS</div>
+                        <div class="kpi-value">90 <small>/ 100h</small></div>
+                        <div class="kpi-progress-bar">
+                            <div class="kpi-progress-fill" style="width: 90%;"></div>
+                        </div>
+                        <div class="kpi-subtext">Você atingiu <strong>90%</strong> da carga horária obrigatória para este semestre.</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label"><i class='bx bx-time' style="color:var(--azul-senac);"></i> EM ANÁLISE</div>
+                        <div class="kpi-value">20h</div>
+                        <div class="kpi-subtext highlight">3 SOLICITAÇÕES PENDENTES</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label"><i class='bx bx-check-shield' style="color:var(--azul-senac);"></i> APROVADAS</div>
+                        <div class="kpi-value">90h</div>
+                        <div class="kpi-subtext">+12H ESTE MÊS</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-label"><i class='bx bx-error-circle' style="color:var(--azul-senac);"></i> RESTANTE</div>
+                        <div class="kpi-value">10h</div>
+                        <div class="kpi-subtext">META: DEZEMBRO 2024</div>
+                    </div>
+                    
+                </div>
+
+                <!-- Bottom Layout -->
+                <div class="bottom-grid">
+                    
+                    <!-- Left Col -->
+                    <div class="col-esquerda">
+                        
+                        <!-- Limites -->
+                        <div class="box-limites">
+                            <div class="box-title">LIMITES POR CATEGORIA</div>
+                            
+                            <div class="limit-item">
+                                <div class="limit-info">
+                                    <span>EXTENSÃO</span>
+                                    <span><strong>80</strong> / 80h</span>
+                                </div>
+                                <div class="limit-bar-bg">
+                                    <div class="limit-bar-fill" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="limit-item">
+                                <div class="limit-info">
+                                    <span>PESQUISA</span>
+                                    <span><strong>40</strong> / 40h</span>
+                                </div>
+                                <div class="limit-bar-bg">
+                                    <div class="limit-bar-fill" style="width: 100%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="limit-item">
+                                <div class="limit-info">
+                                    <span>CULTURAIS</span>
+                                    <span><strong>25</strong> / 40h</span>
+                                </div>
+                                <div class="limit-bar-bg">
+                                    <div class="limit-bar-fill" style="width: 62.5%;"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="limit-item">
+                                <div class="limit-info">
+                                    <span>MONITORIA</span>
+                                    <span><strong>31</strong> / 40h</span>
+                                </div>
+                                <div class="limit-bar-bg">
+                                    <div class="limit-bar-fill" style="width: 77.5%;"></div>
+                                </div>
+                            </div>
+                            
+                        </div>
+
+                        <!-- Dica do Coordenador -->
+                        <div class="box-dica">
+                            <div class="dica-header">
+                                <i class='bx bx-bulb'></i> DICA DO COORDENADOR
+                            </div>
+                            <p>A categoria Pesquisa já atingiu o limite máximo de horas permitidas. Sugira aos alunos focar em atividades Culturais para diversificar o extrato.</p>
+                        </div>
+                        
+                    </div>
+
+                    <!-- Right Col: Tabela -->
+                    <div class="col-direita">
+                        
+                        <div class="box-tabela">
+                            
+                            <div class="tabela-header-row">
+                                <div class="tabela-title">HISTÓRICO DE ATIVIDADES</div>
+                                <div class="tabela-tabs">
+                                    <button class="tab-btn active">TODOS</button>
+                                    <button class="tab-btn">PENDENTES</button>
+                                </div>
+                            </div>
+
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ATIVIDADE</th>
+                                        <th>CATEGORIA</th>
+                                        <th>DATA</th>
+                                        <th>HORAS</th>
+                                        <th>STATUS</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="td-atividade">
+                                                <strong>Hackathon Senac 2024</strong>
+                                                <small>Certificado #44312</small>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge-categoria">EXTENSÃO</span></td>
+                                        <td class="td-data">12/05/2024</td>
+                                        <td class="td-horas">20h</td>
+                                        <td><span class="status-badge status-aprovado">APROVADO</span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="td-atividade">
+                                                <strong>Palestra Inteligência Artificial</strong>
+                                                <small>Campus Santo Amaro</small>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge-categoria">CULTURAIS</span></td>
+                                        <td class="td-data">10/05/2024</td>
+                                        <td class="td-horas">4h</td>
+                                        <td><span class="status-badge status-aprovado">APROVADO</span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="td-atividade">
+                                                <strong>Iniciação Científica - Blockchain</strong>
+                                                <small>Orientador: Dr. Marcos</small>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge-categoria">PESQUISA</span></td>
+                                        <td class="td-data">08/05/2024</td>
+                                        <td class="td-horas">40h</td>
+                                        <td><span class="status-badge status-analise">EM ANÁLISE</span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="td-atividade">
+                                                <strong>Monitoria Algoritmos I</strong>
+                                                <small>Semestre 2024.1</small>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge-categoria">MONITORIA</span></td>
+                                        <td class="td-data">01/05/2024</td>
+                                        <td class="td-horas">31h</td>
+                                        <td><span class="status-badge status-aprovado">APROVADO</span></td>
+                                    </tr>
+
+                                    <tr>
+                                        <td>
+                                            <div class="td-atividade">
+                                                <strong>Workshop de UX Design</strong>
+                                                <small>Online - Coursera</small>
+                                            </div>
+                                        </td>
+                                        <td><span class="badge-categoria">EXTENSÃO</span></td>
+                                        <td class="td-data">25/04/2024</td>
+                                        <td class="td-horas">12h</td>
+                                        <td><span class="status-badge status-rejeitado">REJEITADO</span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            
+                        </div>
+
+                    </div>
+                    
+                </div>
+                
+            </div>
+            
+        </main>
+    </div>
+</body>
+</html>

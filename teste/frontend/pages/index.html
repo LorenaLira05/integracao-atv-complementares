@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Login</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/style.css">
+    
+
+    <script src="/services/script.js"></script>
+</head>
+<body>
+    <main class="container">
+        <form>
+            <h1>Bem-vindo ao Portal</h1>
+            <p class="subtitle">Selecione seu perfil e insira suas credenciais.</p>
+
+            <span class="label-section">TIPO DE PERFIL</span>
+            <div class="perfil-selector">
+                <label class="perfil-card">
+                    <input type="radio" name="perfil" value="coordenador" checked>
+                    <div class="card-content">
+                        <i class='bx bx-id-card'></i>
+                        <span>COORDENADOR</span>
+                    </div>
+                </label>
+
+                <label class="perfil-card">
+                    <input type="radio" name="perfil" value="super-adm">
+                    <div class="card-content">
+                        <i class='bx bx-shield-quarter'></i>
+                        <span>SUPER ADM</span>
+                    </div>
+                </label>
+            </div>
+
+            <div class="inputbox">
+                <label>USUÁRIO</label>
+                <div class="input-wrapper">
+                    <i class="bx bx-user icon-left"></i>
+                    <input placeholder="Digite seu CPF ou e-mail" type="email" id="usuario">
+                </div>
+            </div>
+
+            <div class="inputbox">
+                <label>SENHA</label>
+                <div class="input-wrapper">
+                    <i class="bx bx-lock-alt icon-left"></i>
+                    <input placeholder="••••••••" type="password" id="senha">
+                    <i class="bx bx-hide icon-right"></i>
+                </div>
+            </div>
+
+            <div class="esqueci-a-senha">
+                <label><input type="checkbox"> Lembrar acesso</label>
+                <a href="#">Esqueceu a senha?</a>
+            </div>
+
+            <button type="button" class="btn-login" onclick="acessarPortal()">
+                Acessar Portal <i class='bx bx-log-in-circle'></i>
+            </button>
+
+            <div class="footer-login">
+                <p>© 2024 Senac – Serviço Nacional de Aprendizagem Comercial.<br>Todos os direitos reservados.</p>
+                <div class="footer-icons">
+                    <i class='bx bx-shield'></i>
+                    <i class='bx bx-check-shield'></i>
+                    <i class='bx bx-certification'></i>
+                </div>
+            </div>
+        </form>
+
+        <div class="logo-panel">
+            <div class="logo-content-wrapper">
+                <span class="portal-tag">PORTAL CORPORATIVO</span>
+                <h2>Excelência na<br>Educação<br>Profissional.</h2>
+                <div class="linha-laranja"></div>
+                <p class="paragrafo">Gestão acadêmica integrada para<br>potencializar o futuro de milhares de<br>brasileiros através do conhecimento.</p>
+                
+                <div class="stats-row">
+                    <div class="stat-item">
+                        <h3>75+</h3>
+                        <p>ANOS DE HISTÓRIA</p>
+                    </div>
+                    <div class="stat-item">
+                        <h3>200k+</h3>
+                        <p>ALUNOS ATIVOS</p>
+                    </div>
+                </div>
+            </div>
+            <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-bottom">
+        </div>
+    </main>
+</body>
+<script>
+</script>
+</html>

@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Relatórios Acadêmicos</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/relatorios.css">
+    <script src="/services/script.js"></script>
+    <script src="/services/apiHelper.js"></script>
+
+    <script>
+        protegerPagina(['COORDINATOR', 'SUPER_ADMIN', 'COORDENADOR']);
+
+        function formatarDataLocal(data) {
+            if (!data) return '—';
+            const d = new Date(data);
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(' de ', ' ').toUpperCase();
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const dados = await apiGet('/dashboard/relatorios');
+
+                // 1. Total de horas (Card 1)
+                const elHoras = document.querySelector('.kpi-card:nth-child(1) h2');
+                if (elHoras) elHoras.textContent = Number(dados.total_horas).toLocaleString('pt-BR');
+
+                // 2. Eficiência (Card 2)
+                const elEficiencia = document.querySelector('.kpi-card:nth-child(2) h2');
+                if (elEficiencia) elEficiencia.innerHTML = `${dados.eficiencia.eficiencia_percentual} <small>%</small>`;
+
+                // 3. Pendentes (Card 3)
+                const elPendentes = document.querySelector('.kpi-card:nth-child(3) h2');
+                if (elPendentes) {
+                    const valor = dados.eficiencia.total - dados.eficiencia.aprovadas;
+                    elPendentes.textContent = valor;
+                }
+
+                // 4. GRÁFICO: Horas mensais
+                const chartContent = document.querySelector('.chart-content');
+                const chartLabels = document.querySelector('.chart-labels');
+                if (chartContent && chartLabels && dados.horas_mensais && dados.horas_mensais.length > 0) {
+                    const maxHoras = Math.max(...dados.horas_mensais.map(m => m.horas));
+
+                    // Limpa as colunas antigas mantendo o SVG
+                    const bars = chartContent.querySelectorAll('.bar-group');
+                    bars.forEach(b => b.remove());
+
+                    dados.horas_mensais.forEach(m => {
+                        const group = document.createElement('div');
+                        group.className = 'bar-group';
+                        const div = document.createElement('div');
+                        div.className = 'bar bg-cinza-claro';
+                        div.style.height = maxHoras > 0 ? (m.horas / maxHoras * 100) + '%' : '0%';
+                        group.appendChild(div);
+                        chartContent.insertBefore(group, chartContent.querySelector('svg'));
+                    });
+
+                    chartLabels.innerHTML = dados.horas_mensais.map(m => `<span>${m.mes}</span>`).join('');
+                }
+
+                // 5. GRÁFICO: Eficiência por curso
+                const listaProgresso = document.querySelector('.lista-progresso');
+                if (listaProgresso && dados.eficiencia_por_curso && dados.eficiencia_por_curso.length > 0) {
+                    listaProgresso.innerHTML = dados.eficiencia_por_curso.map((c, index) => {
+                        // Cursos com baixa eficiência ficam com a barra laranja, senão azul
+                        const bgClass = c.eficiencia < 70 ? 'bg-laranja' : 'bg-azul-main';
+                        return `
+                    <div class="item-progresso">
+                        <div class="info-progresso"><span>${c.nome_curso.toUpperCase()}</span> <strong>${c.eficiencia}%</strong></div>
+                        <div class="barra-fundo">
+                            <div class="barra-preenchida ${bgClass}" style="width: ${c.eficiencia}%;"></div>
+                        </div>
+                    </div>
+                `}).join('');
+                }
+
+                // 6. TABELA: Log de atividades
+                const tbody = document.querySelector('.tabela-logs tbody');
+                if (tbody && dados.log_atividades && dados.log_atividades.length > 0) {
+                    tbody.innerHTML = dados.log_atividades.map(a => `
+                    <tr>
+                        <td>
+                            <div class="td-curso"><i class='bx bx-category icon-curso'></i> ${a.category_name || '—'}</div>
+                        </td>
+                        <td>${a.nome_aluno || '—'}</td>
+                        <td><strong>${a.approved_hours || a.requested_hours || '—'}h</strong></td>
+                        <td>${formatarDataLocal(a.submitted_at)}</td>
+                        <td><span class="status ${a.status === 'approved' ? 'validado' : 'pendente'}">
+                            ${a.status === 'approved' ? 'VALIDADO' : a.status === 'submitted' ? 'PENDENTE' : a.status.toUpperCase()}
+                        </span></td>
+                    </tr>
+                `).join('');
+                }
+
+            } catch (err) {
+                console.error('Erro ao carregar relatórios:', err);
+            }
+        });
+    </script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+    <div class="layout-geral">
+        <!-- Sidebar -->
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <!-- Menu preenchido dinamicamente pelo script.js -->
+            <nav class="menu-navegacao"></nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Header Topo -->
+            <header class="cabecalho-topo">
+                <div class="caixa-busca">
+                    <i class='bx bx-search'></i>
+                    <input type="text" placeholder="Busca rápida...">
+                </div>
+                <div class="acoes-usuario">
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-question-mark icon-header circle-icon'></i>
+                    <div class="perfil-info">
+                        <strong>ADMIN USER</strong>
+                        <small>Coordenador Acadêmico</small>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name=A&background=e2e8f0&color=333&rounded=true" alt="Avatar"
+                        class="foto-perfil">
+                </div>
+            </header>
+
+            <!-- Page Header -->
+            <section class="cabecalho-pagina">
+                <div>
+                    <span class="etiqueta-laranja">VISÃO GERAL ANALÍTICA</span>
+                    <h1>Relatórios Acadêmicos</h1>
+                </div>
+                <div class="botoes-exportar">
+                    <button class="btn-outline"><i class='bx bx-file'></i> EXPORTAR PARA PDF</button>
+                    <button class="btn-solid"><i class='bx bx-table'></i> EXPORTAR PARA CSV</button>
+                </div>
+            </section>
+
+            <!-- KPI Cards -->
+            <section class="kpi-grid">
+                <!-- Card 1 -->
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <p class="kpi-titulo">TOTAL DE HORAS PROCESSADAS</p>
+                    </div>
+                    <div class="kpi-valor">
+                        <h2>12,480</h2>
+                    </div>
+                    <div class="kpi-footer verde">
+                        <span><i class='bx bx-trending-up'></i> 12%</span>
+                        <small>Horas verificadas este semestre</small>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <p class="kpi-titulo">EFICIÊNCIA MÉDIA</p>
+                    </div>
+                    <div class="kpi-valor">
+                        <h2>94.2 %</h2>
+                    </div>
+                    <div class="kpi-footer azul">
+                        <span class="badge-azul">~ 94%</span>
+                        <small>Taxa de resposta global</small>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <p class="kpi-titulo">PROTOCOLOS PENDENTES</p>
+                    </div>
+                    <div class="kpi-valor">
+                        <h2 class="laranja">142</h2>
+                    </div>
+                    <div class="kpi-footer laranja-claro">
+                        <span><i class='bx bx-error-alt'></i> Alta</span>
+                        <small>Requer revisão imediata</small>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="kpi-card">
+                    <div class="kpi-header">
+                        <p class="kpi-titulo">AVALIAÇÃO DOS ALUNOS</p>
+                    </div>
+                    <div class="kpi-valor">
+                        <h2>4.9</h2>
+                        <div class="estrelas">
+                            <i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i
+                                class='bx bxs-star'></i><i class='bx bxs-star-half'></i>
+                        </div>
+                    </div>
+                    <div class="kpi-footer cinza">
+                        <small>Baseado em 840 avaliações</small>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Charts Section -->
+            <section class="graficos-grid">
+                <!-- Line Chart -->
+                <div class="card-grafico principal">
+                    <div class="header-grafico">
+                        <div>
+                            <h3>Horas Processadas Mensalmente</h3>
+                            <p>Comparação entre anos acadêmicos</p>
+                        </div>
+                        <div class="legenda">
+                            <span>
+                                <div class="bolinha azul-escuro"></div> 2024
+                            </span>
+                            <span>
+                                <div class="bolinha laranja"></div> 2025
+                            </span>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <div class="grid-lines">
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                            <div></div>
+                        </div>
+                        <div class="chart-content">
+                            <!-- Bars -->
+                            <div class="bar-group">
+                                <div class="bar bg-cinza-claro" style="height: 40%;"></div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar bg-cinza-claro" style="height: 55%;"></div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar bg-cinza-claro" style="height: 45%;"></div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar bg-cinza-claro" style="height: 70%;"></div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar bg-cinza-claro" style="height: 90%;"></div>
+                            </div>
+                            <div class="bar-group">
+                                <div class="bar bg-cinza-claro" style="height: 60%;"></div>
+                            </div>
+                            <!-- SVG Line -->
+                            <svg viewBox="0 0 600 200" preserveAspectRatio="none" class="svg-line">
+                                <polyline points="50,110 150,80 250,105 350,55 450,15 550,75" fill="none"
+                                    stroke="var(--laranja)" stroke-width="3" />
+                                <circle cx="50" cy="110" r="4" fill="var(--azul-main)" />
+                                <circle cx="150" cy="80" r="4" fill="var(--azul-main)" />
+                                <circle cx="250" cy="105" r="4" fill="var(--azul-main)" />
+                                <circle cx="350" cy="55" r="4" fill="var(--azul-main)" />
+                                <circle cx="450" cy="15" r="4" fill="var(--azul-main)" />
+                                <circle cx="550" cy="75" r="4" fill="var(--azul-main)" />
+                            </svg>
+                        </div>
+                        <div class="chart-labels">
+                            <span>JAN</span>
+                            <span>FEV</span>
+                            <span>MAR</span>
+                            <span>ABR</span>
+                            <span>MAI</span>
+                            <span>JUN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progress Bars -->
+                <div class="card-grafico secundario">
+                    <div class="header-grafico">
+                        <div>
+                            <h3>Eficiência por Curso</h3>
+                            <p>Em relação às metas de referência</p>
+                        </div>
+                    </div>
+                    <div class="lista-progresso">
+                        <div class="item-progresso">
+                            <div class="info-progresso"><span>SISTEMAS DE INFORMAÇÃO</span> <strong>98%</strong></div>
+                            <div class="barra-fundo">
+                                <div class="barra-preenchida bg-azul-main" style="width: 98%;"></div>
+                            </div>
+                        </div>
+                        <div class="item-progresso">
+                            <div class="info-progresso"><span>DESIGN GRÁFICO</span> <strong>82%</strong></div>
+                            <div class="barra-fundo">
+                                <div class="barra-preenchida bg-azul-main" style="width: 82%;"></div>
+                            </div>
+                        </div>
+                        <div class="item-progresso">
+                            <div class="info-progresso"><span>GASTRONOMIA</span> <strong>75%</strong></div>
+                            <div class="barra-fundo">
+                                <div class="barra-preenchida bg-azul-main" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                        <div class="item-progresso">
+                            <div class="info-progresso"><span>ADMINISTRAÇÃO</span> <strong>91%</strong></div>
+                            <div class="barra-fundo">
+                                <div class="barra-preenchida bg-azul-main" style="width: 91%;"></div>
+                            </div>
+                        </div>
+                        <div class="item-progresso">
+                            <div class="info-progresso"><span>MODA</span> <strong>64%</strong></div>
+                            <div class="barra-fundo">
+                                <div class="barra-preenchida bg-laranja" style="width: 64%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="btn-link-central">VER MÉTRICAS DETALHADAS</button>
+                </div>
+            </section>
+
+            <!-- Table Section -->
+            <section class="tabela-secao">
+                <div class="header-tabela">
+                    <h3>Atividades Recentes</h3>
+                    <div class="filtro-tabela">
+                        Mostrar: <select>
+                            <option>Últimos 7 Dias</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="tabela-logs">
+                    <thead>
+                        <tr>
+                            <th>CURSO</th>
+                            <th>COORDENADOR</th>
+                            <th>HORAS</th>
+                            <th>DATA</th>
+                            <th>STATUS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="td-curso"><i class='bx bx-category icon-curso'></i> ADS</div>
+                            </td>
+                            <td>Ricardo Oliveira</td>
+                            <td><strong>100h</strong></td>
+                            <td>Oct 12, 2023</td>
+                            <td><span class="status validado">VALIDADO</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="td-curso">JOGOS DIGITAIS</div>
+                            </td>
+                            <td>Camila Santos</td>
+                            <td><strong>100h</strong></td>
+                            <td>Oct 11, 2025</td>
+                            <td><span class="status pendente">PENDENTE</span></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="td-curso">MARKETING</div>
+                            </td>
+                            <td>Marcos Lima</td>
+                            <td><strong>100h</strong></td>
+                            <td>Oct 10, 2024</td>
+                            <td><span class="status validado">VALIDADO</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="footer-tabela">
+                    <button class="btn-ver-todas">VER TODAS</button>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

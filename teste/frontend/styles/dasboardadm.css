@@ -1,0 +1,556 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    --azul-dark: #0a1b3f;
+    --azul-sidebar: #0f2c59;
+    --azul-sidebar-hover: #163d7a;
+    --azul-sidebar-active: #11428a;
+    --azul-principal: #003366;
+    --azul-botao: #004085;
+    --azul-claro: #4b7dbb;
+    --azul-acinzentado: #8ca3be;
+    --amarelo: #f5a623;
+    --laranja: #e88b00;
+    --laranja-hover: #cc7a00;
+    --verde: #28a745;
+    --vermelho: #dc3545;
+    --cinza-bg: #fdfdfd;
+    --cinza-borda: #eaeaea;
+    --cinza-texto: #6c757d;
+    --cinza-claro: #f4f6f8;
+    --texto-escuro: #212529;
+    --branco: #ffffff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Montserrat', -apple-system, sans-serif;
+}
+
+body {
+    background-color: var(--cinza-bg);
+    color: var(--texto-escuro);
+}
+
+.layout-geral {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* === CONTEUDO PRINCIPAL ========== */
+.conteudo-principal {
+    flex: 1;
+    padding: 0 50px 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 35px;
+}
+
+/* ========== CABEÇALHO TOPO ========== */
+.cabecalho-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 25px 0;
+    border-bottom: 1px solid var(--cinza-borda);
+}
+
+.topo-links {
+    display: flex;
+    gap: 30px;
+}
+
+.topo-links a {
+    text-decoration: none;
+    color: var(--cinza-texto);
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.topo-links a.active {
+    color: var(--azul-principal);
+    font-weight: 600;
+    border-bottom: 3px solid var(--laranja);
+    padding-bottom: 6px;
+}
+
+.topo-actions {
+    display: flex;
+    align-items: center;
+    gap: 25px;
+}
+
+.caixa-busca {
+    background: var(--cinza-claro);
+    padding: 10px 20px;
+    border-radius: 25px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 280px;
+}
+
+.caixa-busca i {
+    color: var(--cinza-texto);
+    font-size: 16px;
+}
+
+.caixa-busca input {
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+    width: 100%;
+}
+
+.icon-header {
+    font-size: 22px;
+    color: #4a5568;
+    cursor: pointer;
+}
+
+.btn-novo-protocolo {
+    background: var(--azul-principal);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+.btn-novo-protocolo:hover {
+    background: var(--azul-botao);
+}
+
+/* ========== TITULO ========== */
+.secao-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.etiqueta-amarela {
+    color: var(--amarelo);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.secao-titulo h1 {
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--azul-dark);
+    margin-top: 8px;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: -1px;
+}
+
+.titulo-dir {
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+}
+
+.titulo-dir strong {
+    font-size: 15px;
+    color: var(--azul-dark);
+    font-weight: 600;
+}
+
+.titulo-dir span {
+    font-size: 13px;
+    color: #a0aabf;
+    margin-top: 2px;
+}
+
+/* ========== CARDS SUPERIORES ========== */
+.grid-cards-top {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
+}
+
+.card-kpi {
+    background: white;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+.card-kpi-titulo {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--cinza-texto);
+    letter-spacing: 0.5px;
+    margin-bottom: 20px;
+}
+
+.card-kpi-valor {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+}
+
+.valor-azul {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--azul-principal);
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1;
+}
+
+.valor-escuro {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--texto-escuro);
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1;
+}
+
+.valor-laranja {
+    font-size: 48px;
+    font-weight: 800;
+    color: var(--laranja);
+    font-family: 'Montserrat', sans-serif;
+    line-height: 1;
+}
+
+.variacao {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.variacao-positiva {
+    color: var(--vermelho);
+}
+
+.variacao-neutra {
+    color: var(--cinza-texto);
+}
+
+.variacao-texto {
+    font-size: 15px;
+    color: var(--cinza-texto);
+    font-weight: 500;
+}
+
+.card-kpi-bg-icon {
+    position: absolute;
+    right: 25px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 70px;
+    color: #f1f3f5;
+    opacity: 0.8;
+}
+
+.card-kpi-footer {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 15px;
+    font-size: 12px;
+    color: var(--cinza-texto);
+}
+
+.card-kpi-chart {
+    display: flex;
+    gap: 5px;
+    margin-top: 20px;
+    align-items: center;
+    height: 10px;
+}
+
+.bar {
+    height: 100%;
+    border-radius: 5px;
+}
+
+.bar-laranja { background: var(--laranja); }
+.bar-cinza { background: var(--cinza-borda); }
+
+
+/* ========== MIDDLE SECTION ========== */
+.grid-middle {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.card-content {
+    background: white;
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+}
+
+.card-header h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--azul-dark);
+}
+
+.toggle-periodo {
+    display: flex;
+    background: var(--cinza-claro);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.toggle-periodo button {
+    border: none;
+    background: none;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--cinza-texto);
+    cursor: pointer;
+}
+
+.toggle-periodo button.active {
+    background: white;
+    color: var(--azul-principal);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+/* Barras */
+.linha-barra {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.rotulo-barra {
+    width: 110px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-escuro);
+}
+
+.barra-fundo {
+    flex: 1;
+    background: var(--cinza-claro);
+    height: 35px;
+    position: relative;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.barra-preenchimento {
+    height: 100%;
+}
+
+.bg-azul-escuro { background: var(--azul-principal); }
+.bg-azul-claro { background: var(--azul-claro); }
+.bg-laranja { background: var(--laranja); }
+.bg-azul-acinzentado { background: var(--azul-acinzentado); }
+
+.valor-barra {
+    width: 50px;
+    text-align: right;
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--texto-escuro);
+}
+
+/* Atividades */
+.lista-atividades {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.item-atividade {
+    display: flex;
+    gap: 15px;
+}
+
+.icone-atividade {
+    width: 45px;
+    height: 45px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 22px;
+}
+
+.icone-azul { background: #ebf5ff; color: #0264be; }
+.icone-laranja { background: #fff4e5; color: #db540b; }
+.icone-verde { background: #eafbee; color: #118139; }
+
+.info-atividade {
+    flex: 1;
+}
+
+.atividade-titulo {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--texto-escuro);
+    margin-bottom: 6px;
+}
+
+.atividade-titulo .tempo {
+    font-size: 11px;
+    color: var(--cinza-texto);
+    font-weight: 600;
+}
+
+.atividade-desc {
+    font-size: 13px;
+    color: #5a6575;
+    line-height: 1.5;
+}
+
+.atividade-acoes {
+    margin-top: 12px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-validar {
+    background: var(--azul-principal);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-detalhes {
+    background: var(--cinza-claro);
+    color: var(--cinza-texto);
+    border: none;
+    padding: 8px 18px;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.footer-atividades {
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+}
+
+.footer-atividades a {
+    color: var(--azul-principal);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+/* ========== BOTTOM SECTION ========== */
+.card-relatorio {
+    background: linear-gradient(135deg, var(--azul-principal) 0%, var(--azul-dark) 100%);
+    border-radius: 12px;
+    padding: 50px 60px;
+    position: relative;
+    overflow: hidden;
+    color: white;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.relatorio-conteudo {
+    position: relative;
+    z-index: 2;
+    max-width: 600px;
+}
+
+.relatorio-conteudo h2 {
+    font-size: 26px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.relatorio-conteudo p {
+    font-size: 15px;
+    color: #cad6eb;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+.btn-baixar {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--amarelo);
+    font-weight: 700;
+    font-size: 14px;
+    text-decoration: none;
+    letter-spacing: 0.5px;
+}
+
+.btn-baixar i {
+    font-size: 18px;
+}
+
+.btn-baixar:hover {
+    text-decoration: underline;
+}
+
+.relatorio-bg-text {
+    position: absolute;
+    right: 20px;
+    bottom: -30px;
+    font-size: 180px;
+    font-weight: 800;
+    color: rgba(255,255,255,0.03);
+    line-height: 1;
+    pointer-events: none;
+}
+
+/* ========== FOOTER ========== */
+.rodape-dashboard {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.rodape-dashboard h4 {
+    color: var(--azul-principal);
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.rodape-links {
+    display: flex;
+    gap: 25px;
+}
+
+.rodape-links a {
+    color: var(--cinza-texto);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.rodape-dashboard p {
+    font-size: 12px;
+    color: #adb5bd;
+}
+
+

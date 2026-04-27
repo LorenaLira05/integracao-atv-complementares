@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Análise de Certificado</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/certificado.css">
+    <script src="/services/script.js"></script>
+<script src="/services/apiHelper.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+<body>
+
+    <div class="layout-geral">
+        
+                <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+                
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+                    
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <main class="conteudo-principal">
+            
+            <header class="cabecalho-topo">
+                <div class="abas-links">
+                    
+                    <a href="#" class="aba active">Certificados</a>
+                
+                </div>
+
+                <div class="acoes-usuario">
+                    <div class="caixa-busca">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header'></i>
+                </div>
+            </header>
+
+            <section class="titulo-analise">
+                <h1>Análise de Certificado</h1>
+                <p>Protocolo #2023-AF82 • Atividade Complementar de Extensão Universitária</p>
+            </section>
+
+            <<section class="titulo-analise">
+    <h1>Enviar Novo Certificado</h1>
+    <p>Preencha os dados abaixo e anexe o comprovante da sua atividade.</p>
+</section>
+
+<div class="grade-analise">
+    <div class="container-preview">
+        <div class="cartao-parecer" style="background: white; padding: 20px; border-radius: 12px;">
+            <div class="header-info">DADOS DA ATIVIDADE</div>
+            
+            <div class="campo-form">
+                <label>TÍTULO DA ATIVIDADE / CURSO</label>
+                <input type="text" placeholder="Ex: Workshop de Design UX" class="input-estilizado">
+            </div>
+
+            <div class="campo-form">
+                <label>CATEGORIA</label>
+                <select class="input-estilizado">
+                    <option value="">Selecione a categoria...</option>
+                    <option value="curso">Curso Livre</option>
+                    <option value="palestra">Palestra / Evento</option>
+                    <option value="monitoria">Monitoria</option>
+                </select>
+            </div>
+
+            <div class="detalhes-carga" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="campo-form">
+                    <label>CARGA HORÁRIA</label>
+                    <input type="number" placeholder="0" class="input-horas">
+                </div>
+                <div class="campo-form">
+                    <label>DATA DE CONCLUSÃO</label>
+                    <input type="date" class="input-estilizado">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <aside class="painel-decisao">
+        <div class="cartao-info-aluno" style="text-align: center; padding: 40px 20px;">
+            <div class="header-info">ANEXAR CERTIFICADO</div>
+            <i class='bx bx-cloud-upload' style="font-size: 4rem; color: #f29100; margin-bottom: 15px;"></i>
+            <p>Arraste o arquivo ou clique para selecionar</p>
+            <input type="file" id="arquivo-cert" style="display: none;">
+            <button class="btn-decisao aprovar" onclick="document.getElementById('arquivo-cert').click()" style="width: 100%; margin-top: 20px;">
+                <i class='bx bx-file-find'></i> SELECIONAR PDF/JPG
+            </button>
+            <small style="display: block; margin-top: 10px; color: #666;">Tamanho máximo: 5MB</small>
+        </div>
+
+        <button class="btn-decisao aprovar" style="width: 100%; height: 50px; font-size: 1rem; background-color: #004587;">
+            <i class='bx bx-send'></i> FINALIZAR ENVIO
+        </button>
+    </aside>
+</div>
+
+            <footer class="footer-bottom">
+                <div class="links-footer">
+                    <a href="#">Privacidade</a>
+                    <a href="#">Termos de Uso</a>
+                    <a href="#">Suporte Técnico</a>
+                </div>
+                <strong>Senac Brasil</strong>
+                <p>© 2024 Senac Brasil - Portal de Atividades Complementares</p>
+            </footer>
+        </main>
+    </div>
+</body>
+</html>

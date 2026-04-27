@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Protocolos de Atividade</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/protocolo.css">
+
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+</head>
+
+<body>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar Unificada -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <!-- Script para ativar a aba atual e carregar dados do usuário -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <main class="conteudo-principal">
+
+            <header class="cabecalho-topo">
+                <div class="abas-links">
+
+                    <a href="certificado.html" class="aba">Certificados</a>
+
+                </div>
+
+                <div class="acoes-usuario">
+                    <div class="caixa-busca">
+                        <i class='bx bx-search'></i>
+                        <input type="text" placeholder="Buscar aluno ou ID...">
+                    </div>
+                    <i class='bx bx-bell icon-header'></i>
+                    <i class='bx bx-cog icon-header'></i>
+                    <button class="botao-novo">Novo Protocolo</button>
+                </div>
+            </header>
+
+            <section class="cabecalho-pagina">
+                <div class="textos-pagina">
+                    <span class="etiqueta-laranja">GESTÃO ACADÊMICA</span>
+                    <h1>Protocolos de Atividade</h1>
+                    <p>Central de curadoria para validação de horas complementares. Analise, revise e aprove as
+                        solicitações submetidas pelo corpo discente de forma organizada e eficiente seguindo os padrões
+                        Senac.</p>
+                </div>
+
+                <div class="metricas-rapidas">
+                    <div class="metrica">
+                        <h2>142</h2>
+                        <span>PENDENTES</span>
+                    </div>
+                    <div class="separador-vertical"></div>
+                    <div class="metrica">
+                        <h2>1,284</h2>
+                        <span>PROCESSADOS</span>
+                    </div>
+                </div>
+            </section>
+
+            <div class="cartao-tabela-container">
+
+                <div class="filtros-tabela">
+                    <div class="grupo-filtro">
+                        <label>FILTRAR POR CURSO</label>
+                        <select>
+                            <option>Todos os Cursos</option>
+                            <option>ADS</option>
+                        </select>
+                    </div>
+                    <div class="grupo-filtro">
+                        <label>STATUS</label>
+                        <select>
+                            <option>Todos Status</option>
+                            <option>Pendente</option>
+                            <option>Aprovado</option>
+                            <option>Reprovado</option>
+                        </select>
+                    </div>
+                    <div class="grupo-filtro">
+                        <label>PERÍODO</label>
+                        <select>
+                            <option>Últimos 30 dias</option>
+                            <option>Últimos 7 dias</option>
+                        </select>
+                    </div>
+                    <button class="btn-mais-filtros"><i class='bx bx-filter'></i> Mais Filtros</button>
+                </div>
+
+                <table class="tabela-dados">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>ALUNO</th>
+                            <th>CURSO</th>
+                            <th>TIPO DE ATIVIDADE</th>
+                            <th>HORAS</th>
+                            <th>STATUS</th>
+                            <th>DATA ENVIO</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-id">#PRT-8821</td>
+                            <td class="td-aluno">
+                                <div class="avatar-iniciais azul">AM</div>
+                                <div>
+                                    <strong>Alice Moreira</strong>
+                                </div>
+                            </td>
+                            <td>ADS</td>
+                            <td>Palestra /<br>Workshop</td>
+                            <td><strong>04h</strong></td>
+                            <td><span class="badge badge-pendente">PENDENTE</span></td>
+                            <td class="td-data">12 Out,<br>2023</td>
+                            <td><a href="#" class="link-acao">Ver Detalhes</a></td>
+                        </tr>
+                        <tr>
+                            <td class="td-id">#PRT-8819</td>
+                            <td class="td-aluno">
+                                <img src="https://i.pravatar.cc/150?img=11" alt="Bruno" class="avatar-img">
+                                <div>
+                                    <strong>Bruno Henrique</strong>
+                                </div>
+                            </td>
+                            <td>ADS</td>
+                            <td>Estágio Não<br>Obrigatório</td>
+                            <td><strong>40h</strong></td>
+                            <td><span class="badge badge-aprovado">APROVADO</span></td>
+                            <td class="td-data">11 Out,<br>2023</td>
+                            <td><a href="#" class="link-acao">Ver Detalhes</a></td>
+                        </tr>
+                        <tr>
+                            <td class="td-id">#PRT-8815</td>
+                            <td class="td-aluno">
+                                <div class="avatar-iniciais laranja">CC</div>
+                                <div>
+                                    <strong>Carla Castro</strong>
+                                </div>
+                            </td>
+                            <td>ADS</td>
+                            <td>Monitoria<br>Acadêmica</td>
+                            <td><strong>20h</strong></td>
+                            <td><span class="badge badge-reprovado">REPROVADO</span></td>
+                            <td class="td-data">10 Out,<br>2023</td>
+                            <td><a href="#" class="link-acao">Ver Detalhes</a></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="rodape-tabela">
+                    <span class="info-paginacao">Mostrando 1 a 3 de 142 protocolos</span>
+                    <div class="paginacao-botoes">
+                        <button class="btn-pag"><i class='bx bx-chevron-left'></i></button>
+                        <button class="btn-pag active">1</button>
+                        <button class="btn-pag">2</button>
+                        <button class="btn-pag"><i class='bx bx-chevron-right'></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grade-cards-rodape">
+
+                <div class="card-info atencao">
+                    <i class='bx bx-calendar-exclamation icon-card'></i>
+                    <h3>Atenção Necessária</h3>
+                    <p>Existem 12 protocolos com mais de 15 dias sem movimentação. Recomenda-se a análise prioritária
+                        destes itens.</p>
+                    <a href="#" class="link-card">REVISAR ATRASADOS <i class='bx bx-right-arrow-alt'></i></a>
+                </div>
+
+                <div class="card-info relatorios">
+                    <div class="conteudo-bottom">
+                        <h3>Relatórios Mensais</h3>
+                        <p>Exportar dados consolidados para o MEC e conselhos regionais.</p>
+                    </div>
+                </div>
+
+                <div class="card-info guia">
+                    <h3>Guia de Curadoria</h3>
+                    <ul class="lista-guia">
+                        <li><i class='bx bx-check-circle'></i> Confira a carga horária máxima permitida por categoria.
+                        </li>
+                        <li><i class='bx bx-check-circle'></i> Valide a autenticidade dos certificados digitais
+                            anexados.</li>
+                    </ul>
+                    <a href="#" class="link-card-branco">ACESSE O MANUAL DO AVALIADOR <i
+                            class='bx bx-link-external'></i></a>
+                </div>
+            </div>
+
+            <footer class="rodape-creditos">
+                © 2026 Senac Brasil - Portal de Atividades Complementares
+            </footer>
+
+        </main>
+    </div>
+</body>
+
+</html>

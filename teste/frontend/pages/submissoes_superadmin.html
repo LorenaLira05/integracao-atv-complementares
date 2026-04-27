@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Submissões (Super Admin)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/submissoes_superadmin.css">
+    <!-- Apenas script.js — já contém apiGet, protegerPagina, logout -->
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+
+    <!-- Guard: somente SUPER_ADMIN -->
+    <script>
+        protegerPagina(['SUPER_ADMIN', 'ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar Unificada (menu preenchido dinamicamente pelo script.js) -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao"></nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Super Admin</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout==='function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="top-header-left">
+                    <h2>Portal Acadêmico</h2>
+                    <div class="search-wrap">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="input-busca" placeholder="Buscar por nome do aluno ou atividade...">
+                    </div>
+                </div>
+                <div class="header-right">
+                </div>
+            </header>
+
+            <div class="page-container">
+
+                <!-- Title & Actions -->
+                <div class="header-action-row">
+                    <div class="page-title">
+                        <h1>Listagem de Submissões</h1>
+                        <p>Gestão de horas complementares e atividades extracurriculares.</p>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-export" id="btn-exportar-csv">
+                            <i class='bx bx-download'></i> Exportar CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPIs -->
+                <div class="kpis-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-blue"><i class='bx bx-file'></i></div>
+                        <div class="kpi-title">PENDENTES</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-pendentes">--</div>
+                            <div class="kpi-sub sub-orange" id="kpi-pendentes-sub">aguardando</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-green"><i class='bx bx-check-circle'></i></div>
+                        <div class="kpi-title">APROVADAS</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-aprovadas">--</div>
+                            <div class="kpi-sub sub-green">Este mês</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-red"><i class='bx bx-x-circle'></i></div>
+                        <div class="kpi-title">REPROVADAS</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-reprovadas">--</div>
+                            <div class="kpi-sub sub-gray" id="kpi-reprovadas-pct">do total</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-orange"><i class='bx bx-time-five'></i></div>
+                        <div class="kpi-title">TOTAL DE ENVIOS</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-total">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Area -->
+                <div class="table-container">
+
+                    <!-- Filters -->
+                    <div class="filters-row">
+                        <div class="tabs-filter">
+                            <span>Filtros:</span>
+                            <button class="active" data-filter="all">Todas</button>
+                            <button data-filter="submitted" id="btn-filter-pendentes">Pendentes</button>
+                            <button data-filter="approved">Aprovadas</button>
+                            <button data-filter="rejected">Reprovadas</button>
+                        </div>
+                        <div class="selects-filter">
+                            <select id="filtro-curso">
+                                <option value="">Todos os Cursos</option>
+                            </select>
+                            <select id="filtro-ordem">
+                                <option value="desc">Mais recentes</option>
+                                <option value="asc">Mais antigas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Data Table -->
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ALUNO</th>
+                                <th>ATIVIDADE</th>
+                                <th>HORAS</th>
+                                <th>DATA DE ENVIO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-submissoes">
+                            <!-- Skeleton loading -->
+                            <tr class="skeleton-row">
+                                <td colspan="6">
+                                    <div
+                                        style="height:48px;background:#e2e8f0;border-radius:8px;animation:pulse 1.5s infinite;">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="skeleton-row">
+                                <td colspan="6">
+                                    <div
+                                        style="height:48px;background:#e2e8f0;border-radius:8px;animation:pulse 1.5s infinite 0.2s;">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="skeleton-row">
+                                <td colspan="6">
+                                    <div
+                                        style="height:48px;background:#e2e8f0;border-radius:8px;animation:pulse 1.5s infinite 0.4s;">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    <div class="pagination-row">
+                        <div class="pagination-info" id="paginacao-info">
+                            Carregando...
+                        </div>
+                        <div class="pagination-controls" id="paginacao-controles">
+                            <!-- preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Banner -->
+                <div class="bottom-banner">
+                    <div class="banner-bg-shape"></div>
+                    <div class="banner-content">
+                        <span class="banner-tag">DICA DE PRODUTIVIDADE</span>
+                        <h3>Análise em Lote</h3>
+                        <p>Use os filtros de status para localizar rapidamente submissões pendentes e agilizar o fluxo
+                            de análise durante períodos de alta demanda.</p>
+                        <button class="btn-white"
+                            onclick="document.querySelector('[data-filter=submitted]').click()">Ver Pendentes</button>
+                    </div>
+                    <div class="banner-shortcuts">
+                        <div class="shortcuts-title">Atalhos de Teclado</div>
+                        <div class="shortcut-item">
+                            <span>Filtrar pendentes</span>
+                            <span class="key-badge">Alt + P</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Buscar</span>
+                            <span class="key-badge">Alt + B</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Próxima página</span>
+                            <span class="key-badge">Alt + N</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <style>
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+    </style>
+
+    <script>
+        // ─── Estado global ───────────────────────────────────────────────────────
+        let todasSubmissoes = [];
+        let filtroAtual = 'all';
+        let buscaAtual = '';
+        let ordemAtual = 'desc';
+        let paginaAtual = 1;
+        const POR_PAGINA = 10;
+
+        // ─── Dados do usuário logado na sidebar/header ────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            const nome = localStorage.getItem('nome');
+            const perfil = localStorage.getItem('perfil');
+
+            if (nome) {
+                // Header
+                const headerNome = document.getElementById('header-nome');
+                if (headerNome) headerNome.textContent = nome;
+                const headerAvatar = document.getElementById('header-avatar');
+                if (headerAvatar) headerAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=f6821f&color=fff`;
+                // Sidebar
+                const sideNome = document.getElementById('sidebar-nome-global');
+                if (sideNome) sideNome.textContent = nome;
+                const sideAvatar = document.getElementById('sidebar-avatar-global');
+                if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+            }
+            if (perfil) {
+                const labelMap = { 'super_admin': 'Super Admin', 'admin': 'Super Admin', 'coordinator': 'Coordenador', 'student': 'Aluno' };
+                const label = labelMap[perfil.toLowerCase()] || perfil;
+                const headerRole = document.getElementById('header-role');
+                if (headerRole) headerRole.textContent = label;
+                const sideRole = document.getElementById('sidebar-role-global');
+                if (sideRole) sideRole.textContent = label;
+            }
+
+            // Marca link ativo após script.js renderizar o menu
+            setTimeout(() => {
+                const currentPage = window.location.pathname.split('/').pop();
+                document.querySelectorAll('.menu-navegacao .link-menu').forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === currentPage);
+                });
+            }, 50);
+
+            // Inicia carregamento
+            carregarSubmissoes();
+        });
+
+        // ─── Carrega dados do backend ─────────────────────────────────────────────
+        async function carregarSubmissoes() {
+            try {
+                const data = await apiGet('/admin/submissoes');
+
+                if (!data) {
+                    exibirErro('Falha ao conectar com o servidor. Verifique se o backend está rodando.');
+                    return;
+                }
+                if (data.erro) {
+                    exibirErro('Erro do servidor: ' + data.erro);
+                    return;
+                }
+
+                todasSubmissoes = data.submissoes || [];
+                const contadores = data.contadores || {};
+
+                // ── KPIs ──
+                const pendentes = parseInt(contadores.pendentes || 0);
+                const aprovadas = parseInt(contadores.aprovadas || 0);
+                const reprovadas = parseInt(contadores.reprovadas || 0);
+                const total = parseInt(contadores.total || todasSubmissoes.length);
+
+                document.getElementById('kpi-pendentes').textContent = pendentes;
+                document.getElementById('kpi-aprovadas').textContent = aprovadas;
+                document.getElementById('kpi-reprovadas').textContent = reprovadas;
+                document.getElementById('kpi-total').textContent = total;
+
+                const pct = total > 0 ? Math.round((reprovadas / total) * 100) : 0;
+                document.getElementById('kpi-reprovadas-pct').textContent = `${pct}% do total`;
+                document.getElementById('btn-filter-pendentes').textContent = `Pendentes (${pendentes})`;
+
+                // ── Popula select de cursos ──
+                const cursos = [...new Set(todasSubmissoes.map(s => s.course_name).filter(Boolean))].sort();
+                const selectCurso = document.getElementById('filtro-curso');
+                cursos.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c;
+                    opt.textContent = c;
+                    selectCurso.appendChild(opt);
+                });
+
+                // ── Renderiza tabela inicial ──
+                renderizarTabela();
+
+            } catch (err) {
+                console.error('Erro ao carregar submissões:', err);
+                exibirErro('Erro inesperado ao carregar dados.');
+            }
+        }
+
+        // ─── Renderiza tabela com filtros, busca e paginação ──────────────────────
+        function renderizarTabela() {
+            let lista = [...todasSubmissoes];
+
+            // Filtro de status
+            if (filtroAtual !== 'all') {
+                lista = lista.filter(s => (s.status || '').toLowerCase() === filtroAtual);
+            }
+
+            // Filtro de curso
+            const cursoBusca = document.getElementById('filtro-curso')?.value;
+            if (cursoBusca) {
+                lista = lista.filter(s => s.course_name === cursoBusca);
+            }
+
+            // Busca por nome ou atividade
+            if (buscaAtual.trim()) {
+                const q = buscaAtual.toLowerCase();
+                lista = lista.filter(s =>
+                    (s.student_name || '').toLowerCase().includes(q) ||
+                    (s.title || '').toLowerCase().includes(q) ||
+                    (s.student_ra || '').toLowerCase().includes(q)
+                );
+            }
+
+            // Ordenação
+            lista.sort((a, b) => {
+                const da = new Date(a.submitted_at);
+                const db = new Date(b.submitted_at);
+                return ordemAtual === 'desc' ? db - da : da - db;
+            });
+
+            // Paginação
+            const total = lista.length;
+            const totalPaginas = Math.ceil(total / POR_PAGINA) || 1;
+            if (paginaAtual > totalPaginas) paginaAtual = 1;
+
+            const inicio = (paginaAtual - 1) * POR_PAGINA;
+            const paginados = lista.slice(inicio, inicio + POR_PAGINA);
+
+            // Info
+            const infoEl = document.getElementById('paginacao-info');
+            if (infoEl) {
+                infoEl.innerHTML = total === 0
+                    ? 'Nenhuma submissão encontrada.'
+                    : `Mostrando <strong>${inicio + 1}–${Math.min(inicio + POR_PAGINA, total)}</strong> de <strong>${total}</strong> submissões`;
+            }
+
+            // Controles de paginação
+            renderizarPaginacao(totalPaginas);
+
+            // Linhas da tabela
+            const tbody = document.getElementById('tabela-submissoes');
+            if (!tbody) return;
+
+            if (paginados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:#64748b;">Nenhuma submissão encontrada para os filtros selecionados.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = paginados.map(s => {
+                const statusStr = (s.status || 'submitted').toLowerCase();
+                let badgeClass = 'status-pendente', badgeText = 'Pendente';
+                if (statusStr === 'approved') { badgeClass = 'status-aprovado'; badgeText = 'Aprovado'; }
+                if (statusStr === 'rejected' || statusStr === 'returned_for_adjustment') {
+                    badgeClass = 'status-reprovado'; badgeText = 'Reprovado';
+                }
+
+                const catName = s.category_name || 'Geral';
+                let catClass = 'badge-blue';
+                const catLow = catName.toLowerCase();
+                if (catLow.includes('evento') || catLow.includes('palestra')) catClass = 'badge-purple';
+                else if (catLow.includes('monitoria')) catClass = 'badge-orange';
+                else if (catLow.includes('social') || catLow.includes('voluntariado')) catClass = 'badge-green';
+                else if (catLow.includes('extensao') || catLow.includes('extensão')) catClass = 'badge-blue';
+
+                let dataEnvio = 'N/D';
+                if (s.submitted_at) {
+                    const d = new Date(s.submitted_at);
+                    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    dataEnvio = `${String(d.getDate()).padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
+                }
+
+                const horas = s.approved_hours || s.horas_solicitadas || s.requested_hours || '—';
+                const cursoAbrev = s.course_name ? s.course_name.substring(0, 12) : 'N/D';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="td-user">
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.student_name || 'U')}&background=random" alt="${s.student_name || 'Aluno'}">
+                                <div class="td-user-info">
+                                    <strong>${s.student_name || 'Aluno'}</strong>
+                                    <small>RA: ${s.student_ra || '—'} • ${cursoAbrev}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="td-activity">
+                                <strong>${s.title || 'Atividade'}</strong>
+                                <span class="badge-cat ${catClass}">${catName.toUpperCase()}</span>
+                            </div>
+                        </td>
+                        <td class="td-hours">${horas}h</td>
+                        <td class="td-date">${dataEnvio}</td>
+                        <td><span class="status-pill ${badgeClass}">${badgeText}</span></td>
+                        <td class="td-actions">
+                            <a href="analise_certificado.html?id=${s.id}" title="Ver detalhes" style="color:var(--texto-claro);">
+                                <i class='bx bx-dots-vertical-rounded'></i>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // ─── Controles de paginação ───────────────────────────────────────────────
+        function renderizarPaginacao(totalPaginas) {
+            const controles = document.getElementById('paginacao-controles');
+            if (!controles) return;
+
+            let html = `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>
+                            <i class='bx bx-chevron-left'></i>
+                        </button>`;
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (totalPaginas > 7 && i > 3 && i < totalPaginas - 1 && Math.abs(i - paginaAtual) > 1) {
+                    if (i === 4) html += `<span class="page-btn">...</span>`;
+                    continue;
+                }
+                html += `<button class="page-btn ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
+            }
+
+            html += `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                         <i class='bx bx-chevron-right'></i>
+                     </button>`;
+
+            controles.innerHTML = html;
+        }
+
+        function mudarPagina(n) {
+            paginaAtual = n;
+            renderizarTabela();
+            document.querySelector('.table-container')?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ─── Filtros de status ────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tabs-filter button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tabs-filter button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    filtroAtual = btn.dataset.filter || 'all';
+                    paginaAtual = 1;
+                    renderizarTabela();
+                });
+            });
+
+            // Select de curso
+            document.getElementById('filtro-curso')?.addEventListener('change', () => {
+                paginaAtual = 1;
+                renderizarTabela();
+            });
+
+            // Select de ordem
+            document.getElementById('filtro-ordem')?.addEventListener('change', (e) => {
+                ordemAtual = e.target.value;
+                paginaAtual = 1;
+                renderizarTabela();
+            });
+
+            // Busca
+            let debounce;
+            document.getElementById('input-busca')?.addEventListener('input', (e) => {
+                clearTimeout(debounce);
+                debounce = setTimeout(() => {
+                    buscaAtual = e.target.value;
+                    paginaAtual = 1;
+                    renderizarTabela();
+                }, 300);
+            });
+
+            // Exportar CSV
+            document.getElementById('btn-exportar-csv')?.addEventListener('click', exportarCSV);
+
+            // Atalho Alt+P → Pendentes
+            document.addEventListener('keydown', (e) => {
+                if (e.altKey && e.key === 'p') document.querySelector('[data-filter="submitted"]')?.click();
+                if (e.altKey && e.key === 'b') document.getElementById('input-busca')?.focus();
+                if (e.altKey && e.key === 'n') mudarPagina(paginaAtual + 1);
+            });
+        });
+
+        // ─── Exportar CSV ─────────────────────────────────────────────────────────
+        function exportarCSV() {
+            let lista = [...todasSubmissoes];
+            if (filtroAtual !== 'all') lista = lista.filter(s => (s.status || '').toLowerCase() === filtroAtual);
+
+            const cabecalho = ['Aluno', 'RA', 'Curso', 'Atividade', 'Categoria', 'Horas', 'Data Envio', 'Status'];
+            const linhas = lista.map(s => {
+                const data = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('pt-BR') : '';
+                return [
+                    s.student_name || '',
+                    s.student_ra || '',
+                    s.course_name || '',
+                    s.title || '',
+                    s.category_name || '',
+                    s.approved_hours || s.horas_solicitadas || '',
+                    data,
+                    s.status || ''
+                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+            });
+
+            const csv = [cabecalho.join(','), ...linhas].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `submissoes_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ─── Exibir erro na tabela ────────────────────────────────────────────────
+        function exibirErro(msg) {
+            const tbody = document.getElementById('tabela-submissoes');
+            if (tbody) tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:32px;color:#ef4444;">${msg}</td></tr>`;
+            ['kpi-pendentes', 'kpi-aprovadas', 'kpi-reprovadas', 'kpi-total'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '—';
+            });
+        }
+    </script>
+</body>
+
+</html>
