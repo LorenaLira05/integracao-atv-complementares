@@ -12,6 +12,7 @@
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
@@ -37,8 +38,7 @@
             <nav class="menu-navegacao">
                 <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
                 <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
-                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
-                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="protocoloadm.html" class="link-menu active"><i class='bx bx-upload'></i> Submissões</a>
                 <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
                 <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
             </nav>
@@ -87,24 +87,13 @@
 
         <!-- Main Content -->
         <main class="conteudo-principal">
-
-            <!-- Top Navbar -->
-            <header class="top-header">
-                <nav class="top-nav-links">
-                    <a href="protocoloadm.html">Início</a>
-                    <a href="extrato_certificado.html">Horas</a>
-                    <a href="submissoes.html">Certificados</a>
-                    <a href="extrato_certificado.html">Extrato</a>
-                </nav>
-                <div class="header-right">
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Buscar...">
-                    </div>
-                    <i class='bx bx-bell icon-header'></i>
-                    <i class='bx bx-cog icon-header'></i>
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
             </header>
+
+            <!-- Header Topo Padronizado removido conforme solicitação -->
 
             <!-- Título da Página -->
             <section class="head-kpis">
@@ -126,46 +115,31 @@
 
                 <!-- COLUNA ESQUERDA -->
                 <div class="col-esquerda">
-
                     <!-- Preview do Certificado -->
                     <div class="box-certificado-preview">
                         <div class="box-label-header">
                             <span class="box-label">DOCUMENTO ENVIADO</span>
-                            <a id="btn-ver-arquivo" href="#" target="_blank" class="btn-ver-arquivo">
-                                <i class='bx bx-link-external'></i> Ver Arquivo Original
-                            </a>
+                            <div style="display: flex; gap: 10px;">
+                                <a id="btn-ver-arquivo" href="#" target="_blank" class="btn-ver-arquivo">
+                                    <i class='bx bx-link-external'></i> Ver Original
+                                </a>
+                            </div>
                         </div>
 
-                        <div class="mock-cert">
-                            <i class='bx bx-book-reader cert-icon'></i>
-                            <h2 class="cert-title">CERTIFICADO</h2>
-                            <div class="cert-line"></div>
-                            <p class="cert-body" id="cert-body">
-                                Certificamos que o aluno(a) <strong id="cert-aluno">—</strong>
-                                participou com êxito de <strong id="cert-titulo">—</strong>.
-                            </p>
-                            <div class="cert-footer">
-                                <div class="c-left">
-                                    <small>CARGA HORÁRIA</small>
-                                    <h3 id="cert-horas">—</h3>
-                                </div>
-                                <div class="c-seal">
-                                    <div class="seal-circle" id="cert-initial">S</div>
-                                </div>
-                                <div class="c-right">
-                                    <small>CATEGORIA</small>
-                                    <p id="cert-categoria">—</p>
-                                </div>
+                        <div id="container-visualizacao" class="container-visualizacao">
+                            <!-- Injetado via JS: img ou iframe -->
+                            <div class="mock-cert" id="placeholder-preview">
+                                <i class='bx bx-loader-alt bx-spin' style="font-size: 40px; color: var(--laranja);"></i>
+                                <p>Carregando documento...</p>
                             </div>
                         </div>
 
                         <!-- Barra OCR (exibida se houver texto extraído) -->
                         <div class="ocr-info-bar" id="ocr-bar" style="display:none;">
                             <i class='bx bx-scan'></i>
-                            <span id="ocr-texto">Texto extraído por OCR com <strong id="ocr-conf">—</strong>% de
-                                confiança.</span>
+                            <span id="ocr-texto">O sistema detectou texto neste documento. Verifique a veracidade.</span>
                         </div>
-                    </div>
+                    </div> <!-- Fim box-certificado-preview -->
 
                     <!-- Box de Regras -->
                     <div class="box-regras">
@@ -286,7 +260,7 @@
                     <a href="#">Termos de Uso</a>
                     <a href="#">Suporte Técnico</a>
                 </div>
-                <div class="footer-copy">&copy; 2024 Senac Brasil - Portal de Atividades Complementares</div>
+                <div class="footer-copy">&copy; 2026 Senac Brasil - Portal de Atividades Complementares</div>
             </footer>
 
         </main>
@@ -414,27 +388,38 @@
             atualizarBadgeStatus(d.status);
             bloqueiarBotoes(d.status);
 
-            // Certificado (mock visual)
-            document.getElementById('cert-aluno').textContent = d.student_name || '—';
-            document.getElementById('cert-titulo').textContent = d.title || '—';
-            document.getElementById('cert-horas').textContent = `${d.declared_hours || 0}h`;
-            document.getElementById('cert-categoria').textContent = d.category_name || '—';
-
-            const inicial = (d.student_name || 'S').charAt(0).toUpperCase();
-            document.getElementById('cert-initial').textContent = inicial;
-
-            // Link para arquivo original
+            // Visualização do Certificado
+            const container = document.getElementById('container-visualizacao');
             if (d.storage_path) {
-                document.getElementById('btn-ver-arquivo').href = `/uploads/${d.storage_path}`;
+                // Normalização do caminho (evita double uploads/)
+                let path = d.storage_path;
+                if (!path.includes('uploads')) path = `/uploads/${path}`;
+                if (!path.startsWith('/')) path = '/' + path;
+                
+                document.getElementById('btn-ver-arquivo').href = path;
+                
+                const ext = d.storage_path.split('.').pop().toLowerCase();
+                console.log('Visualizando arquivo:', path, 'Extensão:', ext);
+                if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+                    container.innerHTML = `<img src="${path}" class="cert-img-preview" alt="Certificado" style="width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
+                } else if (ext === 'pdf') {
+                    container.innerHTML = `<iframe src="${path}#toolbar=0" width="100%" height="500px" style="border:none; border-radius:8px;"></iframe>`;
+                } else {
+                    container.innerHTML = `
+                        <div class="mock-cert">
+                            <i class='bx bx-file' style="font-size:48px; color:var(--azul-main);"></i>
+                            <p>Arquivo .${ext.toUpperCase()} não possui visualização direta.</p>
+                            <a href="${path}" target="_blank" class="btn-ver-arquivo" style="margin-top:10px;">Clique para abrir</a>
+                        </div>`;
+                }
             } else {
+                container.innerHTML = '<p style="padding:20px; text-align:center;">Nenhum arquivo encontrado.</p>';
                 document.getElementById('btn-ver-arquivo').style.display = 'none';
             }
 
             // OCR
             if (d.ocr_extracted_text) {
                 document.getElementById('ocr-bar').style.display = 'flex';
-                document.getElementById('ocr-conf').textContent =
-                    d.ocr_confidence ? Math.round(d.ocr_confidence * 100) : '—';
             }
 
             // Painel do aluno
@@ -615,6 +600,48 @@
 
             btn.innerHTML = '<i class="bx bx-save"></i> Salvar Nova Regra';
             btn.disabled = false;
+        }
+
+        // --- Funções Auxiliares de UI ---
+
+        function atualizarBadgeStatus(status) {
+            const container = document.querySelector('.head-text');
+            if (!container) return;
+            
+            // Remove badge antiga se houver
+            const antiga = container.querySelector('.badge-status');
+            if (antiga) antiga.remove();
+
+            const configs = {
+                'submitted': { cls: 'badge-pendente', label: 'PENDENTE' },
+                'approved': { cls: 'badge-aprovado', label: 'APROVADO' },
+                'rejected': { cls: 'badge-reprovado', label: 'REPROVADO' },
+                'returned_for_adjustment': { cls: 'badge-ajuste', label: 'DEVOLVIDO' }
+            };
+
+            const cfg = configs[status] || configs['submitted'];
+            const span = document.createElement('span');
+            span.className = `badge-status ${cfg.cls}`;
+            span.textContent = cfg.label;
+            
+            container.appendChild(span);
+        }
+
+        function bloqueiarBotoes(status) {
+            const isFinal = ['approved', 'rejected'].includes(status);
+            if (isFinal) {
+                ['btn-aprovar', 'btn-reprovar', 'btn-devolver'].forEach(id => {
+                    const b = document.getElementById(id);
+                    if (b) {
+                        b.disabled = true;
+                        b.style.opacity = '0.5';
+                        b.style.cursor = 'not-allowed';
+                    }
+                });
+                // Também desabilita inputs
+                document.getElementById('input-horas').disabled = true;
+                document.getElementById('input-obs').disabled = true;
+            }
         }
 
         // --- Init ---

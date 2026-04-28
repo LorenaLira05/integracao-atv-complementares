@@ -1,64 +1,56 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senac - Extrato Acadêmico</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/dasboardadm.css">
     <link rel="stylesheet" href="/styles/extrato_certificado.css">
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <script src="/services/script.js"></script>
 </head>
+
 <body>
     <div class="layout-geral">
-        
+
         <!-- Sidebar -->
-                <!-- Sidebar Unificada -->
+        <!-- Sidebar Unificada -->
         <aside class="sidebar-dark">
             <div class="logo-secao">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
                 <span class="logo-subtext">GESTÃO ACADÊMICA</span>
             </div>
 
-            <nav class="menu-navegacao">
-                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
-                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
-                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
-                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
-                <a href="submissoes.html" class="link-menu"><i class='bx bx-upload'></i> Submissões</a>
-                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
-                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
-            </nav>
+            <!-- Menu preenchido dinamicamente pelo script.js -->
+            <nav class="menu-navegacao"></nav>
 
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
-                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
                     <div class="perfil-sidebar-info">
                         <strong id="sidebar-nome-global">Usuário</strong>
                         <small id="sidebar-role-global">Gestão</small>
                     </div>
                 </div>
-                <a href="#" class="link-menu link-sair" onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i class='bx bx-log-out'></i> Sair</a>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
             </div>
         </aside>
 
         <!-- Script para ativar a aba atual e carregar dados do usuário -->
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
-                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
-                links.forEach(link => {
-                    if (link.getAttribute('href') === currentPage) {
-                        link.classList.add('active');
-                    } else {
-                        link.classList.remove('active');
-                    }
-                });
-                
                 if (localStorage.getItem('nome')) {
                     const nomeEl = document.getElementById('sidebar-nome-global');
                     if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
-                    
+
                     const avatarEl = document.getElementById('sidebar-avatar-global');
                     if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
                 }
@@ -66,160 +58,196 @@
                     const roleEl = document.getElementById('sidebar-role-global');
                     if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
                 }
+
+                carregarResumo();
+                carregarHistorico();
             });
+
+            async function carregarResumo() {
+                try {
+                    const resumo = await apiGet('/aluno/resumo-horas');
+                    if (!resumo || resumo.erro) return;
+
+                    // ── KPIs ──
+                    const kpiTotal = document.querySelector('.kpi-destaque .kpi-value');
+                    const kpiProgresso = document.querySelector('.kpi-progress-fill');
+                    const kpiSubtext = document.querySelector('.kpi-destaque .kpi-subtext');
+                    const kpiAnalise = document.querySelectorAll('.kpi-card .kpi-value')[1];
+                    const kpiAnaliseSub = document.querySelectorAll('.kpi-card .kpi-subtext')[0];
+                    const kpiAprovadas = document.querySelectorAll('.kpi-card .kpi-value')[2];
+                    const kpiRestante = document.querySelectorAll('.kpi-card .kpi-value')[3];
+
+                    if (kpiTotal) kpiTotal.innerHTML = `${resumo.total_integralizado} <small>/ ${resumo.total_obrigatorio}h</small>`;
+                    if (kpiProgresso) kpiProgresso.style.width = `${resumo.percentual_total}%`;
+                    if (kpiSubtext) kpiSubtext.innerHTML = `Você atingiu <strong>${Math.round(resumo.percentual_total)}%</strong> da carga horária obrigatória.`;
+                    
+                    if (kpiAnalise) kpiAnalise.textContent = `${resumo.total_em_analise}h`;
+                    if (kpiAprovadas) kpiAprovadas.textContent = `${resumo.total_integralizado}h`;
+                    const restante = Math.max(0, resumo.total_obrigatorio - resumo.total_integralizado);
+                    if (kpiRestante) kpiRestante.textContent = `${restante}h`;
+
+                    // ── Limites por Categoria ──
+                    const boxLimites = document.querySelector('.box-limites');
+                    if (boxLimites && resumo.limites) {
+                        boxLimites.innerHTML = '<div class="box-title">LIMITES POR CATEGORIA</div>';
+                        resumo.limites.forEach(l => {
+                            const item = document.createElement('div');
+                            item.className = 'limit-item';
+                            item.innerHTML = `
+                                <div class="limit-info">
+                                    <span>${l.categoria.toUpperCase()}</span>
+                                    <span><strong>${l.horas_aprovadas}</strong> / ${l.max_horas}h</span>
+                                </div>
+                                <div class="limit-bar-bg">
+                                    <div class="limit-bar-fill" style="width: ${l.percentual}%;"></div>
+                                </div>
+                            `;
+                            boxLimites.appendChild(item);
+                        });
+                    }
+
+                    // ── Info do curso ──
+                    const cursoInfo = document.querySelector('.page-title p');
+                    if (cursoInfo) cursoInfo.innerHTML = `Análise detalhada de atividades complementares: <strong>${resumo.curso}</strong>`;
+
+                } catch (err) {
+                    console.error('Erro ao carregar resumo:', err);
+                }
+            }
+
+            async function carregarHistorico() {
+                const tbody = document.querySelector('table tbody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Carregando histórico...</td></tr>';
+
+                try {
+                    const subs = await apiGet('/aluno/submissoes');
+                    if (!tbody) return;
+
+                    if (!subs || subs.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Nenhuma atividade registrada.</td></tr>';
+                        return;
+                    }
+
+                    tbody.innerHTML = subs.map(s => {
+                        const status = (s.status || 'submitted').toLowerCase();
+                        let statusLabel = 'EM ANÁLISE';
+                        let statusClass = 'status-analise';
+
+                        if (status === 'approved') { statusLabel = 'APROVADO'; statusClass = 'status-aprovado'; }
+                        else if (status === 'rejected') { statusLabel = 'REJEITADO'; statusClass = 'status-rejeitado'; }
+                        else if (status === 'returned_for_adjustment') { statusLabel = 'AJUSTE'; statusClass = 'status-analise'; }
+
+                        return `
+                            <tr>
+                                <td>
+                                    <div class="td-atividade">
+                                        <strong>${s.title}</strong>
+                                        <small>${s.institution_name || 'Protocolo #' + s.id}</small>
+                                    </div>
+                                </td>
+                                <td><span class="badge-categoria">${(s.category_name || 'Geral').toUpperCase()}</span></td>
+                                <td class="td-data">${formatarData(s.submitted_at || s.created_at)}</td>
+                                <td class="td-horas">${s.approved_hours || s.requested_hours}h</td>
+                                <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                } catch (err) {
+                    console.error('Erro ao carregar histórico:', err);
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444; padding:20px;">Erro ao carregar dados.</td></tr>';
+                }
+            }
         </script>
 
         <!-- Main Content -->
         <main class="conteudo-principal">
-            
-            <!-- Top Header -->
-            <header class="top-header">
-                <nav class="top-nav-links">
-                    <a href="protocoloadm.html">Início</a>
-                    <a href="#" class="active">Horas (Extrato)</a>
-                    <a href="analise_certificado.html">Certificados</a>
-                    <a href="#">Dúvidas</a>
-                </nav>
-                
-                <div class="header-right">
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Buscar aluno ou matrícula...">
-                    </div>
-                    <i class='bx bx-bell icon-header'></i>
-                    <i class='bx bx-cog icon-header'></i>
-                    <div class="user-profile">
-                        <div class="user-info">
-                            <strong>Dr. Ricardo Silva</strong>
-                            <small>COORDENADOR</small>
-                        </div>
-                        <img src="https://ui-avatars.com/api/?name=R+S&background=f6821f&color=fff" alt="User">
-                    </div>
-                </div>
-            </header>
 
-            <div class="page-container">
-                
-                <!-- Title & Breadcrumb -->
-                <div class="breadcrumb">
-                    PORTAL > CERTIFICADOS > <span>EXTRATO DE HORAS</span>
+            <!-- Header Topo -->
+            <header class="cabecalho-topo">
+    <div class="topo-links">
+                    <a href="dashboardadm.html">Início</a>
+                    <a href="submissoes.html">Repositório de Certificados</a>
+                    <a href="extrato_certificado.html" class="active">Extrato de Horas</a>
                 </div>
-                
+</header>
+
+            <div class="page-container" style="padding-top: 10px;">
+
                 <div class="header-action-row">
                     <div class="page-title">
                         <h1>Extrato Acadêmico</h1>
-                        <p>Análise detalhada de atividades complementares: <strong>Turma 2024.1 - ADS</strong></p>
+                        <p>Carregando informações do curso...</p>
                     </div>
-                    <button class="btn-export">
+                    <button class="btn-export" onclick="window.print()">
                         <i class='bx bx-download'></i> EXPORTAR PDF
                     </button>
                 </div>
 
                 <!-- KPIs -->
                 <div class="kpis-grid">
-                    
+
                     <div class="kpi-card kpi-destaque">
                         <div class="kpi-label">TOTAL DE HORAS INTEGRALIZADAS</div>
-                        <div class="kpi-value">90 <small>/ 100h</small></div>
+                        <div class="kpi-value">... <small>/ --h</small></div>
                         <div class="kpi-progress-bar">
-                            <div class="kpi-progress-fill" style="width: 90%;"></div>
+                            <div class="kpi-progress-fill" style="width: 0%;"></div>
                         </div>
-                        <div class="kpi-subtext">Você atingiu <strong>90%</strong> da carga horária obrigatória para este semestre.</div>
+                        <div class="kpi-subtext">Calculando progresso...</div>
                     </div>
 
                     <div class="kpi-card">
-                        <div class="kpi-label"><i class='bx bx-time' style="color:var(--azul-senac);"></i> EM ANÁLISE</div>
-                        <div class="kpi-value">20h</div>
-                        <div class="kpi-subtext highlight">3 SOLICITAÇÕES PENDENTES</div>
+                        <div class="kpi-label"><i class='bx bx-time' style="color:var(--azul-senac);"></i> EM ANÁLISE
+                        </div>
+                        <div class="kpi-value">...h</div>
+                        <div class="kpi-subtext highlight">SOLICITAÇÕES PENDENTES</div>
                     </div>
 
                     <div class="kpi-card">
-                        <div class="kpi-label"><i class='bx bx-check-shield' style="color:var(--azul-senac);"></i> APROVADAS</div>
-                        <div class="kpi-value">90h</div>
-                        <div class="kpi-subtext">+12H ESTE MÊS</div>
+                        <div class="kpi-label"><i class='bx bx-check-shield' style="color:var(--azul-senac);"></i>
+                            APROVADAS</div>
+                        <div class="kpi-value">...h</div>
+                        <div class="kpi-subtext">TOTAL VALIDADO</div>
                     </div>
 
                     <div class="kpi-card">
-                        <div class="kpi-label"><i class='bx bx-error-circle' style="color:var(--azul-senac);"></i> RESTANTE</div>
-                        <div class="kpi-value">10h</div>
-                        <div class="kpi-subtext">META: DEZEMBRO 2024</div>
+                        <div class="kpi-label"><i class='bx bx-error-circle' style="color:var(--azul-senac);"></i>
+                            RESTANTE</div>
+                        <div class="kpi-value">...h</div>
+                        <div class="kpi-subtext">META DO CURSO</div>
                     </div>
-                    
+
                 </div>
 
                 <!-- Bottom Layout -->
                 <div class="bottom-grid">
-                    
+
                     <!-- Left Col -->
                     <div class="col-esquerda">
-                        
+
                         <!-- Limites -->
                         <div class="box-limites">
                             <div class="box-title">LIMITES POR CATEGORIA</div>
-                            
-                            <div class="limit-item">
-                                <div class="limit-info">
-                                    <span>EXTENSÃO</span>
-                                    <span><strong>80</strong> / 80h</span>
-                                </div>
-                                <div class="limit-bar-bg">
-                                    <div class="limit-bar-fill" style="width: 100%;"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="limit-item">
-                                <div class="limit-info">
-                                    <span>PESQUISA</span>
-                                    <span><strong>40</strong> / 40h</span>
-                                </div>
-                                <div class="limit-bar-bg">
-                                    <div class="limit-bar-fill" style="width: 100%;"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="limit-item">
-                                <div class="limit-info">
-                                    <span>CULTURAIS</span>
-                                    <span><strong>25</strong> / 40h</span>
-                                </div>
-                                <div class="limit-bar-bg">
-                                    <div class="limit-bar-fill" style="width: 62.5%;"></div>
-                                </div>
-                            </div>
-                            
-                            <div class="limit-item">
-                                <div class="limit-info">
-                                    <span>MONITORIA</span>
-                                    <span><strong>31</strong> / 40h</span>
-                                </div>
-                                <div class="limit-bar-bg">
-                                    <div class="limit-bar-fill" style="width: 77.5%;"></div>
-                                </div>
-                            </div>
-                            
+                            <p style="padding:20px; color:#64748b;">Carregando regras...</p>
                         </div>
 
                         <!-- Dica do Coordenador -->
                         <div class="box-dica">
                             <div class="dica-header">
-                                <i class='bx bx-bulb'></i> DICA DO COORDENADOR
+                                <i class='bx bx-bulb'></i> DICA DO SISTEMA
                             </div>
-                            <p>A categoria Pesquisa já atingiu o limite máximo de horas permitidas. Sugira aos alunos focar em atividades Culturais para diversificar o extrato.</p>
+                            <p>Mantenha seus certificados sempre atualizados para garantir a contagem correta de horas ao final do semestre.</p>
                         </div>
-                        
+
                     </div>
 
                     <!-- Right Col: Tabela -->
                     <div class="col-direita">
-                        
+
                         <div class="box-tabela">
-                            
+
                             <div class="tabela-header-row">
                                 <div class="tabela-title">HISTÓRICO DE ATIVIDADES</div>
-                                <div class="tabela-tabs">
-                                    <button class="tab-btn active">TODOS</button>
-                                    <button class="tab-btn">PENDENTES</button>
-                                </div>
                             </div>
 
                             <table>
@@ -233,82 +261,20 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>
-                                            <div class="td-atividade">
-                                                <strong>Hackathon Senac 2024</strong>
-                                                <small>Certificado #44312</small>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge-categoria">EXTENSÃO</span></td>
-                                        <td class="td-data">12/05/2024</td>
-                                        <td class="td-horas">20h</td>
-                                        <td><span class="status-badge status-aprovado">APROVADO</span></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div class="td-atividade">
-                                                <strong>Palestra Inteligência Artificial</strong>
-                                                <small>Campus Santo Amaro</small>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge-categoria">CULTURAIS</span></td>
-                                        <td class="td-data">10/05/2024</td>
-                                        <td class="td-horas">4h</td>
-                                        <td><span class="status-badge status-aprovado">APROVADO</span></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div class="td-atividade">
-                                                <strong>Iniciação Científica - Blockchain</strong>
-                                                <small>Orientador: Dr. Marcos</small>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge-categoria">PESQUISA</span></td>
-                                        <td class="td-data">08/05/2024</td>
-                                        <td class="td-horas">40h</td>
-                                        <td><span class="status-badge status-analise">EM ANÁLISE</span></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div class="td-atividade">
-                                                <strong>Monitoria Algoritmos I</strong>
-                                                <small>Semestre 2024.1</small>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge-categoria">MONITORIA</span></td>
-                                        <td class="td-data">01/05/2024</td>
-                                        <td class="td-horas">31h</td>
-                                        <td><span class="status-badge status-aprovado">APROVADO</span></td>
-                                    </tr>
-
-                                    <tr>
-                                        <td>
-                                            <div class="td-atividade">
-                                                <strong>Workshop de UX Design</strong>
-                                                <small>Online - Coursera</small>
-                                            </div>
-                                        </td>
-                                        <td><span class="badge-categoria">EXTENSÃO</span></td>
-                                        <td class="td-data">25/04/2024</td>
-                                        <td class="td-horas">12h</td>
-                                        <td><span class="status-badge status-rejeitado">REJEITADO</span></td>
-                                    </tr>
+                                    <!-- JS Render -->
                                 </tbody>
                             </table>
-                            
+
                         </div>
 
                     </div>
-                    
+
                 </div>
-                
+
             </div>
-            
+
         </main>
     </div>
 </body>
+
 </html>

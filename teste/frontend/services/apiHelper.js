@@ -4,7 +4,11 @@
  * Gerencia Autenticação, Guards de Rota e Transformação de Dados.
  */
  
-var API = ''; // Caminho relativo (usado pelo servidor Express)
+var API = ''; 
+// Se o frontend estiver rodando em porta diferente do backend (ex: Live Server), aponta para 3001
+if (window.location.port && window.location.port !== '3001') {
+    API = 'http://localhost:3001';
+}
  
 /* ---------- Camada de Autenticação (Auth Service) ---------- */
  

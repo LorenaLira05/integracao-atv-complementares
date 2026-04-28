@@ -1,24 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
-    --azul-dark: #002244;
-    --azul-senac: #003366;
-    --laranja-senac: #f6821f;
-    --bg-page: #f8fafc;
-    --bg-card: #ffffff;
-    --border-color: #f1f5f9;
-    --input-bg: #f8fafc;
-    --texto-dark: #1e293b;
-    --texto-light: #64748b;
-    --vermelho: #b91c1c;
-    --verde: #16a34a;
-}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 body {

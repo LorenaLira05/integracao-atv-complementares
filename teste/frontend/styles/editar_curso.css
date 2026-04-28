@@ -1,19 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
-    --azul-senac: #004587;
-    --azul-dark: #002244;
-    --laranja-senac: #f6821f;
-    --bg-page: #f1f5f9;
-    --bg-card: #ffffff;
-    --borda: #e2e8f0;
-    --texto-dark: #1e293b;
-    --texto-light: #64748b;
-    --verde: #16a34a;
-    --vermelho: #dc2626;
-}
 
-* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Montserrat', sans-serif; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', 'Inter', sans-serif; }
 
 body { background: var(--bg-page); color: var(--texto-dark); }
 
@@ -130,7 +119,7 @@ body { background: var(--bg-page); color: var(--texto-dark); }
     border: 1.5px solid transparent; padding: 13px 15px;
     border-radius: 8px; font-size: 13px; font-weight: 500;
     color: var(--texto-dark); outline: none; transition: 0.2s;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
 }
 .form-input:focus, .form-select:focus, .form-textarea:focus {
     border-color: var(--azul-senac); background: white;
@@ -162,7 +151,7 @@ body { background: var(--bg-page); color: var(--texto-dark); }
 .kpi-input-wrap input {
     border: none; background: transparent; outline: none;
     font-size: 28px; font-weight: 800; color: var(--azul-dark);
-    width: 100%; font-family: 'Montserrat', sans-serif;
+    width: 100%; font-family: 'Outfit', 'Inter', sans-serif;
 }
 .kpi-input-wrap .unidade {
     font-size: 11px; font-weight: 700; color: var(--texto-light);

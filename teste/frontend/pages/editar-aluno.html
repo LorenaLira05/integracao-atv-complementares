@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Editar Aluno</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/editar-aluno.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'SUPER_ADMIN']);
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const alunoId = urlParams.get('id');
+
+        if (!alunoId) {
+            alert('ID do aluno não fornecido.');
+            window.location.href = 'alunos.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await carregarCursos();
+            await carregarDadosAluno();
+
+            // Ação de Salvar
+            document.getElementById('btnSalvar').addEventListener('click', salvarAlteracoes);
+            
+            // Ação de Inativar
+            document.getElementById('btnInativar').addEventListener('click', () => {
+                const modal = document.getElementById('modal-inativar');
+                if (modal) modal.style.display = 'flex';
+            });
+        });
+
+        async function carregarCursos() {
+            try {
+                const perfil = (localStorage.getItem('perfil') || '').toLowerCase();
+                let cursos = [];
+                if (perfil === 'coordinator') {
+                    cursos = await apiGet('/coordenador/meus-cursos');
+                } else {
+                    cursos = await apiGet('/admin/cursos');
+                }
+                
+                const select = document.getElementById('cursoVinculado');
+                if (select && Array.isArray(cursos)) {
+                    select.innerHTML = '<option value="">Selecione um curso</option>';
+                    cursos.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name || c.nome;
+                        select.appendChild(opt);
+                    });
+                }
+            } catch (e) { console.error('Erro ao carregar cursos:', e); }
+        }
+
+        async function carregarDadosAluno() {
+            try {
+                const aluno = await apiGet(`/coordenador/aluno/${alunoId}`);
+                if (!aluno) {
+                    alert('Aluno não encontrado.');
+                    return;
+                }
+
+                // Títulos e Perfil
+                document.getElementById('edit-titulo-nome').textContent = aluno.full_name;
+                document.getElementById('danger-nome-aluno').textContent = aluno.full_name.toUpperCase();
+                document.getElementById('aluno-perfil-nome').textContent = aluno.full_name;
+                document.getElementById('aluno-perfil-id').textContent = 'ID: #' + (aluno.ra || aluno.id);
+
+                // Informações Pessoais
+                document.getElementById('nomeCompleto').value = aluno.full_name || '';
+                document.getElementById('emailInstitucional').value = aluno.email || '';
+                document.getElementById('cpfAluno').value = aluno.cpf || '';
+                document.getElementById('telefoneAluno').value = aluno.phone || '';
+
+                // Dados Acadêmicos
+                const selectCurso = document.getElementById('cursoVinculado');
+                if (selectCurso) selectCurso.value = aluno.course_id || '';
+                
+                // Endereço (Mantendo estático conforme solicitado)
+                // document.getElementById('input-cep').value = aluno.cep || ''; ...
+
+                // Status Badge
+                const statusBadge = document.getElementById('status-badge');
+                if (statusBadge) {
+                    const s = (aluno.status_matricula || 'ATIVO').toUpperCase();
+                    statusBadge.textContent = s;
+                    statusBadge.className = 'status-tag ' + (s === 'ATIVO' ? 'ativo' : 'trancado');
+                }
+
+                // Avatar
+                const iniciais = aluno.full_name.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+                document.getElementById('aluno-avatar-box').textContent = iniciais;
+
+                // Data de ingresso
+                if (aluno.enrollment_date) {
+                    const d = new Date(aluno.enrollment_date);
+                    document.getElementById('input-ingresso').value = d.toLocaleDateString('pt-BR');
+                }
+
+            } catch (e) {
+                console.error('Erro ao carregar aluno:', e);
+                alert('Erro ao carregar dados do aluno.');
+            }
+        }
+
+        async function salvarAlteracoes() {
+            const payload = {
+                full_name: document.getElementById('nomeCompleto').value,
+                email: document.getElementById('emailInstitucional').value,
+                phone: document.getElementById('telefoneAluno').value,
+                cpf: document.getElementById('cpfAluno').value,
+                course_id: document.getElementById('cursoVinculado').value
+            };
+
+            try {
+                const res = await apiPut(`/coordenador/aluno/${alunoId}`, payload);
+                if (res && !res.erro) {
+                    alert('Alterações salvas com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('Erro ao salvar: ' + (res.erro || 'Desconhecido'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro na conexão com o servidor.');
+            }
+        }
+
+        async function inativarAluno() {
+            if (!confirm('Tem certeza que deseja inativar este aluno?')) return;
+            try {
+                const res = await apiPatch(`/coordenador/aluno/${alunoId}/inativar`);
+                if (res && !res.erro) {
+                    alert('Aluno inativado com sucesso!');
+                    window.location.href = 'alunos.html';
+                } else {
+                    alert('Erro ao inativar: ' + (res.erro || 'Desconhecido'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Erro na conexão.');
+            }
+        }
+
+        async function alterarStatus() {
+            const novoStatus = prompt('Digite o novo status (ATIVO, TRANCADO, PENDENTE FINANCEIRO):', 'TRANCADO');
+            if (!novoStatus) return;
+
+            try {
+                const res = await apiPatch(`/coordenador/aluno/${alunoId}/status`, { status_matricula: novoStatus.toUpperCase() });
+                if (res && !res.erro) {
+                    alert('Status atualizado com sucesso!');
+                    window.location.reload();
+                } else {
+                    alert('Erro ao atualizar status.');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Event Listeners Adicionais
+        window.addEventListener('DOMContentLoaded', () => {
+            const btnInat1 = document.getElementById('btnInativar');
+            const btnInat2 = document.querySelector('.btn-confirm-inativar');
+            const btnAlt = document.querySelector('.btn-link');
+
+            if (btnInat1) btnInat1.onclick = inativarAluno;
+            if (btnInat2) btnInat2.onclick = inativarAluno;
+            if (btnAlt) btnAlt.onclick = alterarStatus;
+        });
+    </script>
+
+    <div class="layout-geral">
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao"></nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="logout()"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+    <div>
+        <span class="titulo-portal">Portal do Coordenador</span>
+    </div>
+</header>
+
+            <div class="titulo-sessao-row">
+                <h1>Editar Aluno: <span id="edit-titulo-nome">Carregando...</span></h1>
+                <div class="acoes-topo">
+                    <button class="btn-outline-danger" id="btnInativar"><i class='bx bx-user-x'></i> INATIVAR ALUNO</button>
+                    <button class="btn-primary-blue" id="btnSalvar"><i class='bx bx-save'></i> SALVAR ALTERAÇÕES</button>
+                </div>
+            </div>
+
+            <div class="grid-edicao">
+                <!-- COLUNA ESQUERDA: PERFIL -->
+                <div class="col-perfil">
+                    <div class="card-perfil-aluno">
+                        <div class="avatar-container">
+                            <div class="avatar-wrapper">
+                                <div class="avatar-main" id="aluno-avatar-box">JO</div>
+                                <div class="badge-avatar">L</div>
+                            </div>
+                        </div>
+                        <h2 id="aluno-perfil-nome">João da Silva</h2>
+                        <span id="aluno-perfil-id">ID: #2023-8912</span>
+
+                        <div class="stats-row">
+                            <div class="stat-item">
+                                <small>MÉDIA</small>
+                                <strong>8.5</strong>
+                            </div>
+                            <div class="stat-item">
+                                <small>FALTAS</small>
+                                <strong>2%</strong>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card-info-lateral">
+                        <small class="label-lateral">STATUS DA MATRÍCULA</small>
+                        <div class="status-box-row">
+                            <span id="status-badge" class="status-tag ativo">ATIVO</span>
+                            <button class="btn-link">ALTERAR</button>
+                        </div>
+                        <div class="last-update">
+                            <small>ÚLTIMA ATUALIZAÇÃO</small>
+                            <p id="data-atualizacao">Sincronizando...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUNA DIREITA: FORMULÁRIO -->
+                <div class="col-form">
+                    <!-- INFORMAÇÕES PESSOAIS -->
+                    <div class="card-form">
+                        <div class="card-header-simple">
+                            <i class='bx bx-user'></i>
+                            <strong>INFORMAÇÕES PESSOAIS</strong>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>NOME COMPLETO</label>
+                                <input type="text" id="nomeCompleto" value="João da Silva">
+                            </div>
+                            <div class="form-group">
+                                <label>E-MAIL INSTITUCIONAL</label>
+                                <input type="email" id="emailInstitucional" value="joao.silva@senac.edu.br">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>CPF</label>
+                                <input type="text" id="cpfAluno" value="123.456.789-00">
+                            </div>
+                            <div class="form-group">
+                                <label>TELEFONE / WHATSAPP</label>
+                                <input type="text" id="telefoneAluno" value="(11) 98765-4321">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DADOS ACADÊMICOS -->
+                    <div class="card-form">
+                        <div class="card-header-simple">
+                            <i class='bx bx-book-content'></i>
+                            <strong>DADOS ACADÊMICOS</strong>
+                        </div>
+                        <div class="form-row single">
+                            <div class="form-group">
+                                <label>CURSO VINCULADO</label>
+                                <select id="cursoVinculado">
+                                    <option>Análise e Desenvolvimento de Sistemas</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>SEMESTRE ATUAL</label>
+                                <input type="text" id="semestreAtual" value="4">
+                            </div>
+                            <div class="form-group">
+                                <label>DATA DE INGRESSO</label>
+                                <input type="text" id="input-ingresso" value="02/15/2022" disabled>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ENDEREÇO E RESIDÊNCIA -->
+                    <div class="card-form">
+                        <div class="card-header-simple">
+                            <i class='bx bx-map-pin'></i>
+                            <strong>ENDEREÇO E RESIDÊNCIA</strong>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group cep">
+                                <label>CEP</label>
+                                <input type="text" id="input-cep" value="01234-567">
+                            </div>
+                            <div class="form-group lgr">
+                                <label>LOGRADOURO</label>
+                                <input type="text" id="input-logradouro" value="AVENIDA VISCONDE DE SUASSUNA">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label>CIDADE</label>
+                                <input type="text" id="input-cidade" value="RECIFE">
+                            </div>
+                            <div class="form-group">
+                                <label>ESTADO</label>
+                                <input type="text" id="input-estado" value="PE">
+                            </div>
+                            <div class="form-group">
+                                <label>BAIRRO</label>
+                                <input type="text" id="input-bairro" value="SANTO AMARO">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ZONA DE SEGURANÇA -->
+                    <div class="card-danger-zone">
+                        <div class="danger-header">
+                            <i class='bx bx-error-circle'></i>
+                            <div>
+                                <strong>ZONA DE SEGURANÇA</strong>
+                                <p>Inativar um aluno impedirá o acesso dele ao portal acadêmico e suspenderá novas submissões. Esta ação não apaga o histórico de notas e presenças.</p>
+                            </div>
+                        </div>
+                        <button class="btn-confirm-inativar">CONFIRMAR INATIVAÇÃO DE <span id="danger-nome-aluno">JOÃO DA SILVA</span></button>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>

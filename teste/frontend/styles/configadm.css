@@ -1,23 +1,10 @@
-:root {
-    --azul-senac: #004587;
-    --laranja-senac: #f6821f;
-    --texto-dark: #1e293b;
-    --texto-light: #64748b;
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --border-color: #e2e8f0;
-    
-    /* Status Colors */
-    --verde-sucesso: #10b981;
-    --laranja-alerta: #f59e0b;
-    --vermelho-erro: #ef4444;
-}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', -apple-system, sans-serif;
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
 }
 
 body {
@@ -219,7 +206,7 @@ body {
     background: #f8fafc;
     font-size: 13px;
     color: var(--texto-dark);
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
     font-weight: 500;
 }
 
@@ -421,7 +408,7 @@ tr:last-child td {
     font-weight: 600;
     color: var(--texto-dark);
     outline: none;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
     cursor: pointer;
     min-width: 140px;
 }

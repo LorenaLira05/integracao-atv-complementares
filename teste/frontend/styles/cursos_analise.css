@@ -1,21 +1,10 @@
-:root {
-    --azul-senac: #003366;
-    --azul-claro: #004587;
-    --laranja-senac: #f6821f;
-    --bg-main: #f8fafc;
-    --border-color: #f1f5f9;
-    --texto-dark: #1e293b;
-    --texto-light: #64748b;
-    
-    --verde-sucesso: #10b981;
-    --laranja-alerta: #f59e0b;
-}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 body {

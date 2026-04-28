@@ -1,19 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700:wght@400;600;700;800&display=swap');
 
-:root {
-    --azul-senac: #004a8e;
-    --laranja: #d4800a;
-    --fundo: #f8fafc;
-    --borda: #e2e8f0;
-    --texto: #1a2e5a;
-    --texto-light: #64748b;
-}
+
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background-color: var(--fundo);
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
     color: var(--texto);
 }
 
@@ -38,12 +31,7 @@ body {
 }
 
 /* --- HEADER --- */
-.cabecalho-topo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2.5rem;
-}
+
 
 .titulo-secao h1 { font-size: 26px; font-weight: 800; }
 .titulo-secao p { font-size: 14px; color: var(--texto-light); }

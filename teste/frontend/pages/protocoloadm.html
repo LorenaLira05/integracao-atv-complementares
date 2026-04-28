@@ -7,113 +7,150 @@
     <title>Senac - Protocolos de Atividade</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="/styles/protocoloadm.css">
-    <script src="/services/apiHelper.js"></script>
-    <script src="/services/script.js"></script>
+    <script src="/services/apiHelper.js?v=2.1"></script>
+    <script src="/services/script.js?v=2.1"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
     <script>
-        protegerPagina(['COORDENADOR', 'SUPER_ADMIN']);
+        protegerPagina(['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN']);
 
-        window.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const tabelaBody = document.getElementById('tabela-body');
-            if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Carregando protocolos...</td></tr>';
+            const selectCurso = document.querySelector('.filter-select');
+            const tabs = document.querySelectorAll('.tab-link');
 
-            const formatDate = (dateStr) => {
-                if (!dateStr) return '';
-                const options = { day: '2-digit', month: 'short', year: 'numeric' };
-                const date = new Date(dateStr);
-                const parts = new Intl.DateTimeFormat('pt-BR', options).formatToParts(date);
-                const day = parts.find(p => p.type === 'day').value;
-                const month = parts.find(p => p.type === 'month').value;
-                const year = parts.find(p => p.type === 'year').value;
-                return `${day} ${month.charAt(0).toUpperCase() + month.slice(1)},<br>${year}`;
-            };
+            if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Sincronizando com o banco de dados...</td></tr>';
 
-            const getInitials = (name) => {
-                if (!name) return 'UN';
-                const parts = name.trim().split(' ');
-                if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-                return parts[0].substring(0, 2).toUpperCase();
-            };
-
-            const getRandomColor = (str) => {
-                const colors = ['bg-blue', 'bg-orange', 'bg-green', 'bg-purple', 'bg-red'];
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    hash = str.charCodeAt(i) + ((hash << 5) - hash);
-                }
-                return colors[Math.abs(hash) % colors.length];
-            };
-
+            // ── Carregar Cursos ──
             apiGet('/coordenador/meus-cursos').then(cursos => {
-                if (cursos && cursos.length > 0) {
-                    const cursoId = cursos[0].id; 
-
-                    apiGet(`/coordenador/submissoes/${cursoId}`).then(resposta => {
-                        if (resposta) {
-                            const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
-                            const contadores = resposta.contadores || null;
-                            renderTable(subs, contadores);
-                        }
-                    }).catch(() => fallbackTable());
-                } else {
-                    renderTable([], { pendentes: 0, aprovadas: 0, reprovadas: 0, total: 0 });
+                if (selectCurso && Array.isArray(cursos)) {
+                    selectCurso.innerHTML = '<option value="all">Todos os Cursos</option>';
+                    cursos.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name;
+                        selectCurso.appendChild(opt);
+                    });
                 }
-            }).catch(() => fallbackTable());
+            }).catch(err => console.error('Erro ao carregar cursos:', err));
+
+            // ── Carregar Dados ──
+            async function carregarDados() {
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Atualizando...</td></tr>';
+                
+                const cursoVal = selectCurso ? selectCurso.value : 'all';
+                const tabAtiva = document.querySelector('.tab-link.active');
+                const statusMap = {
+                    'Pendentes': 'submitted',
+                    'Aprovadas': 'approved',
+                    'Reprovadas': 'rejected',
+                    'Todas': 'TODAS'
+                };
+                const textoTab = tabAtiva ? tabAtiva.textContent.split(' ')[0] : 'Todas';
+                const status = statusMap[textoTab] || 'TODAS';
+
+                try {
+                    let url = (cursoVal === 'all' || cursoVal === 'Todos os Cursos') 
+                        ? '/coordenador/submissoes' 
+                        : `/coordenador/submissoes/${cursoVal}`;
+                    
+                    url += `?status=${status}`;
+
+                    const resposta = await apiGet(url);
+                    const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                    const contadores = resposta.contadores || null;
+                    renderTable(subs, contadores);
+
+                } catch (err) {
+                    console.error('Erro ao carregar dados:', err);
+                    fallbackTable();
+                }
+            }
+
+            // ── Event Listeners ──
+            selectCurso?.addEventListener('change', carregarDados);
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    carregarDados();
+                });
+            });
 
             function renderTable(subs, contadores) {
-                const kpiPendentes = document.getElementById('kpi-pendentes');
-                const kpiProcessados = document.getElementById('kpi-processados');
+                const kpiPendentes = document.getElementById('val-pendentes');
+                const kpiAprovadas = document.getElementById('val-aprovadas');
+                const kpiReprovadas = document.getElementById('val-reprovadas');
+                const tabPendentes = document.getElementById('tab-pendentes');
                 const tabelaInfo = document.getElementById('tabela-info');
-                const tabelaBody = document.getElementById('tabela-body');
+                const rodapeTabela = document.querySelector('.rodape-tabela');
 
                 if (contadores) {
                     if (kpiPendentes) kpiPendentes.textContent = contadores.pendentes || 0;
-                    if (kpiProcessados) kpiProcessados.textContent = (parseInt(contadores.aprovadas || 0) + parseInt(contadores.reprovadas || 0));
-                } else {
-                    const pendentes = subs.filter(s => s.status && s.status.toLowerCase() === 'submitted').length;
-                    const aprovadas = subs.filter(s => s.status && s.status.toLowerCase() === 'approved').length;
-                    const reprovadas = subs.filter(s => s.status && s.status.toLowerCase() === 'rejected').length;
-                    if (kpiPendentes) kpiPendentes.textContent = pendentes;
-                    if (kpiProcessados) kpiProcessados.textContent = aprovadas + reprovadas;
+                    if (kpiAprovadas) kpiAprovadas.textContent = contadores.aprovadas || 0;
+                    if (kpiReprovadas) kpiReprovadas.textContent = contadores.reprovadas || 0;
+                    if (tabPendentes) tabPendentes.textContent = `Pendentes (${contadores.pendentes || 0})`;
                 }
 
                 if (!tabelaBody) return;
                 tabelaBody.innerHTML = '';
 
                 if (subs.length === 0) {
-                    tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px;">Nenhum protocolo encontrado.</td></tr>';
-                    if (tabelaInfo) tabelaInfo.textContent = 'Mostrando 0 de 0 protocolos';
+                    tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--texto-light);">Nenhum protocolo encontrado.</td></tr>';
+                    if (tabelaInfo) tabelaInfo.textContent = 'Mostrando 0 de 0 submissões';
+                    if (rodapeTabela) rodapeTabela.style.display = 'none';
                     return;
                 }
 
-                if (tabelaInfo) tabelaInfo.textContent = `Mostrando 1 a ${Math.min(subs.length, 10)} de ${contadores ? contadores.total : subs.length} protocolos`;
+                if (rodapeTabela) rodapeTabela.style.display = 'flex';
+                if (tabelaInfo) tabelaInfo.textContent = `Mostrando 1-${Math.min(subs.length, 10)} de ${contadores ? contadores.total : subs.length} submissões`;
 
                 subs.slice(0, 10).forEach((s, idx) => {
                     const statusStr = s.status ? s.status.toLowerCase() : 'submitted';
-                    let badgeClass = 'badge-pendente';
-                    let badgeText = 'PENDENTE';
-                    if (statusStr === 'approved') { badgeClass = 'badge-aprovado'; badgeText = 'APROVADO'; }
-                    else if (statusStr === 'rejected') { badgeClass = 'badge-reprovado'; badgeText = 'REPROVADO'; }
+                    let statusClass = 'status-pendente';
+                    let statusLabel = 'Pendente';
+                    if (statusStr === 'approved' || statusStr === 'approved') { statusClass = 'status-aprovado'; statusLabel = 'Aprovado'; }
+                    else if (statusStr === 'rejected') { statusClass = 'status-reprovado'; statusLabel = 'Reprovado'; }
+
+                    // Determinar categoria da atividade para badge
+                    let catClass = 'ativ-complementar';
+                    let catLabel = 'CURSO COMPLEMENTAR';
+                    const catId = s.category_id || (idx % 4 + 1);
+                    if (catId == 2) { catClass = 'ativ-evento'; catLabel = 'EVENTO'; }
+                    else if (catId == 3) { catClass = 'ativ-monitoria'; catLabel = 'MONITORIA'; }
+                    else if (catId == 4) { catClass = 'ativ-social'; catLabel = 'SOCIAL'; }
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
-                        <td class="id-cell">#PRT-${s.id || ('00' + idx)}</td>
                         <td>
                             <div class="td-aluno">
-                                <div class="avatar-text ${getRandomColor(s.student_name || 'Aluno')}">${getInitials(s.student_name || 'Aluno')}</div>
-                                <strong>${s.student_name || 'Aluno Name'}</strong>
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.student_name || 'A')}&background=random&color=fff" class="avatar-aluno" alt="Avatar">
+                                <div class="aluno-info">
+                                    <strong>${s.student_name || 'Aluno'}</strong>
+                                    <small>RA: ${s.student_ra || '20230011'} • ${s.course_name ? s.course_name.substring(0, 3).toUpperCase() : 'CUR'}</small>
+                                </div>
                             </div>
                         </td>
-                        <td class="curso-cell">${s.course_name ? s.course_name.substring(0, 3).toUpperCase() : 'CUR'}</td>
-                        <td>${s.category_name || s.title || 'Atividade'}</td>
-                        <td><strong>${s.approved_hours || s.horas_solicitadas || '0'}h</strong></td>
-                        <td><span class="badge ${badgeClass}">${badgeText}</span></td>
-                        <td class="data-cell">${formatDate(s.submitted_at || s.data_envio)}</td>
                         <td>
-                            <a href="analise_certificado.html?id=${s.id}" class="btn-ver-detalhes">Ver Detalhes</a>
+                            <div class="td-atividade">
+                                <span class="ativ-nome">${s.title || 'Atividade Acadêmica'}</span>
+                                <span class="badge-ativ ${catClass}">${catLabel}</span>
+                            </div>
+                        </td>
+                        <td class="td-horas">${s.approved_hours || s.horas_solicitadas || '00'}h</td>
+                        <td class="td-data">${formatarData(s.submitted_at || s.data_envio)}</td>
+                        <td>
+                            <div class="status-row ${statusClass}">
+                                <div class="dot"></div> ${statusLabel}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn-actions" onclick="window.location.href='analise_certificado.html?id=${s.id}'">
+                                <i class='bx bx-dots-vertical-rounded'></i>
+                            </button>
                         </td>
                     `;
                     tabelaBody.appendChild(tr);
@@ -121,223 +158,173 @@
             }
 
             function fallbackTable() {
-                const kpiPendentes = document.getElementById('kpi-pendentes');
-                const kpiProcessados = document.getElementById('kpi-processados');
-                if (kpiPendentes && kpiPendentes.textContent === '...') kpiPendentes.textContent = '0';
-                if (kpiProcessados && kpiProcessados.textContent === '...') kpiProcessados.textContent = '0';
-
                 const tabelaBody = document.getElementById('tabela-body');
-                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:20px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
             }
+
+            // --- INICIALIZAÇÃO ---
+            carregarDados();
         });
     </script>
 
     <div class="layout-geral">
-
-        <!-- Sidebar Clássica -->
-        <!-- Sidebar Unificada -->
+        <!-- Sidebar -->
         <aside class="sidebar-dark">
             <div class="logo-secao">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
-                    class="logo-img">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
                 <span class="logo-subtext">GESTÃO ACADÊMICA</span>
             </div>
-
-            <!-- Menu preenchido dinamicamente pelo script.js -->
-            <nav class="menu-navegacao"></nav>
-
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+            </nav>
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
-                    <img id="sidebar-avatar-global"
-                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
                     <div class="perfil-sidebar-info">
                         <strong id="sidebar-nome-global">Usuário</strong>
                         <small id="sidebar-role-global">Gestão</small>
                     </div>
                 </div>
-                <a href="#" class="link-menu link-sair"
-                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
-                        class='bx bx-log-out'></i> Sair</a>
+                <a href="#" class="link-menu link-sair" onclick="logout();"><i class='bx bx-log-out'></i> Sair</a>
             </div>
         </aside>
 
-        <!-- Script para ativar a aba atual e carregar dados do usuário -->
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
-                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
-                links.forEach(link => {
-                    if (link.getAttribute('href') === currentPage) {
-                        link.classList.add('active');
-                    } else {
-                        link.classList.remove('active');
-                    }
-                });
-
-                if (localStorage.getItem('nome')) {
-                    const nomeEl = document.getElementById('sidebar-nome-global');
-                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
-
-                    const avatarEl = document.getElementById('sidebar-avatar-global');
-                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
-                }
-                if (localStorage.getItem('perfil')) {
-                    const roleEl = document.getElementById('sidebar-role-global');
-                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
-                }
-            });
-        </script>
-
-        <!-- Main Content -->
         <main class="conteudo-principal">
-
-            <!-- Top Navbar customizada dessa tela -->
-            <header class="top-header">
-                <nav class="top-nav-links">
-                    <a href="#" class="active">Início</a>
-                    <a href="extrato_certificado.html">Horas (Extrato)</a>
-                    <a href="analise_certificado.html">Certificados</a>
-                    <a href="#">Dúvidas</a>
-                </nav>
-
-                <div class="header-right">
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Buscar aluno ou ID...">
-                    </div>
-                    <i class='bx bx-bell icon-header'></i>
-                    <i class='bx bx-cog icon-header'></i>
-                    <button class="btn-novo-protocolo">Novo Protocolo</button>
-                    <!-- Link bônus solicitado para extrato -->
-                    <a href="extrato_certificado.html" class="btn-extrato"><i class='bx bx-list-ul'></i> Extrato de
-                        Aluno</a>
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
             </header>
-
-            <!-- Título e KPIs -->
-            <section class="head-kpis">
-                <div class="head-text">
-                    <span class="label-laranja">GESTÃO ACADÊMICA</span>
-                    <h1>Protocolos de Atividade</h1>
-                    <p>Central de curadoria para validação de horas complementares. Analise, revise e aprove as
-                        solicitações submetidas pelo corpo discente de forma organizada e eficiente seguindo os padrões
-                        Senac.</p>
+            
+            <div class="head-action-header">
+                <div class="head-title-wrap">
+                    <h1>Listagem de Submissões</h1>
+                    <p>Gestão de horas complementares e atividades extracurriculares.</p>
                 </div>
-                <div class="head-numbers">
-                    <div class="number-box">
-                        <h2 id="kpi-pendentes">...</h2>
-                        <span class="number-label">PENDENTES</span>
+                <div class="head-btns">
+                    <button class="btn-csv"><i class='bx bx-download'></i> Exportar CSV</button>
+                    <button class="btn-nova-ativ" onclick="window.location.href='cadastrar_regra.html'"><i class='bx bx-plus'></i> Cadastrar Regra</button>
+                </div>
+            </div>
+
+            <!-- KPI Row -->
+            <section class="kpi-row-new">
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-file icon-blue'></i>
+                        <span>PENDENTES</span>
                     </div>
-                    <div class="number-box">
-                        <h2 id="kpi-processados">...</h2>
-                        <span class="number-label">PROCESSADOS</span>
+                    <div class="kpi-main-val">
+                        <h2 id="val-pendentes">...</h2>
+                        <span class="kpi-sub-label sub-plus">Aguardando...</span>
+                    </div>
+                </div>
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-check-circle icon-green'></i>
+                        <span>APROVADAS</span>
+                    </div>
+                    <div class="kpi-main-val">
+                        <h2 id="val-aprovadas">...</h2>
+                        <span class="kpi-sub-label sub-month">Total acumulado</span>
+                    </div>
+                </div>
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-x-circle icon-red'></i>
+                        <span>REPROVADAS</span>
+                    </div>
+                    <div class="kpi-main-val">
+                        <h2 id="val-reprovadas">...</h2>
+                        <span class="kpi-sub-label sub-pct">Total acumulado</span>
+                    </div>
+                </div>
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-time-five icon-yellow'></i>
+                        <span>RESPOSTA</span>
+                    </div>
+                    <div class="kpi-main-val">
+                        <h2 id="val-sla">--h</h2>
+                        <span class="kpi-sub-label sub-sla">SLA Estimado</span>
                     </div>
                 </div>
             </section>
 
-            <!-- Área da Tabela Central -->
+            <!-- Table Card -->
             <section class="card-tabela-avancada">
-
-                <!-- Barra de Filtros -->
                 <div class="filters-row">
-                    <div class="filter-box">
-                        <label>FILTRAR POR CURSO</label>
-                        <select>
+                    <div class="filters-tabs">
+                        <button class="tab-link active">Todas</button>
+                        <button class="tab-link" id="tab-pendentes">Pendentes</button>
+                        <button class="tab-link">Aprovadas</button>
+                        <button class="tab-link">Reprovadas</button>
+                    </div>
+                    <div class="filters-selects">
+                        <select class="filter-select">
                             <option>Todos os Cursos</option>
                         </select>
-                    </div>
-                    <div class="filter-box">
-                        <label>STATUS</label>
-                        <select>
-                            <option>Todos Status</option>
+                        <select class="filter-select">
+                            <option>Mais recentes</option>
                         </select>
                     </div>
-                    <div class="filter-box">
-                        <label>PERÍODO</label>
-                        <select>
-                            <option>Últimos 30 dias</option>
-                        </select>
-                    </div>
-                    <button class="btn-mais-filtros"><i class='bx bx-filter'></i> Mais Filtros</button>
                 </div>
 
-                <!-- Tabela de Dados -->
                 <table class="tabela-protocolos">
                     <thead>
                         <tr>
-                            <th>ID</th>
                             <th>ALUNO</th>
-                            <th>CURSO</th>
-                            <th>TIPO DE ATIVIDADE</th>
+                            <th>ATIVIDADE</th>
                             <th>HORAS</th>
+                            <th>DATA DE ENVIO</th>
                             <th>STATUS</th>
-                            <th>DATA ENVIO</th>
                             <th>AÇÕES</th>
                         </tr>
                     </thead>
                     <tbody id="tabela-body">
-                        <!-- Linhas geradas via JavaScript -->
+                        <!-- JS Render -->
                     </tbody>
                 </table>
 
-                <!-- Rodapé da Tabela -->
                 <div class="rodape-tabela">
-                    <span class="info-paginacao" id="tabela-info">Mostrando ... protocolos</span>
+                    <span class="info-paginacao" id="tabela-info">Carregando métricas...</span>
                     <div class="paginacao">
                         <button class="btn-pag-arrow"><i class='bx bx-chevron-left'></i></button>
                         <button class="btn-pag numeric active">1</button>
                         <button class="btn-pag numeric">2</button>
+                        <button class="btn-pag numeric">3</button>
+                        <button class="btn-pag-arrow">...</button>
+                        <button class="btn-pag numeric">19</button>
                         <button class="btn-pag-arrow"><i class='bx bx-chevron-right'></i></button>
                     </div>
                 </div>
             </section>
 
-            <!-- Cards Bottom Widgets -->
-            <section class="bottom-widgets-grid">
-
-                <!-- Card 1: Atenção -->
-                <div class="widget-card widget-atencao">
-                    <div class="w-icon"><i class='bx bx-notepad'></i></div>
-                    <h3>Atenção Necessária</h3>
-                    <p>Existem 12 protocolos com mais de 15 dias sem movimentação. Recomenda-se a análise prioritária
-                        destes itens.</p>
-                    <a href="#" class="widget-link">REVISAR ATRASADOS &rarr;</a>
+            <!-- Banner Lote -->
+            <section class="banner-lote">
+                <div class="lote-content">
+                    <span class="lote-label">DICA DE PRODUTIVIDADE</span>
+                    <h2>Análise em Lote</h2>
+                    <p>Você sabia que pode selecionar múltiplas submissões para aprová-las de uma vez? Utilize a caixa de seleção na lateral para agilizar seu fluxo de trabalho durante períodos de alta demanda.</p>
+                    <button class="btn-lote">Aprender como usar</button>
                 </div>
-
-                <!-- Card 2: Relatório Mensal -->
-                <div class="widget-card widget-relatorio">
-                    <h3>Relatórios Mensais</h3>
-                    <p>Exportar dados consolidados para o MEC e conselhos regionais.</p>
+                <div class="shortcuts-box">
+                    <h4><div class="dot-short"></div> Atalhos de Teclado</h4>
+                    <div class="shortcut-item"><span>Aprovar selecionados</span> <span class="kbd">Alt + A</span></div>
+                    <div class="shortcut-item"><span>Ver detalhes</span> <span class="kbd">Alt + V</span></div>
+                    <div class="shortcut-item"><span>Próxima página</span> <span class="kbd">Alt + ></span></div>
                 </div>
-
-                <!-- Card 3: Guia Curadoria -->
-                <div class="widget-card widget-guia">
-                    <h3>Guia de Curadoria</h3>
-                    <ul class="guia-list">
-                        <li><i class='bx bx-check-circle'></i> Confira a carga horária máxima permitida por categoria.
-                        </li>
-                        <li><i class='bx bx-check-circle'></i> Valide a autenticidade dos certificados digitais
-                            anexados.</li>
-                    </ul>
-                    <a href="#" class="widget-link link-guia">ACESSE O MANUAL DO AVALIADOR <i
-                            class='bx bx-link-external'></i></a>
-                </div>
-
             </section>
 
-            <!-- Footer Simples -->
             <footer class="main-footer">
-                <div class="footer-logo">Senac</div>
-                <div class="footer-links">
-                    <a href="#">Privacidade</a>
-                    <a href="#">Termos de Uso</a>
-                    <a href="#">Suporte Técnico</a>
-                </div>
-                <div class="footer-copy">&copy; 2024 Senac Brasil - Portal de Atividades Complementares</div>
+                &copy; 2026 Portal Acadêmico - Todos os direitos reservados.
             </footer>
 
         </main>
     </div>
 </body>
-
 </html>

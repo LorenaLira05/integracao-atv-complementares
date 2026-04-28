@@ -11,6 +11,7 @@
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
@@ -36,32 +37,13 @@
         const POR_PAGINA = 15;
         let buscaAtual = '';
         let cursoBuscaAtual = '';
+        let statusBuscaAtual = '';
 
         window.addEventListener('DOMContentLoaded', () => {
-
-            // ── Sidebar usuario ──
-            const nome   = localStorage.getItem('nome');
-            const perfil = localStorage.getItem('perfil');
-            const labelMap = { 'super_admin':'Super Admin','coordinator':'Coordenador','student':'Aluno' };
-
-            if (nome) {
-                const nomeEl   = document.getElementById('sidebar-nome-global');
-                const avatarEl = document.getElementById('sidebar-avatar-global');
-                const headerNomeEl = document.getElementById('header-nome-usuario');
-                const headerRoleEl = document.getElementById('header-role-usuario');
-                if (nomeEl)   nomeEl.textContent = nome;
-                if (avatarEl) avatarEl.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
-                if (headerNomeEl) headerNomeEl.textContent = nome;
-                if (headerRoleEl) headerRoleEl.textContent = labelMap[perfil?.toLowerCase()] || 'Coordenador';
-            }
-            if (perfil) {
-                const roleEl = document.getElementById('sidebar-role-global');
-                if (roleEl) roleEl.textContent = labelMap[perfil.toLowerCase()] || perfil;
-            }
-
+            // Sidebar e Header info já são tratados pelo script.js central
             carregarDados();
 
-            // ── Busca por nome/RA ──
+            // Busca
             let debounce;
             document.querySelector('.caixa-busca input')?.addEventListener('input', e => {
                 clearTimeout(debounce);
@@ -72,72 +54,73 @@
                 }, 300);
             });
 
-            // ── Filtro por curso ──
+            // Filtros
             document.getElementById('select-curso')?.addEventListener('change', e => {
                 cursoBuscaAtual = e.target.value;
+                paginaAtual = 1;
+                renderAlunos();
+            });
+            document.getElementById('select-status')?.addEventListener('change', e => {
+                statusBuscaAtual = e.target.value;
                 paginaAtual = 1;
                 renderAlunos();
             });
         });
 
         async function carregarDados() {
-            const perfil = (localStorage.getItem('perfil') || '').toLowerCase();
             try {
+                const perfil = (localStorage.getItem('perfil') || '').toLowerCase();
+                const selectCurso = document.getElementById('select-curso');
+                console.log('Iniciando carregamento de alunos. Perfil:', perfil);
+
                 if (perfil === 'coordinator') {
-                    // 1. Descobre os cursos do coordenador
                     const meusCursos = await apiGet('/coordenador/meus-cursos');
                     const cursos = Array.isArray(meusCursos) ? meusCursos : [];
-
-                    // Popula select de cursos
-                    const select = document.getElementById('select-curso');
-                    if (select) {
+                    console.log('Cursos do coordenador:', cursos);
+                    
+                    if (selectCurso && selectCurso.options.length <= 1) {
                         cursos.forEach(c => {
                             const opt = document.createElement('option');
                             opt.value = c.id;
                             opt.textContent = c.name;
-                            select.appendChild(opt);
+                            selectCurso.appendChild(opt);
                         });
                     }
 
-                    // 2. Busca alunos de todos os cursos do coordenador
                     const promessas = cursos.map(c =>
                         apiGet(`/coordenador/alunos/${c.id}`)
                             .then(lista => (Array.isArray(lista) ? lista : []).map(a => ({ ...a, course_name: c.name, course_id: c.id })))
-                            .catch(() => [])
+                            .catch(err => { console.error(`Erro ao carregar alunos do curso ${c.id}:`, err); return []; })
                     );
                     const resultados = await Promise.all(promessas);
                     todosAlunos = resultados.flat();
-
+                    console.log('Total de alunos carregados (Coordenador):', todosAlunos.length);
                 } else {
-                    // SUPER_ADMIN: busca todos
                     const resp = await apiGet('/admin/alunos');
                     todosAlunos = Array.isArray(resp) ? resp : [];
+                    console.log('Total de alunos carregados (Admin):', todosAlunos.length);
 
-                    // Popula select de cursos para super admin
                     const cursos = await apiGet('/admin/cursos').catch(() => []);
-                    const select = document.getElementById('select-curso');
-                    if (select && Array.isArray(cursos)) {
+                    if (selectCurso && selectCurso.options.length <= 1 && Array.isArray(cursos)) {
                         cursos.forEach(c => {
                             const opt = document.createElement('option');
                             opt.value = c.id;
                             opt.textContent = c.name;
-                            select.appendChild(opt);
+                            selectCurso.appendChild(opt);
                         });
                     }
                 }
-
                 renderAlunos();
-
             } catch(e) {
-                console.error('Erro ao carregar alunos:', e);
-                renderAlunos();
+                console.error('Erro crítico no carregamento:', e);
+                const infoTotal = document.getElementById('info-total-alunos');
+                if (infoTotal) infoTotal.textContent = 'Erro: ' + e.message;
             }
         }
 
         function renderAlunos() {
             let lista = [...todosAlunos];
 
-            // Filtro de busca texto
             if (buscaAtual.trim()) {
                 const q = buscaAtual.toLowerCase();
                 lista = lista.filter(a =>
@@ -147,98 +130,91 @@
                 );
             }
 
-            // Filtro de curso
             if (cursoBuscaAtual) {
                 lista = lista.filter(a => String(a.course_id) === String(cursoBuscaAtual));
             }
-
-            // KPIs
-            const kpis = document.querySelectorAll('.kpi-kpi-valor-row h2');
-            if (kpis.length >= 2) {
-                kpis[0].textContent = todosAlunos.length.toLocaleString('pt-BR');
-                const ativos = todosAlunos.filter(a => (a.status_matricula || a.status || 'ativo').toLowerCase() === 'ativo').length;
-                kpis[1].textContent = ativos.toLocaleString('pt-BR');
+            if (statusBuscaAtual) {
+                lista = lista.filter(a => (a.status_matricula || '').toLowerCase() === statusBuscaAtual.toLowerCase());
             }
 
-            // Paginação
+            // KPIs
+            const totalEl = document.getElementById('kpi-total');
+            const ativasEl = document.getElementById('kpi-ativas');
+            if (totalEl) totalEl.textContent = lista.length.toLocaleString('pt-BR');
+            if (ativasEl) {
+                const ativas = lista.filter(a => (a.status_matricula || 'ativo').toLowerCase() === 'ativo').length;
+                ativasEl.textContent = ativas.toLocaleString('pt-BR');
+            }
+
             const total = lista.length;
             const totalPags = Math.ceil(total / POR_PAGINA) || 1;
-            if (paginaAtual > totalPags) paginaAtual = 1;
             const inicio = (paginaAtual - 1) * POR_PAGINA;
             const paginados = lista.slice(inicio, inicio + POR_PAGINA);
 
-            // Info
-            const infoEl = document.querySelector('.info-listagem span');
-            if (infoEl) infoEl.textContent = total === 0
-                ? 'Nenhum aluno encontrado'
-                : `Exibindo ${inicio + 1}-${Math.min(inicio + POR_PAGINA, total)} de ${total.toLocaleString()} alunos`;
-
-            // Paginação controles
-            renderPaginacao(totalPags);
-
-            // Tabela
-            const tbody = document.querySelector('.tabela-alunos tbody');
-            if (!tbody) return;
-
-            if (paginados.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;padding:30px;">Nenhum aluno encontrado no banco de dados.</td></tr>';
-                return;
+            const infoTotal = document.getElementById('info-total-alunos');
+            if (infoTotal) {
+                const fim = Math.min(inicio + POR_PAGINA, total);
+                infoTotal.textContent = total === 0 ? 'Nenhum aluno encontrado' : `Exibindo ${total > 0 ? inicio + 1 : 0} a ${fim} de ${total.toLocaleString()} alunos`;
             }
 
+            const tbody = document.getElementById('tbody-alunos');
+            if (!tbody) return;
+
             tbody.innerHTML = paginados.map(a => {
-                const nome = a.full_name || 'Sem Nome';
-                const ra   = a.ra || a.id || '—';
-                const curso = a.course_name || 'Não vinculado';
-                const semestre = a.semestre || '1';
-                const statusRaw = (a.status_matricula || a.status || 'ativo').toLowerCase();
-                const statusLabel = statusRaw === 'ativo' ? 'ATIVO' : statusRaw === 'trancado' ? 'TRANCADO' : statusRaw.toUpperCase();
-                const statusClass = statusRaw === 'ativo' ? 'status-ativo' : 'status-trancado';
-                const initials = nome.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-                const corCurso = getCorCurso(curso);
-                const bgColors = ['#0056b3','#f6821f','#7c3aed','#10b981','#ef4444'];
-                const bgColor  = bgColors[nome.charCodeAt(0) % bgColors.length];
+                const nome = a.full_name || 'Estudante';
+                const iniciais = nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+                const statusRaw = (a.status_matricula || 'ativo').toLowerCase();
+                
+                let statusLabel = 'ATIVO';
+                let statusClass = 'status-ativo';
+                if (statusRaw === 'trancado') { statusLabel = 'TRANCADO'; statusClass = 'status-trancado'; }
+                else if (statusRaw.includes('pendente')) { statusLabel = 'PENDENTE FINANCEIRO'; statusClass = 'status-pendente-finan'; }
 
                 return `
                     <tr>
                         <td>
                             <div class="td-aluno-row">
-                                <div class="avatar-circle" style="background:${bgColor};color:#fff;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${initials}</div>
-                                <div>
+                                <div class="avatar-circle">${iniciais}</div>
+                                <div class="aluno-nome-email">
                                     <strong>${nome}</strong>
-                                    <span class="email-aluno">${a.email || '—'}</span>
+                                    <span>${a.email || '—'}</span>
                                 </div>
                             </div>
                         </td>
-                        <td class="td-ra">${ra}</td>
-                        <td>
-                            <span class="tag-curso-aluno" style="background:${corCurso.bg};color:${corCurso.color};">${curso}</span>
-                        </td>
-                        <td class="td-semestre">${semestre}º</td>
+                        <td class="td-ra">${a.ra || '—'}</td>
+                        <td>${a.course_name || 'Geral'}</td>
+                        <td style="font-weight:700; color:var(--azul-main)">${a.semestre || '1'}º</td>
                         <td>
                             <span class="status-badge-aluno ${statusClass}">
-                                <i class='bx bx-circle-fill' style="font-size:7px"></i> ${statusLabel}
+                                <i class='bx bxs-circle'></i> ${statusLabel}
                             </span>
+                        </td>
+                        <td style="text-align:right">
+                            <a href="editar-aluno.html?id=${a.id}" class="btn-acao-tabela edit" title="Editar Aluno">
+                                <i class='bx bx-pencil'></i>
+                            </a>
                         </td>
                     </tr>
                 `;
             }).join('');
+
+            renderPaginacao(totalPags);
         }
 
         function renderPaginacao(totalPags) {
-            const wrap = document.querySelector('.paginacao-botoes');
-            const info = document.querySelector('.info-paginacao');
-            if (!wrap) return;
+            const container = document.getElementById('paginacao-container');
+            const info = document.getElementById('info-paginacao-texto');
+            if (!container) return;
 
-            let html = `<button class="btn-pag" onclick="mudarPag(${paginaAtual-1})" ${paginaAtual<=1?'disabled':''}><i class='bx bx-chevron-left'></i></button>`;
+            let html = '';
             for (let i = 1; i <= totalPags; i++) {
-                if (totalPags > 7 && i > 3 && i < totalPags - 1 && Math.abs(i - paginaAtual) > 1) {
+                if (totalPags > 5 && i > 3 && i < totalPags) {
                     if (i === 4) html += '<button class="btn-pag" disabled>...</button>';
                     continue;
                 }
-                html += `<button class="btn-pag ${i===paginaAtual?'active':''}" onclick="mudarPag(${i})">${i}</button>`;
+                html += `<button class="btn-pag ${i === paginaAtual ? 'active' : ''}" onclick="mudarPag(${i})">${i}</button>`;
             }
-            html += `<button class="btn-pag" onclick="mudarPag(${paginaAtual+1})" ${paginaAtual>=totalPags?'disabled':''}><i class='bx bx-chevron-right'></i></button>`;
-            wrap.innerHTML = html;
+            container.innerHTML = html;
             if (info) info.textContent = `PÁGINA ${paginaAtual} DE ${totalPags}`;
         }
 
@@ -259,7 +235,13 @@
             </div>
 
             <!-- Menu preenchido dinamicamente pelo script.js -->
-            <nav class="menu-navegacao"></nav>
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+            </nav>
 
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
@@ -283,20 +265,7 @@
 
             <header class="cabecalho-topo">
                 <div>
-                    <span class="titulo-portal">SENAC ERP</span>
-                    <span class="titulo-subportal">Portal Acadêmico</span>
-                </div>
-                <div class="caixa-busca">
-                    <i class='bx bx-search'></i>
-                    <input type="text" placeholder="Buscar por nome ou RA...">
-                </div>
-                <div class="acoes-usuario">
-                    <i class='bx bx-bell icon-header'></i>
-                    <div class="perfil-info">
-                        <strong id="header-nome-usuario">Carregando...</strong>
-                        <small id="header-role-usuario">Coordenador</small>
-                    </div>
-                    <div class="foto-perfil"></div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
             </header>
 
@@ -305,15 +274,12 @@
                     <div class="breadcrumb">
                         <span>GESTÃO ACADÊMICA</span>
                         <i class='bx bx-chevron-right'></i>
-                        <span>ALUNOS</span>
-                        <i class='bx bx-chevron-right'></i>
-                        <span class="breadcrumb-ativo">VISÃO GERAL</span>
+                        <span class="breadcrumb-ativo">LISTAGEM GERAL</span>
                     </div>
                     <h1>Gestão de Alunos</h1>
                 </div>
                 <div>
-                    <a href="novo-aluno.html" class="btn-solid" style="text-decoration:none;"><i
-                            class='bx bx-user-plus'></i> Novo Aluno</a>
+                    <a href="novo-aluno.html" class="btn-solid"><i class='bx bx-user-plus'></i> Novo Aluno</a>
                 </div>
             </section>
 
@@ -321,128 +287,86 @@
                 <div class="kpi-card-kpi">
                     <span class="kpi-kpi-titulo">TOTAL DE ALUNOS</span>
                     <div class="kpi-kpi-valor-row">
-                        <h2>0</h2>
-                        <span class="badge-kpi badge-verde-subir">
-                            <i class='bx bx-trending-up'></i> +9% este semestre
-                        </span>
+                        <h2 id="kpi-total">0</h2>
                     </div>
+                    <span class="badge-kpi badge-verde-subir">
+                        <i class='bx bx-trending-up'></i> Atualizado agora
+                    </span>
                 </div>
-
-                <div class="kpi-separador"></div>
 
                 <div class="kpi-card-kpi">
                     <span class="kpi-kpi-titulo">MATRÍCULAS ATIVAS</span>
                     <div class="kpi-kpi-valor-row">
-                        <h2>1,150</h2>
-                        <span class="badge-kpi badge-cinza-claro-kpi">
-                            89.5% do corpo docente
-                        </span>
+                        <h2 id="kpi-ativas">0</h2>
                     </div>
+                    <span class="badge-kpi badge-cinza-claro-kpi">
+                        Filtro ativo
+                    </span>
                 </div>
 
                 <div class="card-analise-performance">
-                    <div class="perf-header">
-                        <span class="perf-tag">Análise de Performance</span>
-                        <span class="perf-valor">8.4</span>
+                    <div class="perf-left">
+                        <h3>Análise de Performance</h3>
+                        <p>Indicadores de engajamento baseados na média de notas dos alunos matriculados.</p>
+                        <a href="#" class="btn-perf-ver-relatorio">Ver Relatório Completo</a>
                     </div>
-                    <p class="perf-texto">A média geral de GPA aumentou 0.2 pontos desde o último semestre, indicando
-                        engajamento acadêmico.</p>
-                    <a href="#" class="btn-perf-ver-relatorio">Ver Relatório Completo</a>
+                    <div class="perf-valor-box">
+                        <span class="perf-valor" id="gpa-medio">8.4</span>
+                        <span class="perf-valor-label">GPA MÉDIO</span>
+                    </div>
                 </div>
             </section>
 
             <section class="cartao-tabela-container">
                 <div class="filtros-barra">
                     <div class="grupo-filtro-linha">
-                        <div class="campo-filtro">
-                            <label>Filtrar por Curso</label>
-                            <select class="select-filtro-grande" id="select-curso">
+                        <div class="select-wrapper">
+                            <i class='bx bx-filter-alt select-icon'></i>
+                            <select id="select-curso" class="select-filtro-compact">
                                 <option value="">Todos os Cursos</option>
                             </select>
                         </div>
-                        <div class="campo-filtro">
-                            <label>Semestre</label>
-                            <select class="select-filtro-grande" id="select-semestre">
-                                <option value="">Todos</option>
-                                <option value="1">2024.1</option>
-                                <option value="2">2024.2</option>
-                                <option value="3">2025.1</option>
+                        <div class="select-wrapper">
+                            <i class='bx bx-check-circle select-icon'></i>
+                            <select id="select-status" class="select-filtro-compact">
+                                <option value="">Todos os Status</option>
+                                <option value="ativo">Ativo</option>
+                                <option value="trancado">Trancado</option>
+                                <option value="pendente_financeiro">Pendente Financeiro</option>
                             </select>
                         </div>
                     </div>
-                </div>
-
-                <div class="info-listagem">
-                    <span>Exibindo 0 alunos</span>
+                    <div class="info-listagem">
+                        <span id="info-total-alunos">Carregando...</span>
+                        <i class='bx bx-chevron-left' onclick="mudarPag(paginaAtual-1)"></i>
+                        <i class='bx bx-chevron-right' onclick="mudarPag(paginaAtual+1)"></i>
+                    </div>
                 </div>
 
                 <table class="tabela-alunos">
                     <thead>
                         <tr>
                             <th>NOME DO ALUNO</th>
-                            <th>RA</th>
-                            <th>CURSO</th>
+                            <th>RA (REGISTRO)</th>
+                            <th>CURSO ACADÊMICO</th>
                             <th>SEMESTRE</th>
-                            <th>STATUS</th>
+                            <th>STATUS MATRÍCULA</th>
+                            <th></th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: var(--texto-light); padding: 20px;">
-                                Carregando alunos...
-                            </td>
-                        </tr>
+                    <tbody id="tbody-alunos">
+                        <!-- Preenchido via JS -->
                     </tbody>
                 </table>
 
                 <div class="rodape-tabela">
-                    <div class="paginacao-botoes">
-                        <button class="btn-pag"><i class='bx bx-chevron-left'></i></button>
-                        <button class="btn-pag active">1</button>
-                        <button class="btn-pag">2</button>
-                        <button class="btn-pag">9</button>
-                        <button class="btn-pag"><i class='bx bx-chevron-right'></i></button>
+                    <div class="paginacao-botoes" id="paginacao-container">
+                        <!-- Preenchido via JS -->
                     </div>
-                    <span class="info-paginacao">PÁGINA 1 DE 129</span>
+                    <span class="info-paginacao" id="info-paginacao-texto">PÁGINA 1 DE 129</span>
                 </div>
             </section>
 
-            <section class="grade-cards-inferiores">
-                <div class="card-info-bottom card-dica-sistema">
-                    <div class="card-dica-icon">
-                        <i class='bx bx-bulb'></i>
-                    </div>
-                    <span class="card-dica-tag">Dica do Sistema</span>
-                    <h3>Auditoria de Matrículas</h3>
-                    <p>Realize a validação de frequently updates nas matrículas. O prazo para processamento sem taxa de
-                        multa finaliza próximo em 5 dias úteis.</p>
-                    <a href="#" class="link-ver-funcionalidade">VER FUNCIONALIDADE</a>
-                    <span class="link-complementar">CONHECER TODA A LISTA</span>
-                </div>
-
-                <div class="card-info-bottom card-calendario">
-                    <div class="calendario-header">
-                        <i class='bx bx-calendar'></i>
-                        <span>Calendário Acadêmico</span>
-                    </div>
-                    <div class="calendario-eventos">
-                        <div class="evento-item">
-                            <div class="evento-dot"></div>
-                            <div>
-                                <strong>2º Sem de Avaliações</strong>
-                                <span>22 Jan</span>
-                            </div>
-                        </div>
-                        <div class="evento-item">
-                            <div class="evento-dot cor-laranja"></div>
-                            <div>
-                                <strong>Lançamento das Notas</strong>
-                                <span>31 Mar</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
         </main>
 

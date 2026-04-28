@@ -1,24 +1,15 @@
 /* ==========================================================================
    CONFIGURAÇÕES E VARIÁVEIS
    ========================================================================== */
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
-    --brand-primary: #004a8e;    /* Azul Senac */
-    --brand-secondary: #d4800a;  /* Laranja Senac */
-    --brand-dark: #1a2e5a;       /* Azul Escuro */
-    --bg-main: #f8fafc;
-    --bg-white: #ffffff;
-    --text-muted: #64748b;
-    --border-color: #e2e8f0;
-    --radius: 12px;
-}
+
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
     background-color: var(--bg-main);
-    font-family: "Montserrat", sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
     color: var(--brand-dark);
 }
 
@@ -61,7 +52,7 @@ body {
 }
 
 /* Header */
-.cabecalho-topo { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; }
+
 .aba { text-decoration: none; color: var(--text-muted); font-weight: 600; margin-right: 20px; font-size: 13px; }
 .aba.active { color: var(--brand-primary); border-bottom: 3px solid var(--brand-secondary); padding-bottom: 4px; }
 

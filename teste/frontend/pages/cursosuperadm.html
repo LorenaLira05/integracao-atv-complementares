@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senac - Gestão de Cursos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="/styles/sidebar.css">
@@ -30,10 +30,9 @@
             </div>
 
             <nav class="menu-navegacao">
-                <a href="cursosuperadm.html" class="link-menu active"><i class='bx bx-book'></i> Cursos</a>
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
                 <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
                 <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
-                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
             </nav>
 
             <div class="sidebar-bottom-action">
@@ -56,15 +55,9 @@
         <main class="conteudo-principal">
 
             <!-- Top Header -->
-            <header class="top-header">
-                <div class="top-header-left">
-                    <h2>Portal Acadêmico</h2>
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="input-busca" placeholder="Buscar por curso ou ID...">
-                    </div>
-                </div>
-                <div class="header-right">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Super Administrador</span>
                 </div>
             </header>
 
@@ -73,7 +66,7 @@
                 <!-- Title & Action -->
                 <div class="header-action-row">
                     <div class="page-title">
-                        <div class="breadcrumb">GESTÃO ACADEMICA</div>
+                        <div class="breadcrumb">GESTÃO ACADÊMICA</div>
                         <h1>3a. Gestão de Cursos <span>(Super Adm)</span></h1>
                     </div>
                     <button class="btn-primary" onclick="window.location.href='criar_curso.html'">
@@ -84,28 +77,28 @@
                 <!-- KPIs -->
                 <div class="kpis-grid">
                     <div class="kpi-card">
-                        <div class="kpi-badge" id="kpi-badge-mes">+0 ESTE MÊS</div>
-                        <div class="kpi-icon kpi-icon-blue"><i class='bx bx-book-bookmark'></i></div>
+                        <div class="kpi-badge" id="kpi-badge-mes">+4 ESTE MÊS</div>
+                        <div class="kpi-icon kpi-icon-blue"><i class='bx bx-book'></i></div>
                         <div class="kpi-title">Total de Cursos</div>
-                        <div class="kpi-value" id="kpi-total-cursos">—</div>
+                        <div class="kpi-value" id="kpi-total-cursos">124</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-icon kpi-icon-orange"><i class='bx bx-user-voice'></i></div>
                         <div class="kpi-title">Coordenadores Ativos</div>
-                        <div class="kpi-value" id="kpi-coord-ativos">—</div>
+                        <div class="kpi-value" id="kpi-coord-ativos">48</div>
                     </div>
 
                     <div class="kpi-card">
-                        <div class="kpi-icon kpi-icon-orange"><i class='bx bx-clipboard'></i></div>
+                        <div class="kpi-icon kpi-icon-orange"><i class='bx bx-time-five'></i></div>
                         <div class="kpi-title">Aguardando Revisão</div>
-                        <div class="kpi-value" id="kpi-pendentes">—</div>
+                        <div class="kpi-value" id="kpi-pendentes">12</div>
                     </div>
 
                     <div class="kpi-card">
                         <div class="kpi-icon kpi-icon-blue"><i class='bx bx-group'></i></div>
                         <div class="kpi-title">Alunos Matriculados</div>
-                        <div class="kpi-value" id="kpi-alunos">—</div>
+                        <div class="kpi-value" id="kpi-alunos">3.842</div>
                     </div>
                 </div>
 
@@ -154,7 +147,7 @@
                                     <div class="td-acoes">
                                         <i class='bx bx-pencil'></i>
                                         <i class='bx bx-show'></i>
-                                        <i class='bx bx-download'></i>
+                                        <i class='bx bx-archive'></i>
                                     </div>
                                 </td>
                             </tr>
@@ -182,7 +175,7 @@
                                     <div class="td-acoes">
                                         <i class='bx bx-pencil'></i>
                                         <i class='bx bx-show'></i>
-                                        <i class='bx bx-download'></i>
+                                        <i class='bx bx-archive'></i>
                                     </div>
                                 </td>
                             </tr>
@@ -200,9 +193,7 @@
                                 </td>
                                 <td>
                                     <div class="td-coordenador pendente">
-                                        <div class="coord-avatar"
-                                            style="background: #f8fafc; color: #cbd5e1; border: 1px dashed #cbd5e1;">NA
-                                        </div>
+                                        <div class="coord-avatar">NA</div>
                                         <span>Pendente vinculação</span>
                                     </div>
                                 </td>
@@ -212,7 +203,7 @@
                                     <div class="td-acoes">
                                         <i class='bx bx-pencil'></i>
                                         <i class='bx bx-show'></i>
-                                        <i class='bx bx-download'></i>
+                                        <i class='bx bx-archive'></i>
                                     </div>
                                 </td>
                             </tr>
@@ -221,7 +212,7 @@
                             <tr>
                                 <td>
                                     <div class="td-curso">
-                                        <div class="curso-sigla" style="background:#f1f5f9;color:#64748b;">ENG</div>
+                                        <div class="curso-sigla sigla-cinza">ENG</div>
                                         <div class="curso-info">
                                             <strong>Engenharia de Software</strong>
                                             <small>Bacharelado • 10 semestres</small>
@@ -240,7 +231,7 @@
                                     <div class="td-acoes">
                                         <i class='bx bx-pencil'></i>
                                         <i class='bx bx-show'></i>
-                                        <i class='bx bx-download'></i>
+                                        <i class='bx bx-archive'></i>
                                     </div>
                                 </td>
                             </tr>
@@ -250,7 +241,7 @@
                     <!-- Pagination -->
                     <div class="pagination-row">
                         <div class="pagination-info">
-                            Mostrando <strong>1-4</strong> de <strong>124</strong> cursos
+                            Mostrando 1-4 de 124 cursos
                         </div>
                         <div class="pagination-controls">
                             <button class="page-btn arrow"><i class='bx bx-chevron-left'></i></button>
@@ -269,7 +260,6 @@
 
                     <!-- Relatórios Rápidos -->
                     <div class="module-relatorios">
-                        <i class='bx bx-bar-chart-alt-2 bg-grafico'></i>
                         <h3>Relatórios Rápidos</h3>
                         <p>Acesse métricas avançadas de desempenho por curso e taxa de evasão semestral.</p>
                         <button class="btn-white">GERAR AGORA</button>
@@ -394,13 +384,19 @@
                             dataCriacao = `${d.getDate().toString().padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
                         }
                         const sigla = curso.code ? curso.code.substring(0, 3).toUpperCase() : (curso.name.substring(0, 3).toUpperCase());
+                        
+                        // Determinar classe da sigla baseado no nome (apenas para exemplo visual como na imagem)
+                        let siglaClass = '';
+                        if (sigla === 'ADM') siglaClass = 'sigla-amarela';
+                        if (sigla === 'ENG') siglaClass = 'sigla-cinza';
+
                         const isAtivo = curso.is_active !== false;
                         const statusClass = isAtivo ? 'status-ativo' : 'status-inativo';
                         const statusText = isAtivo ? 'Ativo' : 'Inativo';
 
                         let coordHtml = `
                             <div class="td-coordenador pendente">
-                                <div class="coord-avatar" style="background: #f8fafc; color: #cbd5e1; border: 1px dashed #cbd5e1;">NA</div>
+                                <div class="coord-avatar">NA</div>
                                 <span>Pendente vinculação</span>
                             </div>
                         `;
@@ -419,7 +415,7 @@
                         tr.innerHTML = `
                             <td>
                                 <div class="td-curso">
-                                    <div class="curso-sigla">${sigla}</div>
+                                    <div class="curso-sigla ${siglaClass}">${sigla}</div>
                                     <div class="curso-info">
                                         <strong>${curso.name}</strong>
                                         <small>${curso.modalidade || 'Bacharelado'} • ${curso.semestres || 8} semestres</small>
@@ -431,9 +427,9 @@
                             <td><span class="status-pill ${statusClass}">${statusText}</span></td>
                             <td>
                                 <div class="td-acoes">
-                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;" title="Editar"><i class='bx bx-pencil' style="cursor:pointer;"></i></a>
-                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;" title="Visualizar"><i class='bx bx-show' style="cursor:pointer;"></i></a>
-                                    <i class='bx bx-download' style="cursor:pointer;" title="Exportar" onclick="exportarCSV_Curso(${curso.id})"></i>
+                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;"><i class='bx bx-pencil' title="Editar"></i></a>
+                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;"><i class='bx bx-show' title="Visualizar"></i></a>
+                                    <i class='bx bx-archive' title="Arquivar" onclick="deletarCurso(${curso.id}, '${curso.name}')"></i>
                                 </div>
                             </td>
                         `;
@@ -442,8 +438,37 @@
 
                     // Update pagination text
                     const paginationInfo = document.querySelector('.pagination-info');
+                    const paginationControls = document.querySelector('.pagination-controls');
+                    
                     if (paginationInfo) {
-                        paginationInfo.innerHTML = `Mostrando <strong>1-${lista.length}</strong> de <strong>${cursos.length}</strong> cursos`;
+                        const total = cursos.length;
+                        const exibindo = lista.length;
+                        paginationInfo.innerHTML = `Mostrando <strong>1-${exibindo}</strong> de <strong>${total}</strong> cursos`;
+                    }
+
+                    if (paginationControls) {
+                        paginationControls.innerHTML = ''; // Limpa os botões fixos (1, 2, 3... 31)
+                        
+                        // Implementação simples: se tivermos dados, mostramos pelo menos a página 1
+                        if (lista.length > 0) {
+                            paginationControls.innerHTML = `
+                                <button class="page-btn arrow"><i class='bx bx-chevron-left'></i></button>
+                                <button class="page-btn active">1</button>
+                                <button class="page-btn arrow"><i class='bx bx-chevron-right'></i></button>
+                            `;
+                        }
+                    }
+                };
+
+                // Função Deletar
+                window.deletarCurso = async (id, nome) => {
+                    if (!confirm(`Tem certeza que deseja excluir o curso "${nome}"? Esta ação não pode ser desfeita.`)) return;
+                    try {
+                        await apiDelete(`/admin/curso/${id}`);
+                        alert('Curso excluído com sucesso!');
+                        location.reload();
+                    } catch (err) {
+                        alert('Erro ao excluir curso: ' + err.message);
                     }
                 };
 

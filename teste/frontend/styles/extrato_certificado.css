@@ -1,23 +1,10 @@
-:root {
-    --azul-senac: #004587;
-    --laranja-senac: #f6821f;
-    --texto-dark: #1e293b;
-    --texto-light: #64748b;
-    --bg-main: #f8fafc;
-    --bg-card: #ffffff;
-    --border-color: #e2e8f0;
-    
-    /* Status Colors */
-    --verde-sucesso: #10b981;
-    --laranja-alerta: #f59e0b;
-    --vermelho-erro: #ef4444;
-}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', -apple-system, sans-serif;
+    font-family: 'Outfit', 'Inter', -apple-system, sans-serif;
 }
 
 body {
@@ -122,107 +109,29 @@ body {
     background-color: #f8fafc; /* light bg like in image */
 }
 
-/* Header */
-.top-header {
-    background: white;
-    padding: 0 40px;
-    height: 70px;
+/* ========== CABEÇALHO TOPO ========== */
+
+
+.topo-links {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid var(--border-color);
+    gap: 30px;
 }
 
-.top-nav-links {
-    display: flex;
-    height: 100%;
-}
-
-.top-nav-links a {
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
+.topo-links a {
     text-decoration: none;
     color: var(--texto-light);
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.topo-links a.active {
+    color: var(--azul-senac);
     font-weight: 600;
-    font-size: 13px;
-    text-transform: uppercase;
-    border-bottom: 3px solid transparent;
-    transition: all 0.2s;
+    border-bottom: 3px solid var(--laranja-senac);
+    padding-bottom: 6px;
 }
 
-.top-nav-links a:hover {
-    color: var(--azul-senac);
-}
-
-.top-nav-links a.active {
-    color: var(--azul-senac);
-    border-bottom-color: var(--laranja-senac);
-}
-
-.search-wrap {
-    display: flex;
-    align-items: center;
-    background: #f1f5f9;
-    padding: 10px 15px;
-    border-radius: 8px;
-    width: 300px;
-}
-
-.search-wrap i {
-    color: var(--texto-light);
-    margin-right: 10px;
-}
-
-.search-wrap input {
-    border: none;
-    background: transparent;
-    outline: none;
-    font-size: 14px;
-    width: 100%;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.icon-header {
-    font-size: 22px;
-    color: var(--texto-light);
-    cursor: pointer;
-}
-
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-left: 20px;
-    border-left: 1px solid var(--border-color);
-}
-
-.user-profile .user-info {
-    text-align: right;
-}
-
-.user-profile strong {
-    display: block;
-    font-size: 14px;
-    color: var(--texto-dark);
-}
-
-.user-profile small {
-    font-size: 11px;
-    color: var(--texto-light);
-    text-transform: uppercase;
-}
-
-.user-profile img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-}
+/* Ações removidas conforme solicitação */
 
 /* Page Content */
 .page-container {

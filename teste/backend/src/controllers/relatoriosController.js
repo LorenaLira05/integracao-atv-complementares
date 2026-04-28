@@ -46,11 +46,17 @@ exports.getRelatorios = async (req, res) => {
             `SELECT
                 COUNT(*) AS total,
                 COUNT(*) FILTER (WHERE s.status = 'approved') AS aprovadas,
+                COUNT(*) FILTER (WHERE s.status = 'submitted') AS pendentes,
                 CASE
                     WHEN COUNT(*) > 0
                     THEN ROUND((COUNT(*) FILTER (WHERE s.status = 'approved')::numeric / COUNT(*)) * 100, 1)
                     ELSE 0
-                END AS eficiencia_percentual
+                END AS eficiencia_percentual,
+                CASE 
+                    WHEN COUNT(DISTINCT uc.user_id) > 0 
+                    THEN ROUND(SUM(s.approved_hours) FILTER (WHERE s.status = 'approved')::numeric / COUNT(DISTINCT uc.user_id), 1)
+                    ELSE 0 
+                END AS media_horas_aluno
              FROM submissions s
              JOIN user_courses uc ON uc.id = s.user_course_id
              WHERE uc.course_id = ANY($1)`,
@@ -101,8 +107,9 @@ exports.getRelatorios = async (req, res) => {
                 s.status,
                 s.submitted_at,
                 s.approved_hours,
+                s.requested_hours,
                 u.full_name AS nome_aluno,
-                cat.name AS categoria,
+                cat.name AS category_name,
                 v.comment AS feedback,
                 v.validated_at AS data_validacao
              FROM submissions s

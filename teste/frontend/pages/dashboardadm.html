@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/styles/sidebar.css">
     <!-- Carrega APENAS script.js (que já contém apiGet, protegerPagina, logout, etc.) -->
     <script src="/services/script.js"></script>
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
@@ -28,7 +29,13 @@
             </div>
 
             <!-- Menu preenchido dinamicamente pelo script.js -->
-            <nav class="menu-navegacao"></nav>
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+            </nav>
 
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
@@ -49,21 +56,8 @@
         <main class="conteudo-principal">
             <!-- Header Topo -->
             <header class="cabecalho-topo">
-                <div class="topo-links">
-                    <a href="#" class="active">Início</a>
-                    <a href="submissoes.html">Certificados</a>
-                    <a href="protocoloadm.html">Protocolos</a>
-                </div>
-                <div class="topo-actions">
-                    <div class="caixa-busca">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="busca-dashboard" placeholder="Buscar alunos, protocolos...">
-                    </div>
-                    <i class='bx bx-bell icon-header'></i>
-                    <i class='bx bx-cog icon-header' onclick="window.location.href='configuracao.html'"
-                        style="cursor:pointer;"></i>
-                    <button class="btn-novo-protocolo" onclick="window.location.href='protocoloadm.html'">Novo
-                        Protocolo</button>
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
             </header>
 
@@ -74,8 +68,8 @@
                     <h1>Dashboard</h1>
                 </div>
                 <div class="titulo-dir">
-                    <strong id="label-semestre">Semestre Letivo 2024.1</strong>
-                    <span id="label-atualizacao">Carregando dados...</span>
+                    <strong id="label-semestre">Semestre Letivo 2026.1</strong>
+                    <span id="label-atualizacao">Atualizado agora</span>
                 </div>
             </section>
 
@@ -154,23 +148,11 @@
                         </div>
                     </div>
                     <div class="footer-atividades">
-                        <a href="submissoes.html">VER TODAS AS SUBMISSÕES</a>
+                        <a href="protocoloadm.html">VER TODAS AS SUBMISSÕES</a>
                     </div>
                 </div>
             </section>
 
-            <!-- Bottom Section -->
-            <section class="grid-bottom">
-                <div class="card-relatorio">
-                    <div class="relatorio-conteudo">
-                        <h2>Relatório Consolidado</h2>
-                        <p>Gere a análise completa de desempenho das turmas para o conselho acadêmico.</p>
-                        <a href="relatorios.html" class="btn-baixar">VER RELATÓRIOS <i
-                                class='bx bx-right-arrow-alt'></i></a>
-                    </div>
-                    <div class="relatorio-bg-text">WORK</div>
-                </div>
-            </section>
 
             <!-- Footer -->
             <footer class="rodape-dashboard">
@@ -180,7 +162,7 @@
                     <a href="#">Termos de Uso</a>
                     <a href="#">Suporte Técnico</a>
                 </div>
-                <p>&copy; 2024 Senac Brasil - Portal de Atividades Complementares</p>
+                <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
             </footer>
         </main>
     </div>
@@ -228,11 +210,7 @@
                 }
             }
 
-            // ─── Marca link ativo na sidebar ───
-            const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
-            document.querySelectorAll('.menu-navegacao .link-menu').forEach(link => {
-                link.classList.toggle('active', link.getAttribute('href') === currentPage);
-            });
+            // O link ativo na sidebar agora é gerenciado centralmente pelo script.js
         });
 
         // ─── Função auxiliar: formata tempo decorrido ───

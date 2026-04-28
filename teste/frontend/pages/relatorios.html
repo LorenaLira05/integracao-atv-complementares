@@ -20,87 +20,124 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+            const chartContent = document.querySelector('.chart-content');
+            const chartLabels = document.querySelector('.chart-labels');
+            const svgLine = document.querySelector('.svg-line');
+            const listaProgresso = document.querySelector('.lista-progresso');
+            const tbody = document.querySelector('.tabela-logs tbody');
+
+            // Limpeza inicial
+            if (chartContent) chartContent.querySelectorAll('.bar-group').forEach(b => b.remove());
+            if (svgLine) svgLine.innerHTML = '';
+            if (chartLabels) chartLabels.innerHTML = '';
+            if (listaProgresso) listaProgresso.innerHTML = '<div style="padding: 20px; text-align:center; color:#94a3b8;">Sincronizando dados reais...</div>';
+
             try {
                 const dados = await apiGet('/dashboard/relatorios');
 
-                // 1. Total de horas (Card 1)
+                // 1. KPIs
                 const elHoras = document.querySelector('.kpi-card:nth-child(1) h2');
-                if (elHoras) elHoras.textContent = Number(dados.total_horas).toLocaleString('pt-BR');
+                if (elHoras) elHoras.textContent = Number(dados.total_horas || 0).toLocaleString('pt-BR');
 
-                // 2. Eficiência (Card 2)
                 const elEficiencia = document.querySelector('.kpi-card:nth-child(2) h2');
-                if (elEficiencia) elEficiencia.innerHTML = `${dados.eficiencia.eficiencia_percentual} <small>%</small>`;
+                if (elEficiencia) elEficiencia.innerHTML = `${dados.eficiencia?.eficiencia_percentual || 0} <small>%</small>`;
 
-                // 3. Pendentes (Card 3)
                 const elPendentes = document.querySelector('.kpi-card:nth-child(3) h2');
-                if (elPendentes) {
-                    const valor = dados.eficiencia.total - dados.eficiencia.aprovadas;
-                    elPendentes.textContent = valor;
-                }
+                if (elPendentes) elPendentes.textContent = dados.eficiencia?.pendentes || 0;
 
-                // 4. GRÁFICO: Horas mensais
-                const chartContent = document.querySelector('.chart-content');
-                const chartLabels = document.querySelector('.chart-labels');
-                if (chartContent && chartLabels && dados.horas_mensais && dados.horas_mensais.length > 0) {
-                    const maxHoras = Math.max(...dados.horas_mensais.map(m => m.horas));
+                const elMedia = document.querySelector('.kpi-card:nth-child(4) h2');
+                if (elMedia) elMedia.textContent = dados.eficiencia?.media_horas_aluno || 0;
 
-                    // Limpa as colunas antigas mantendo o SVG
-                    const bars = chartContent.querySelectorAll('.bar-group');
-                    bars.forEach(b => b.remove());
+                // 2. Gráfico de Linha
+                if (chartContent && chartLabels && svgLine && dados.horas_mensais && dados.horas_mensais.length > 0) {
+                    const maxHoras = Math.max(...dados.horas_mensais.map(m => m.horas), 10);
+                    const width = 600;
+                    const height = 200;
+                    const stepX = width / (dados.horas_mensais.length + 1);
+                    
+                    let pointsArr = [];
+                    dados.horas_mensais.forEach((m, i) => {
+                        const x = (i + 1) * stepX;
+                        const y = height - (m.horas / maxHoras * (height - 40)) - 20;
+                        pointsArr.push(`${x},${y}`);
 
-                    dados.horas_mensais.forEach(m => {
                         const group = document.createElement('div');
                         group.className = 'bar-group';
                         const div = document.createElement('div');
                         div.className = 'bar bg-cinza-claro';
-                        div.style.height = maxHoras > 0 ? (m.horas / maxHoras * 100) + '%' : '0%';
+                        div.style.height = '100%';
+                        div.style.opacity = (i === dados.horas_mensais.length - 1) ? '1' : '0.4';
                         group.appendChild(div);
-                        chartContent.insertBefore(group, chartContent.querySelector('svg'));
+                        chartContent.insertBefore(group, svgLine);
+
+                        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", x);
+                        circle.setAttribute("cy", y);
+                        circle.setAttribute("r", "5");
+                        circle.setAttribute("fill", "var(--azul-main)");
+                        circle.setAttribute("stroke", "white");
+                        circle.setAttribute("stroke-width", "2");
+                        svgLine.appendChild(circle);
                     });
 
+                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+                    polyline.setAttribute("points", pointsArr.join(' '));
+                    polyline.setAttribute("fill", "none");
+                    polyline.setAttribute("stroke", "var(--laranja)");
+                    polyline.setAttribute("stroke-width", "3");
+                    svgLine.prepend(polyline);
+
                     chartLabels.innerHTML = dados.horas_mensais.map(m => `<span>${m.mes}</span>`).join('');
+                } else if (chartLabels) {
+                    chartLabels.innerHTML = '<div style="width:100%; text-align:center; color:#94a3b8; font-size:12px; margin-top:20px;">Nenhum volume registrado nos últimos meses.</div>';
                 }
 
-                // 5. GRÁFICO: Eficiência por curso
-                const listaProgresso = document.querySelector('.lista-progresso');
-                if (listaProgresso && dados.eficiencia_por_curso && dados.eficiencia_por_curso.length > 0) {
-                    listaProgresso.innerHTML = dados.eficiencia_por_curso.map((c, index) => {
-                        // Cursos com baixa eficiência ficam com a barra laranja, senão azul
-                        const bgClass = c.eficiencia < 70 ? 'bg-laranja' : 'bg-azul-main';
-                        return `
-                    <div class="item-progresso">
-                        <div class="info-progresso"><span>${c.nome_curso.toUpperCase()}</span> <strong>${c.eficiencia}%</strong></div>
-                        <div class="barra-fundo">
-                            <div class="barra-preenchida ${bgClass}" style="width: ${c.eficiencia}%;"></div>
-                        </div>
-                    </div>
-                `}).join('');
+                // 3. Eficiência por Curso
+                if (listaProgresso) {
+                    if (dados.eficiencia_por_curso && dados.eficiencia_por_curso.length > 0) {
+                        listaProgresso.innerHTML = dados.eficiencia_por_curso.map(c => {
+                            const bgClass = c.eficiencia < 70 ? 'bg-laranja' : 'bg-azul-main';
+                            return `
+                                <div class="item-progresso">
+                                    <div class="info-progresso"><span>${c.nome_curso.toUpperCase()}</span> <strong>${c.eficiencia}%</strong></div>
+                                    <div class="barra-fundo">
+                                        <div class="barra-preenchida ${bgClass}" style="width: ${c.eficiencia}%;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        listaProgresso.innerHTML = '<div style="padding: 20px; text-align:center; color:#94a3b8;">Nenhum curso com atividades.</div>';
+                    }
                 }
 
-                // 6. TABELA: Log de atividades
-                const tbody = document.querySelector('.tabela-logs tbody');
-                if (tbody && dados.log_atividades && dados.log_atividades.length > 0) {
-                    tbody.innerHTML = dados.log_atividades.map(a => `
-                    <tr>
-                        <td>
-                            <div class="td-curso"><i class='bx bx-category icon-curso'></i> ${a.category_name || '—'}</div>
-                        </td>
-                        <td>${a.nome_aluno || '—'}</td>
-                        <td><strong>${a.approved_hours || a.requested_hours || '—'}h</strong></td>
-                        <td>${formatarDataLocal(a.submitted_at)}</td>
-                        <td><span class="status ${a.status === 'approved' ? 'validado' : 'pendente'}">
-                            ${a.status === 'approved' ? 'VALIDADO' : a.status === 'submitted' ? 'PENDENTE' : a.status.toUpperCase()}
-                        </span></td>
-                    </tr>
-                `).join('');
+                // 4. Tabela de Logs
+                if (tbody) {
+                    if (dados.log_atividades && dados.log_atividades.length > 0) {
+                        tbody.innerHTML = dados.log_atividades.map(a => `
+                            <tr>
+                                <td><div class="td-curso"><i class='bx bx-category icon-curso'></i> ${a.category_name || 'Geral'}</div></td>
+                                <td>${a.nome_aluno || '—'}</td>
+                                <td><strong>${a.approved_hours || a.requested_hours || '0'}h</strong></td>
+                                <td>${formatarDataLocal(a.submitted_at)}</td>
+                                <td><span class="status ${a.status === 'approved' ? 'validado' : 'pendente'}">
+                                    ${a.status === 'approved' ? 'VALIDADO' : 'PENDENTE'}
+                                </span></td>
+                            </tr>
+                        `).join('');
+                    } else {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:#94a3b8;">Sem atividades recentes.</td></tr>';
+                    }
                 }
 
             } catch (err) {
                 console.error('Erro ao carregar relatórios:', err);
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:#ef4444;">Erro na conexão com o banco de dados.</td></tr>';
             }
         });
     </script>
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
@@ -115,7 +152,13 @@
             </div>
 
             <!-- Menu preenchido dinamicamente pelo script.js -->
-            <nav class="menu-navegacao"></nav>
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+            </nav>
 
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
@@ -164,19 +207,8 @@
 
             <!-- Header Topo -->
             <header class="cabecalho-topo">
-                <div class="caixa-busca">
-                    <i class='bx bx-search'></i>
-                    <input type="text" placeholder="Busca rápida...">
-                </div>
-                <div class="acoes-usuario">
-                    <i class='bx bx-bell icon-header'></i>
-                    <i class='bx bx-question-mark icon-header circle-icon'></i>
-                    <div class="perfil-info">
-                        <strong>ADMIN USER</strong>
-                        <small>Coordenador Acadêmico</small>
-                    </div>
-                    <img src="https://ui-avatars.com/api/?name=A&background=e2e8f0&color=333&rounded=true" alt="Avatar"
-                        class="foto-perfil">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
             </header>
 
@@ -239,17 +271,13 @@
                 <!-- Card 4 -->
                 <div class="kpi-card">
                     <div class="kpi-header">
-                        <p class="kpi-titulo">AVALIAÇÃO DOS ALUNOS</p>
+                        <p class="kpi-titulo">MÉDIA DE HORAS / ALUNO</p>
                     </div>
                     <div class="kpi-valor">
-                        <h2>4.9</h2>
-                        <div class="estrelas">
-                            <i class='bx bxs-star'></i><i class='bx bxs-star'></i><i class='bx bxs-star'></i><i
-                                class='bx bxs-star'></i><i class='bx bxs-star-half'></i>
-                        </div>
+                        <h2>0</h2>
                     </div>
                     <div class="kpi-footer cinza">
-                        <small>Baseado em 840 avaliações</small>
+                        <small>Média de horas aprovadas por estudante</small>
                     </div>
                 </div>
             </section>
@@ -265,7 +293,7 @@
                         </div>
                         <div class="legenda">
                             <span>
-                                <div class="bolinha azul-escuro"></div> 2024
+                                <div class="bolinha azul-escuro"></div> 2026
                             </span>
                             <span>
                                 <div class="bolinha laranja"></div> 2025
@@ -381,8 +409,8 @@
                 <table class="tabela-logs">
                     <thead>
                         <tr>
-                            <th>CURSO</th>
-                            <th>COORDENADOR</th>
+                            <th>CATEGORIA</th>
+                            <th>ALUNO</th>
                             <th>HORAS</th>
                             <th>DATA</th>
                             <th>STATUS</th>
@@ -413,7 +441,7 @@
                             </td>
                             <td>Marcos Lima</td>
                             <td><strong>100h</strong></td>
-                            <td>Oct 10, 2024</td>
+                            <td>Oct 10, 2026</td>
                             <td><span class="status validado">VALIDADO</span></td>
                         </tr>
                     </tbody>

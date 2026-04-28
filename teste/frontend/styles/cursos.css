@@ -1,26 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
-    --azul-dark: #0a1f44;
-    --azul-main: #002b5e;
-    --azul-brilho: #0a3d7a;
-    --laranja: #d4800a;
-    --fundo: #f4f7fc;
-    --texto: #1a2e5a;
-    --texto-light: #8f9bba;
-    --borda: #e2e8f0;
-    --verde: #10b981;
-    --amarelo: #f59e0b;
-    --roxo: #7c3aed;
-    --branco: #ffffff;
-    --azul-claro: #2563eb;
-}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 body {
@@ -41,21 +27,9 @@ body {
 }
 
 /* ========== CABEÇALHO TOPO ========== */
-.cabecalho-topo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px 0;
-    border-bottom: 1px solid var(--borda);
-    margin-bottom: 30px;
-}
 
-.titulo-portal {
-    font-weight: 800;
-    color: var(--azul-main);
-    letter-spacing: 2px;
-    font-size: 18px;
-}
+
+
 
 .titulo-subportal {
     font-weight: 600;
@@ -141,11 +115,7 @@ body {
     margin-bottom: 6px;
 }
 
-.cabecalho-pagina h1 {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--azul-dark);
-}
+.cabecalho-pagina 
 
 .titulo-subtitulo {
     font-size: 14px;

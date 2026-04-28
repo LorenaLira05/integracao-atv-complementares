@@ -6,125 +6,155 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senac - Repositório de Certificados</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/dasboardadm.css">
     <link rel="stylesheet" href="/styles/submissoes.css">
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
     <script>
-        protegerPagina(['COORDENADOR', 'ALUNO', 'SUPER_ADMIN']);
+        protegerPagina(['COORDENADOR', 'COORDINATOR', 'ALUNO', 'STUDENT', 'SUPER_ADMIN', 'ADMIN']);
 
-        window.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', () => {
             const gridCards = document.getElementById('certificadosGrid');
-            if (gridCards) gridCards.innerHTML = '<p style="padding:20px;">Carregando repositório...</p>';
+            const filtroCurso = document.getElementById('filtroCurso');
+            const filtroPeriodo = document.getElementById('filtroPeriodo');
+            const btnToggles = document.querySelectorAll('.btn-toggle');
+            
+            let statusAtual = 'PENDENTE'; // Inicia com pendentes (submitted + returned)
+            let cursoAtual = '';
 
-            // Formatar data utils
-            const formatDate = (dateStr) => {
-                if (!dateStr) return '';
-                const options = { day: 'numeric', month: 'short', year: 'numeric' };
-                return new Intl.DateTimeFormat('pt-BR', options).format(new Date(dateStr));
-            };
+            if (gridCards) gridCards.innerHTML = '<p style="padding:20px;">Carregando dados...</p>';
 
-            // Dados do header (nome perfil)
-            const perfilElement = document.querySelector('.profile-text strong');
-            const roleElement = document.querySelector('.profile-text small');
+            // ── Carregar Cursos (se for Coordenador/Admin) ──
+            const perfil = (localStorage.getItem('perfil') || '').toUpperCase();
+            const isAdminOuCoord = ['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN'].includes(perfil);
 
-            let perfil = localStorage.getItem('perfil');
-            if (perfilElement) perfilElement.textContent = localStorage.getItem('nome') || 'Usuário';
-            if (roleElement) roleElement.textContent = (perfil || 'USUÁRIO').toUpperCase();
-
-            // Map perfis para role strings simplificados
-            if (Array.isArray(perfil)) perfil = perfil[0];
-            if (typeof perfil === 'string') perfil = perfil.toUpperCase();
-
-            if (perfil === 'COORDENADOR' || perfil === 'COORDINATOR' || perfil === 'SUPER_ADMIN' || perfil === 'SUPER_ADMIN' || perfil === 'ADMIN') {
-                // Backend Coordenador
+            if (isAdminOuCoord) {
                 apiGet('/coordenador/meus-cursos').then(cursos => {
-                    if (cursos && cursos.length > 0) {
-                        const cursoId = cursos[0].id;
-                        apiGet(`/coordenador/submissoes/${cursoId}`).then(resposta => {
-                            if (resposta) {
-                                // Pode retornar o objeto com .submissoes ou array plano
-                                const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
-                                const contadores = resposta.contadores || null;
-                                renderGrid(subs, contadores, cursos.length);
-                            }
-                        }).catch(() => fallbackGrid());
-                    } else {
-                        fallbackGrid();
+                    if (cursos && Array.isArray(cursos) && filtroCurso) {
+                        filtroCurso.innerHTML = '<option value="">Todos os Cursos</option>';
+                        cursos.forEach(c => {
+                            const opt = document.createElement('option');
+                            opt.value = c.id;
+                            opt.textContent = c.name;
+                            filtroCurso.appendChild(opt);
+                        });
                     }
-                }).catch(() => fallbackGrid());
+                }).catch(err => console.error('Erro ao carregar cursos:', err));
             } else {
-                // Backend Aluno
-                apiGet('/aluno/submissoes').then(subs => {
-                    if (subs && Array.isArray(subs)) {
-                        renderGrid(subs);
-                    } else {
-                        fallbackGrid();
-                    }
-                }).catch(() => fallbackGrid());
+                if (filtroCurso) filtroCurso.closest('.field-box').style.display = 'none';
             }
 
-            function atualizarKpis(subs, contadores, numCursos) {
-                const kpiValues = document.querySelectorAll('.kpi-value');
-                if (!kpiValues || kpiValues.length < 4) return;
+            // ── Event Listeners ──
+            filtroCurso?.addEventListener('change', (e) => {
+                cursoAtual = e.target.value;
+                carregarDados();
+            });
 
-                const calcSpace = (total) => {
-                    const mb = total * 2.4;
-                    if (mb >= 1024) return (mb / 1024).toFixed(1) + ' <small>GB</small>';
-                    return mb.toFixed(1) + ' <small>MB</small>';
-                };
+            btnToggles.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    btnToggles.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    statusAtual = btn.textContent.includes('APROVADOS') ? 'approved' : 'PENDENTE';
+                    carregarDados();
+                });
+            });
 
-                if (contadores) {
-                    kpiValues[0].textContent = contadores.total || subs.length;
-                    kpiValues[1].textContent = contadores.aprovadas || 0;
-                    kpiValues[2].textContent = numCursos !== undefined ? numCursos : 1;
-                    kpiValues[3].innerHTML = calcSpace(contadores.total || subs.length);
-                } else {
-                    const pendentes = subs.filter(s => s.status && s.status.toLowerCase().includes('pendente')).length;
-                    const aprovadas = subs.filter(s => s.status && s.status.toLowerCase().includes('aprovado')).length;
-                    kpiValues[0].textContent = subs.length;
-                    kpiValues[1].textContent = aprovadas;
-                    kpiValues[2].textContent = numCursos || 1;
-                    kpiValues[3].innerHTML = calcSpace(subs.length);
+            // ── Função Principal de Carga ──
+            async function carregarDados() {
+                if (gridCards) gridCards.innerHTML = '<p style="padding:20px;">Atualizando...</p>';
+                
+                try {
+                    let url = '';
+                    if (isAdminOuCoord) {
+                        const cursoId = (cursoAtual && cursoAtual !== 'all' && cursoAtual !== 'Todos os Cursos') ? cursoAtual : null;
+                        url = cursoId 
+                            ? `/coordenador/submissoes/${cursoId}?status=${statusAtual}`
+                            : `/coordenador/submissoes?status=${statusAtual}`;
+                    } else {
+                        url = `/aluno/submissoes?status=${statusAtual.toLowerCase()}`;
+                    }
+
+                    console.log('Buscando em:', url);
+                    const resposta = await apiGet(url);
+                    console.log('Resposta completa:', resposta);
+                    if (!resposta) {
+                        fallbackGrid();
+                        return;
+                    }
+                    const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                    const contadores = resposta.contadores || null;
+                    
+                    renderGrid(subs);
+                    if (contadores) atualizarKpis(contadores);
+                    else if (!isAdminOuCoord) atualizarKpisAluno(subs);
+
+                } catch (err) {
+                    console.error('Erro ao carregar dados:', err);
+                    // Tenta capturar erro do corpo da resposta se houver
+                    if (err.message) console.error('Mensagem:', err.message);
+                    fallbackGrid();
                 }
             }
 
-            function renderGrid(subs, contadores = null, numCursos = 1) {
+            function renderGrid(subs) {
                 if (!gridCards) return;
-                atualizarKpis(subs, contadores, numCursos);
-
                 gridCards.innerHTML = '';
-                if (subs.length === 0) {
-                    gridCards.innerHTML = '<p style="padding:20px; color:#64748b;">Nenhum documento encontrado no repositório.</p>';
+
+                if (!subs || subs.length === 0) {
+                    gridCards.innerHTML = '<div style="grid-column: 1/-1; padding:60px; text-align:center; color:#64748b; background:white; border-radius:14px; border:1px solid #e2e8f0;">Nenhum documento encontrado com este filtro.</div>';
                     return;
                 }
 
-                subs.slice(0, 10).forEach((s, idx) => {
-                    const statusStr = s.status ? s.status.toUpperCase() : 'PENDENTE';
-                    const bgBadge = statusStr === 'APPROVED' || statusStr === 'APROVADO' ? '#10b981' :
-                        statusStr === 'REJECTED' || statusStr === 'REPROVADO' ? '#ef4444' : '#f59e0b';
+                subs.forEach((s, idx) => {
+                    const statusStr = (s.status || 'submitted').toLowerCase();
+                    const nome = s.student_name || s.nome_aluno || 'Aluno';
+                    
+                    // Lógica da Miniatura normalizada
+                    let path = '/assets/placeholder-cert.png';
+                    if (s.storage_path) {
+                        path = s.storage_path;
+                        if (!path.includes('uploads')) path = `/uploads/${path}`;
+                        if (!path.startsWith('/')) path = '/' + path;
+                        // Importante: Adiciona a URL da API para carregar do backend
+                        path = (typeof API !== 'undefined' && API) ? API + path : path;
+                    }
+
+                    const dataStr = (typeof formatarData === 'function') 
+                        ? formatarData(s.submitted_at || s.created_at)
+                        : (s.submitted_at || '—');
 
                     const card = document.createElement('div');
                     card.className = 'cert-card';
                     card.innerHTML = `
                         <div class="cert-cover">
-                            <!-- Utilizamos a imagem mockada base do servidor ou fallback -->
-                            <img src="/brain/a2e55989-be1d-4478-a4fb-64744ce80463/certificado_preview_1776627424316.png" class="cert-img" alt="Certificado" onerror="this.src='https://images.unsplash.com/photo-1589330694653-efa64f7b6009?w=300&q=80'">
-                            <span class="badge-id" style="background: ${bgBadge}">ID: #${s.id || ('00' + idx)}</span>
-                            <button class="btn-preview"><i class='bx bx-show'></i></button>
+                            <img src="${path}" class="cert-img" onerror="this.src='https://placehold.co/400x300?text=Certificado'">
+                            <span class="badge-id">ID: #${s.id}</span>
+                            <button class="btn-preview" onclick="window.location.href='analise_certificado.html?id=${s.id}'">
+                                <i class='bx bx-show'></i>
+                            </button>
                         </div>
                         <div class="cert-info">
-                            <div class="cert-curso">${s.category_name || s.categoria || 'CURSO COMPLEMENTAR'} <span class="dot" style="background: ${bgBadge}"></span></div>
-                            <h3 style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${s.student_name || s.nome_aluno || 'Aluno'}">${s.student_name || s.nome_aluno || 'Aluno Name'}</h3>
-                            <div class="cert-meta">
-                                <div class="meta-item"><i class='bx bx-calendar'></i> ${formatDate(s.submitted_at || s.data_envio)}</div>
-                                <div class="meta-item"><i class='bx bx-time'></i> ${s.approved_hours || s.horas_solicitadas || '0'}h</div>
+                            <div class="cert-curso">
+                                <span>${s.category_name || 'GERAL'}</span>
+                                <span class="dot ${statusStr === 'approved' ? 'verde' : 'amarelo'}"></span>
                             </div>
-                            <div class="cert-actions">
-                                <button class="btn-download">DOWNLOAD PDF</button>
+                            <h3>${s.student_name || 'Estudante'}</h3>
+                            <div class="cert-meta">
+                                <span><i class='bx bx-id-card'></i> RA: ${s.ra || 'N/A'}</span>
+                            </div>
+                            <div class="cert-meta">
+                                <span><i class='bx bx-calendar'></i> ${formatarData(s.submitted_at)}</span>
+                                <span><i class='bx bx-time'></i> ${s.requested_hours}h</span>
+                            </div>
+                            <div class="cert-footer">
+                                <button class="btn-download" onclick="abrirAnalise(${s.id})">
+                                    <i class='bx bx-search-alt'></i> ANALISAR DOCUMENTO
+                                </button>
                                 <button class="btn-share"><i class='bx bx-share-alt'></i></button>
                             </div>
                         </div>
@@ -133,16 +163,41 @@
                 });
             }
 
-            function fallbackGrid() {
+            function atualizarKpis(contadores) {
                 const kpiValues = document.querySelectorAll('.kpi-value');
-                if (kpiValues && kpiValues.length >= 4) {
-                    kpiValues[0].textContent = '0';
-                    kpiValues[1].textContent = '0';
-                    kpiValues[2].textContent = '0';
-                    kpiValues[3].innerHTML = '0 <small>MB</small>';
+                if (kpiValues.length >= 4 && contadores) {
+                    kpiValues[0].textContent = contadores.total || 0;
+                    kpiValues[1].textContent = contadores.aprovadas || 0;
+                    kpiValues[2].textContent = contadores.total_cursos || (filtroCurso?.options.length - 1) || 0;
+                    kpiValues[3].textContent = '3.2 MB'; 
                 }
-                if (gridCards) gridCards.innerHTML = '<p style="padding:20px; color:#ef4444;">Nenhuma submissão encontrada ou erro ao conectar com o banco de dados.</p>';
             }
+
+            function atualizarKpisAluno(subs) {
+                const kpiValues = document.querySelectorAll('.kpi-value');
+                if (kpiValues.length >= 4) {
+                    kpiValues[0].textContent = subs.length;
+                    kpiValues[1].textContent = subs.filter(s => s.status === 'approved').length;
+                    kpiValues[2].textContent = '1';
+                    kpiValues[3].innerHTML = (subs.length * 0.8).toFixed(1) + ' <small>MB</small>';
+                }
+            }
+
+            function fallbackGrid() {
+                if (gridCards) {
+                    gridCards.innerHTML = `
+                        <tr>
+                            <td colspan="7" style="padding:60px; text-align:center;">
+                                <i class='bx bx-error-circle' style="font-size:40px; color:#ef4444; margin-bottom:15px; display:block;"></i>
+                                <div style="color:#ef4444; font-weight:700;">Erro ao carregar dados do servidor.</div>
+                                <p style="color:#64748b; font-size:12px; margin-top:5px;">Verifique sua conexão ou tente novamente mais tarde.</p>
+                            </td>
+                        </tr>`;
+                }
+            }
+
+            // Carga inicial
+            carregarDados();
         });
     </script>
 
@@ -178,31 +233,28 @@
         <!-- Script para ativar a aba atual e carregar dados do usuário -->
         <script>
             document.addEventListener('DOMContentLoaded', () => {
-                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
-                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
-                links.forEach(link => {
-                    if (link.getAttribute('href') === currentPage) {
-                        link.classList.add('active');
-                    } else {
-                        link.classList.remove('active');
-                    }
-                });
+                // O link ativo na sidebar agora é gerenciado centralmente pelo script.js
 
-                if (localStorage.getItem('nome')) {
-                    const nomeEl = document.getElementById('sidebar-nome-global');
-                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+            if (localStorage.getItem('nome')) {
+                const nomeEl = document.getElementById('sidebar-nome-global');
+                if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
 
-                    const avatarEl = document.getElementById('sidebar-avatar-global');
-                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
-                }
-                if (localStorage.getItem('perfil')) {
-                    const roleEl = document.getElementById('sidebar-role-global');
-                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
-                }
+                const avatarEl = document.getElementById('sidebar-avatar-global');
+                if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+            }
+            if (localStorage.getItem('perfil')) {
+                const roleEl = document.getElementById('sidebar-role-global');
+                if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+            }
             });
         </script>
 
         <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
+                </div>
+            </header>
 
             <!-- Header -->
             <header class="cabecalho-submissoes">
@@ -211,20 +263,20 @@
                     <span class="titulo-muted">| VALIDADOS</span>
                 </div>
 
+                <div class="search-wrap">
+                    <i class='bx bx-search'></i>
+                    <input type="text" id="input-busca" placeholder="Buscar certificado...">
+                </div>
+
                 <div class="header-tools">
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" placeholder="Buscar certificado...">
-                    </div>
                     <i class='bx bx-bell icon-btn'></i>
                     <i class='bx bx-cog icon-btn'></i>
                     <div class="header-profile">
                         <div class="profile-text">
-                            <small>COORDENADOR</small>
-                            <strong>Dr. Marcelo Silva</strong>
+                            <small id="header-role-global">COORDENADOR</small>
+                            <strong id="header-nome-global">Usuário</strong>
                         </div>
-                        <img src="https://ui-avatars.com/api/?name=M+S&background=cbd5e1&color=fff&rounded=true"
-                            alt="Avatar" class="avatar">
+                        <img id="header-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" class="avatar">
                     </div>
                 </div>
             </header>
@@ -232,153 +284,97 @@
             <!-- KPIs -->
             <section class="kpis-row">
                 <div class="kpi-box">
-                    <span class="kpi-label">TOTAL DE CERTIFICADOS</span>
-                    <div class="kpi-value">...</div>
-                    <div class="kpi-bottom text-green" id="kpi-sub-1"></div>
-                </div>
-                <div class="kpi-box">
-                    <span class="kpi-label">VALIDADOS HOJE</span>
-                    <div class="kpi-value">...</div>
-                    <div class="kpi-bottom text-gray" id="kpi-sub-2"></div>
-                </div>
-                <div class="kpi-box">
-                    <span class="kpi-label">CURSOS ATIVOS</span>
-                    <div class="kpi-value">...</div>
-                    <div class="kpi-bottom text-gray" id="kpi-sub-3"></div>
-                </div>
-                <div class="kpi-box">
-                    <span class="kpi-label">ESPAÇO UTILIZADO</span>
-                    <div class="kpi-value">...</div>
-                    <div class="kpi-bottom">
-                        <div class="progress-bar-container">
-                            <div class="progress-bar-fill" style="width: 0%;"></div>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span class="kpi-label">TOTAL DE CERTIFICADOS</span>
+                            <div class="kpi-value" id="kpi-total">--</div>
                         </div>
+                        <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-file text-blue'></i></div>
+                    </div>
+                    <div class="kpi-bottom text-green">
+                        <i class='bx bx-trending-up'></i> +12% este mês
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span class="kpi-label">VALIDADOS HOJE</span>
+                            <div class="kpi-value" id="kpi-hoje">--</div>
+                        </div>
+                        <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-time-five text-blue'></i></div>
+                    </div>
+                    <div class="kpi-bottom text-gray">
+                         Processamento médio: 4h
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span class="kpi-label">CURSOS ATIVOS</span>
+                            <div class="kpi-value" id="kpi-cursos">--</div>
+                        </div>
+                        <div class="kpi-icon-wrap bg-yellow-light"><i class='bx bx-map-pin text-yellow'></i></div>
+                    </div>
+                    <div class="kpi-bottom text-gray">
+                        Unidades Senac/SP
+                    </div>
+                </div>
+                <div class="kpi-box">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div>
+                            <span class="kpi-label">ESPAÇO UTILIZADO</span>
+                            <div class="kpi-value" id="kpi-espaco">--</div>
+                        </div>
+                        <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-hdd text-blue'></i></div>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-fill" id="kpi-espaco-fill" style="width: 65%;"></div>
                     </div>
                 </div>
             </section>
 
-            <!-- Main Split Layout -->
             <div class="main-split">
-
                 <div class="left-content">
-                    <!-- Certificates Grid -->
-                    <div class="certificados-grid" id="certificadosGrid">
-                        <!-- Os dados serão injetados aqui. Abaixo está o HTML base (Mock correspondente à imagem) -->
-                        <div class="cert-card">
-                            <div class="cert-cover">
-
-                                <span class="badge-id laranja">ID: #48293</span>
-                                <button class="btn-preview"><i class='bx bx-show'></i></button>
-                            </div>
-                            <div class="cert-info">
-                                <div class="cert-curso">ARQUITETURA DE SOFTWARE <span class="dot verde"></span></div>
-                                <h3>Ana Beatriz Ferreira</h3>
-                                <div class="cert-meta">
-                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 14 Out, 2023</div>
-                                    <div class="meta-item"><i class='bx bx-time'></i> 200h</div>
-                                </div>
-                                <div class="cert-actions">
-                                    <button class="btn-download">DOWNLOAD PDF</button>
-                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="cert-card">
-                            <div class="cert-cover">
-                                <span class="badge-id laranja">ID: #48291</span>
-                                <button class="btn-preview"><i class='bx bx-show'></i></button>
-                            </div>
-                            <div class="cert-info">
-                                <div class="cert-curso">GESTÃO DE PROJETOS <span class="dot verde"></span></div>
-                                <h3>Roberto O. Almeida</h3>
-                                <div class="cert-meta">
-                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 12 Out, 2023</div>
-                                    <div class="meta-item"><i class='bx bx-time'></i> 120h</div>
-                                </div>
-                                <div class="cert-actions">
-                                    <button class="btn-download">DOWNLOAD PDF</button>
-                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="cert-card">
-                            <div class="cert-cover">
-                                <span class="badge-id laranja">ID: #48288</span>
-                                <button class="btn-preview"><i class='bx bx-show'></i></button>
-                            </div>
-                            <div class="cert-info">
-                                <div class="cert-curso">DATA SCIENCE EXPERT <span class="dot verde"></span></div>
-                                <h3>Juliana Mendes</h3>
-                                <div class="cert-meta">
-                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 11 Out, 2023</div>
-                                    <div class="meta-item"><i class='bx bx-time'></i> 340h</div>
-                                </div>
-                                <div class="cert-actions">
-                                    <button class="btn-download">DOWNLOAD PDF</button>
-                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="cert-card">
-                            <div class="cert-cover">
-                                <span class="badge-id laranja">ID: #48285</span>
-                                <button class="btn-preview"><i class='bx bx-show'></i></button>
-                            </div>
-                            <div class="cert-info">
-                                <div class="cert-curso">UX/UI DESIGN FOUNDATIONS <span class="dot verde"></span></div>
-                                <h3>Lucas Oliveira</h3>
-                                <div class="cert-meta">
-                                    <div class="meta-item"><i class='bx bx-calendar'></i> Validado em 10 Out, 2023</div>
-                                    <div class="meta-item"><i class='bx bx-time'></i> 80h</div>
-                                </div>
-                                <div class="cert-actions">
-                                    <button class="btn-download">DOWNLOAD PDF</button>
-                                    <button class="btn-share"><i class='bx bx-share-alt'></i></button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Filters Options Area -->
+                    <!-- Filters Panel (Agora no Topo) -->
                     <div class="filters-panel">
                         <div class="filters-fields">
                             <div class="field-box">
                                 <label>CURSO</label>
-                                <select>
-                                    <option>Todos os Cursos</option>
+                                <select id="filtroCurso">
+                                    <option value="">Todos os Cursos</option>
                                 </select>
                             </div>
                             <div class="field-box">
                                 <label>PERÍODO</label>
-                                <select>
+                                <select id="filtroPeriodo">
                                     <option>Últimos 30 dias</option>
                                 </select>
                             </div>
                             <div class="field-box">
                                 <label>STATUS DE VALIDAÇÃO</label>
                                 <div class="toggle-status">
-                                    <button class="btn-toggle active">APROVADOS</button>
-                                    <button class="btn-toggle text">PENDENTES</button>
+                                    <button class="btn-toggle" id="btn-approved">APROVADOS</button>
+                                    <button class="btn-toggle active" id="btn-pending">PENDENTES</button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="filters-buttons">
                             <button class="btn-adv-filters"><i class='bx bx-filter'></i> FILTROS AVANÇADOS</button>
-                            <button class="btn-export"><i class='bx bx-download'></i> EXPORTAR LISTA</button>
+                            <button class="btn-export" onclick="exportarLista()"><i class='bx bx-download'></i> EXPORTAR LISTA</button>
                         </div>
+                    </div>
+
+                    <!-- Grid de Cards -->
+                    <div id="certificadosGrid" class="certificados-grid">
+                        <!-- Injetado via JS -->
                     </div>
                 </div>
 
                 <!-- Right Sidebar Widget -->
                 <div class="right-widgets">
-
                     <div class="widget-timeline">
                         <h4 class="widget-title">ÚLTIMAS VALIDAÇÕES</h4>
-
                         <div class="timeline-list">
                             <div class="timeline-item">
                                 <div class="t-icon bg-blue-light text-blue"><i class='bx bx-check-shield'></i></div>
@@ -388,7 +384,6 @@
                                     <span class="t-time">HÁ 15 MINUTOS</span>
                                 </div>
                             </div>
-
                             <div class="timeline-item">
                                 <div class="t-icon bg-blue-light text-blue"><i class='bx bx-file-blank'></i></div>
                                 <div class="t-content">
@@ -397,25 +392,13 @@
                                     <span class="t-time">HÁ 2 HORAS</span>
                                 </div>
                             </div>
-
-                            <div class="timeline-item">
-                                <div class="t-icon bg-yellow-light text-yellow"><i class='bx bx-search'></i></div>
-                                <div class="t-content">
-                                    <strong>Busca realizada</strong>
-                                    <span class="t-desc">Filtro aplicado: "Engenharia de Dados"</span>
-                                    <span class="t-time">HÁ 4 HORAS</span>
-                                </div>
-                            </div>
                         </div>
-
                         <button class="btn-history">VER HISTÓRICO COMPLETO</button>
                     </div>
 
                     <div class="widget-security">
                         <h4 class="security-title">SEGURANÇA & BACKUP</h4>
-                        <p class="security-text">Todos os documentos são criptografados e armazenados em redundância
-                            tripla para sua segurança.</p>
-
+                        <p class="security-text">Todos os documentos são criptografados e armazenados em redundância tripla para sua segurança.</p>
                         <div class="security-footer">
                             <div class="avatars-group">
                                 <img src="https://ui-avatars.com/api/?name=U+A&background=random" class="min-avatar">
@@ -425,13 +408,10 @@
                             <span class="ativos-text">ATIVOS AGORA</span>
                         </div>
                     </div>
-
                 </div>
-
             </div>
 
-            <!-- Footer Pagination -->
-            <footer class="bottom-footer">
+            <footer class="bottom-footer" style="padding: 20px 40px;">
                 <div class="showing-txt">EXIBINDO 1-12 DE 1,284 REGISTROS</div>
                 <div class="paginacao">
                     <button class="btn-pag-arrow"><i class='bx bx-chevron-left'></i></button>

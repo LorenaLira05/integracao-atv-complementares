@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="/styles/coordenadores.css">
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
@@ -28,10 +29,8 @@
 
             <nav class="menu-navegacao">
                 <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
-
-                <a href="coordenadores.html" class="link-menu active"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
                 <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
-                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
             </nav>
 
             <div class="sidebar-bottom-action">
@@ -52,126 +51,199 @@
         <main class="conteudo-principal">
 
             <!-- Top Header -->
-            <header class="top-header">
-                <div class="top-header-left">
-                    <h2>Portal Acadêmico</h2>
-                    <div class="search-wrap">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="input-busca-global" placeholder="Buscar coordenador por nome ou curso...">
-                    </div>
-                </div>
-                <div class="header-right">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Super Administrador</span>
                 </div>
             </header>
 
             <div class="page-container">
 
 
-            <div class="page-header">
-                <div class="page-title">
-                    <h1>3b. Gestão de Coordenadores</h1>
-                    <p>Gerencie o corpo docente de coordenação, atribua cursos e acompanhe o histórico de vínculos
-                        acadêmicos em toda a rede Senac.</p>
-                </div>
-                <button class="btn-cadastrar" onclick="window.location.href='cadastrar_coordenador.html'"><i
-                        class='bx bx-user-plus'></i> Cadastrar Coordenador</button>
-            </div>
-
-            <div class="kpi-grid">
-                <div class="kpi-card">
-                    <span class="kpi-title">TOTAL ATIVOS</span>
-                    <div class="kpi-value-wrap">
-                        <span class="kpi-value kpi-valor-numero" id="kpi-total">—</span>
-                        <span class="kpi-badge-green" id="kpi-badge-trend">+5%</span>
+                <div class="page-header">
+                    <div class="page-title">
+                        <div class="breadcrumb">Portal > Gestão Administrativa > <span>Coordenadores</span></div>
+                        <h1>3b. Gestão de Coordenadores</h1>
+                        <p>Gerencie o corpo docente de coordenação, atribua cursos e acompanhe o histórico de vínculos
+                            acadêmicos em toda a rede Senac.</p>
                     </div>
+                    <button class="btn-cadastrar" onclick="window.location.href='cadastrar_coordenador.html'">
+                        <i class='bx bx-user-plus'></i> Cadastrar Coordenador
+                    </button>
                 </div>
-                <div class="kpi-card">
-                    <span class="kpi-title">CURSOS COBERTOS</span>
-                    <div class="kpi-value-wrap">
-                        <span class="kpi-value" id="kpi-cursos-cobertos">—</span>
-                        <span class="kpi-badge-gray" id="kpi-cursos-total">/ —</span>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <span class="kpi-title">TOTAL ATIVOS</span>
+                        <div class="kpi-value-wrap">
+                            <span class="kpi-value" id="kpi-total">124</span>
+                            <span class="kpi-badge-green">+5%</span>
+                        </div>
                     </div>
-                </div>
-                <div class="kpi-card">
-                    <span class="kpi-title">NOVAS SUBMISSÕES</span>
-                    <div class="kpi-value-wrap">
-                        <span class="kpi-value" id="kpi-submissoes">—</span>
-                        <span class="badge-urgente" id="kpi-submissoes-badge">CARREGANDO</span>
+                    <div class="kpi-card">
+                        <span class="kpi-title">CURSOS COBERTOS</span>
+                        <div class="kpi-value-wrap">
+                            <span class="kpi-value" id="kpi-cursos-cobertos">88</span>
+                            <span class="kpi-badge-gray" id="kpi-cursos-total">/ 92</span>
+                        </div>
                     </div>
-                </div>
-                <div class="kpi-card kpi-blue">
-                    <span class="kpi-title">EFICIÊNCIA GERAL</span>
-                    <div class="kpi-value-wrap">
-                        <span class="kpi-value" id="kpi-eficiencia">—</span>
+                    <div class="kpi-card">
+                        <span class="kpi-title">NOVAS SUBMISSÕES</span>
+                        <div class="kpi-value-wrap">
+                            <span class="kpi-value" id="kpi-submissoes">12</span>
+                            <span class="badge-urgente">URGENTE</span>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="tabela-container">
-                <div class="tabela-header">
-                    <h3>Lista de Coordenadores <span class="filtro-badge">Filtro: Todos <i
-                                class='bx bx-chevron-down'></i></span></h3>
-                    <button class="btn-export"><i class='bx bx-download'></i> Exportar Relatório</button>
-                </div>
-
-                <table class="tabela-coordenadores">
-                    <thead>
-                        <tr>
-                            <th>COORDENADOR</th>
-                            <th>CURSO VINCULADO</th>
-                            <th>DATA DE VÍNCULO</th>
-                            <th>STATUS</th>
-                            <th>AÇÕES</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: var(--texto-light);">Carregando
-                                coordenadores...</td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div class="tabela-footer">
-                    <span class="info-pag">Exibindo 0 coordenadores</span>
-                    <div class="pag-bts">
-                        <button class="btn-pag"><i class='bx bx-chevron-left'></i></button>
-                        <button class="btn-pag active">1</button>
-                        <button class="btn-pag">2</button>
-                        <button class="btn-pag">3</button>
-                        <button class="btn-pag"><i class='bx bx-chevron-right'></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="grid-inferior">
-
-                <!-- Timeline de logs reais -->
-                <div class="timeline-card">
-                    <h3><i class='bx bx-history'></i> Atividades Recentes de Gestão</h3>
-                    <div id="timeline-logs">
-                        <div style="color:#64748b;font-size:13px;padding:12px 0;">Carregando...</div>
-                    </div>
-                </div>
-
-                <div class="col-right">
-                    <div class="card-dica">
-                        <i class='bx bx-bulb'></i>
-                        <h4>Dica de Gestão</h4>
-                        <p>"Manter os dados de coordenação atualizados garante que as submissões fluam sem interrupções
-                            críticas no final do semestre."</p>
-                        <a href="#">Ver Guia de Melhores Práticas <i class='bx bx-right-arrow-alt'></i></a>
-                    </div>
-
-                    <div class="card-pendentes">
-                        <h4>Cursos sem Coordenador</h4>
-                        <div id="lista-sem-coord">
-                            <div style="color:#64748b;font-size:13px;padding:8px 0;">Carregando...</div>
+                    <div class="kpi-card kpi-blue">
+                        <span class="kpi-title">EFICIÊNCIA GERAL</span>
+                        <div class="kpi-value-wrap">
+                            <span class="kpi-value" id="kpi-eficiencia">94.2%</span>
                         </div>
                     </div>
                 </div>
 
-            </div>
+                <div class="tabela-container">
+                    <div class="tabela-header">
+                        <h3>Lista de Coordenadores <span class="filtro-badge">Filtro: Todos <i
+                                     class='bx bx-chevron-down'></i></span></h3>
+                        <div class="table-actions-right">
+                            <button class="btn-export"><i class='bx bx-download'></i> Exportar Relatório</button>
+                        </div>
+                    </div>
+
+                    <table class="tabela-coordenadores">
+                        <thead>
+                            <tr>
+                                <th>COORDENADOR</th>
+                                <th>CURSO VINCULADO</th>
+                                <th>DATA DE VÍNCULO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Item 1 -->
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="av av-blue">RM</div>
+                                        <div class="u-info">
+                                            <strong>Ricardo Malta</strong>
+                                            <span>ricardo.malta@senac.edu.br</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="td-curso"><strong>Bacharelado em Design Gráfico</strong></td>
+                                <td class="td-data">12 Abr, 2022</td>
+                                <td><span class="status-ativo">ATIVO</span></td>
+                                <td class="acoes-cell">
+                                    <i class='bx bx-pencil btn-acao-icon'></i>
+                                    <i class='bx bx-show btn-acao-icon'></i>
+                                </td>
+                            </tr>
+                            <!-- Item 2 -->
+                            <tr>
+                                <td>
+                                    <div class="user-cell">
+                                        <div class="av av-orange">AL</div>
+                                        <div class="u-info">
+                                            <strong>Ana Lúcia Oliveira</strong>
+                                            <span>ana.lucia@senac.edu.br</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="td-curso"><strong>Técnico em Informática</strong></td>
+                                <td class="td-data">05 Jan, 2023</td>
+                                <td><span class="status-ativo">ATIVO</span></td>
+                                <td class="acoes-cell">
+                                    <i class='bx bx-pencil btn-acao-icon'></i>
+                                    <i class='bx bx-show btn-acao-icon'></i>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="tabela-footer">
+                        <span class="info-pag">Exibindo 4 de 124 coordenadores</span>
+                        <div class="pag-bts">
+                            <button class="btn-pag"><i class='bx bx-chevron-left'></i></button>
+                            <button class="btn-pag active">1</button>
+                            <button class="btn-pag">2</button>
+                            <button class="btn-pag">3</button>
+                            <button class="btn-pag"><i class='bx bx-chevron-right'></i></button>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="grid-inferior">
+
+                    <!-- Atividades Recentes -->
+                    <div class="timeline-card">
+                        <h3><i class='bx bx-history'></i> Atividades Recentes de Gestão</h3>
+                        <div id="timeline-logs">
+                            <!-- Item 1 -->
+                            <div class="tl-item">
+                                <div class="tl-dot orange"></div>
+                                <div class="tl-content">
+                                    <div class="tl-header">
+                                        <strong>Novo Vínculo Estabelecido</strong>
+                                        <span>HOJE, 09:45</span>
+                                    </div>
+                                    <p>Mariana Silva foi designada como coordenadora de Bacharelado em Administração.</p>
+                                </div>
+                            </div>
+                            <!-- Item 2 -->
+                            <div class="tl-item">
+                                <div class="tl-dot blue"></div>
+                                <div class="tl-content">
+                                    <div class="tl-header">
+                                        <strong>Atualização de Cadastro</strong>
+                                        <span>ONTEM, 14:20</span>
+                                    </div>
+                                    <p>O e-mail institucional de Ricardo Malta foi atualizado pelo sistema.</p>
+                                </div>
+                            </div>
+                            <!-- Item 3 -->
+                            <div class="tl-item">
+                                <div class="tl-dot gray"></div>
+                                <div class="tl-content">
+                                    <div class="tl-header">
+                                        <strong>Processo de Seleção Finalizado</strong>
+                                        <span>15 MAR, 2024</span>
+                                    </div>
+                                    <p>Encerramento do edital para coordenação de Gastronomia.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-right">
+                        <!-- Dica de Gestão -->
+                        <div class="card-dica">
+                            <i class='bx bx-bulb'></i>
+                            <h4>Dica de Gestão</h4>
+                            <p>"Manter os dados de coordenação atualizados garante que as submissões de notas e frequências fluam sem interrupções críticas no final do semestre."</p>
+                            <a href="#">Ver Guia de Melhores Práticas <i class='bx bx-right-arrow-alt'></i></a>
+                        </div>
+
+                        <!-- Cursos sem Coordenador -->
+                        <div class="card-pendentes">
+                            <h4>Cursos sem Coordenador</h4>
+                            <div id="lista-sem-coord">
+                                <div class="item-pendente">
+                                    <span>Arquitetura</span>
+                                    <button class="btn-red">DESIGNAR</button>
+                                </div>
+                                <div class="item-pendente">
+                                    <span>Enfermagem</span>
+                                    <button class="btn-red">DESIGNAR</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
 
             </div><!-- /.page-container -->
 
@@ -225,7 +297,7 @@
 
                 const inputBusca = document.getElementById('input-busca-global');
                 const busca = (inputBusca?.value || '').toLowerCase();
-                
+
                 let lista = busca
                     ? data.filter(c =>
                         (c.full_name || '').toLowerCase().includes(busca) ||
@@ -250,9 +322,20 @@
                     const email = c.email || '';
                     let cursos = Array.isArray(c.course_names) && c.course_names.length > 0
                         ? c.course_names.join(', ') : 'Não vinculado';
-                    const dataAdm = formatarData(c.data_admissao || c.created_at);
+                    
+                    // Formatar data como no exemplo: "12 Abr, 2022"
+                    let dataAdm = 'N/D';
+                    if (c.data_admissao || c.created_at) {
+                        const d = new Date(c.data_admissao || c.created_at);
+                        const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                        dataAdm = `${d.getDate().toString().padStart(2, '0')} ${meses[d.getMonth()]}, ${d.getFullYear()}`;
+                    }
+
                     const initials = getIniciais(nome);
-                    const colorCls = colorAvatar(nome);
+                    
+                    // Mapear avatar color (simulado como na imagem)
+                    const colorClsMap = { 0: 'av-blue', 1: 'av-orange', 2: 'av-purple', 3: 'av-green' };
+                    const colorCls = colorClsMap[c.id % 4] || 'av-blue';
 
                     return `
                         <tr>
@@ -276,7 +359,19 @@
                 }).join('');
 
                 const infoPag = document.querySelector('.info-pag');
-                if (infoPag) infoPag.textContent = `Exibindo ${lista.length} coordenadores`;
+                if (infoPag) infoPag.textContent = `Exibindo ${lista.length} de ${todosCoord.length} coordenadores`;
+            };
+
+            // Função Deletar
+            window.deletarCoordenador = async (id, nome) => {
+                if (!confirm(`Tem certeza que deseja excluir o coordenador "${nome}"? Esta ação não pode ser desfeita.`)) return;
+                try {
+                    await apiDelete(`/admin/coordenador/${id}`);
+                    alert('Coordenador excluído com sucesso!');
+                    location.reload();
+                } catch (err) {
+                    alert('Erro ao excluir coordenador: ' + err.message);
+                }
             };
 
             // ── Exportar ──
@@ -358,9 +453,9 @@
                         'VALIDAR_SUBMISSAO': 'Submissão Validada', 'CRIAR_CATEGORIA': 'Nova Atividade',
                         'DELETAR_CATEGORIA': 'Atividade Removida'
                     };
-                    const dotColors = { 
-                        'CRIAR_COORDENADOR': 'orange', 
-                        'ATUALIZAR_COORDENADOR': 'blue', 
+                    const dotColors = {
+                        'CRIAR_COORDENADOR': 'orange',
+                        'ATUALIZAR_COORDENADOR': 'blue',
                         'DELETAR_COORDENADOR': 'gray',
                         'CRIAR_CURSO': 'orange',
                         'ATUALIZAR_CURSO': 'blue',

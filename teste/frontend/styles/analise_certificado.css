@@ -1,29 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-:root {
-    --azul-dark:    #0a1f44;
-    --azul-main:    #002b5e;
-    --azul-light:   #f0f4f8;
-    --azul-text:    #1d4ed8;
-    --laranja:      #f59e0b;
-    --laranja-hover:#d97706;
-    --fundo:        #ffffff;
-    --fundo-page:   #f8fafc;
-    --texto:        #1e293b;
-    --texto-light:  #64748b;
-    --texto-lighter:#94a3b8;
-    --borda:        #f1f5f9;
-    --borda-dark:   #e2e8f0;
-    --verde:        #10b981;
-    --vermelho:     #ef4444;
-    --roxo:         #7c3aed;
-}
+
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 body {
@@ -46,83 +29,29 @@ body {
     flex-direction: column;
 }
 
-/* ========== TOP HEADER ========== */
-.top-header {
+/* ========== CABECALHO TOPO PADRONIZADO ========== */
+
+
+.topo-links {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 70px;
-    border-bottom: 1px solid var(--borda-dark);
-    margin-bottom: 40px;
+    gap: 25px;
 }
 
-.top-nav-links {
-    display: flex;
-    height: 100%;
-}
-
-.top-nav-links a {
-    display: flex;
-    align-items: center;
-    padding: 0 20px;
+.topo-links a {
     text-decoration: none;
     color: var(--texto-light);
     font-size: 13px;
-    font-weight: 600;
-    position: relative;
+    font-weight: 700;
     transition: 0.2s;
 }
 
-.top-nav-links a:hover { color: var(--azul-main); }
-
-.top-nav-links a.active {
+.topo-links a:hover, .topo-links a.active {
     color: var(--azul-main);
-    font-weight: 700;
+    border-bottom: 3px solid var(--laranja);
+    padding-bottom: 6px;
 }
 
-.top-nav-links a.active::after {
-    content: '';
-    position: absolute;
-    bottom: -1px;
-    left: 0;
-    width: 100%;
-    height: 3px;
-    background: var(--laranja);
-    border-radius: 3px 3px 0 0;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-}
-
-.search-wrap {
-    background: var(--azul-light);
-    padding: 8px 16px;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: 220px;
-}
-
-.search-wrap input {
-    border: none;
-    background: transparent;
-    outline: none;
-    font-size: 12px;
-    width: 100%;
-    color: var(--texto);
-}
-
-.icon-header {
-    font-size: 20px;
-    color: var(--texto-light);
-    cursor: pointer;
-    transition: color 0.2s;
-}
-.icon-header:hover { color: var(--azul-main); }
+/* Ações removidas conforme solicitação */
 
 /* ========== TÍTULO + BREADCRUMB ========== */
 .head-kpis {
@@ -624,7 +553,7 @@ body {
     color: var(--texto);
     outline: none;
     resize: vertical;
-    font-family: 'Montserrat', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
     transition: 0.2s;
     min-height: 90px;
 }

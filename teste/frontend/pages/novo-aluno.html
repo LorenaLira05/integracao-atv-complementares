@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/styles/novo-aluno.css">
     <script src="/services/script.js"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
@@ -81,10 +82,11 @@
             </div>
 
             <nav class="menu-navegacao">
-                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
-                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
-                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
-                <a href="configadm.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
             </nav>
 
             <div class="sidebar-bottom-action">
@@ -99,51 +101,10 @@
             </div>
         </aside>
 
-        <!-- Script para ativar a aba atual e carregar dados do usuário -->
-        <script>
-            document.addEventListener('DOMContentLoaded', () => {
-                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
-                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
-                links.forEach(link => {
-                    if (link.getAttribute('href') === currentPage) {
-                        link.classList.add('active');
-                    } else {
-                        link.classList.remove('active');
-                    }
-                });
-                
-                if (localStorage.getItem('nome')) {
-                    const nomeEl = document.getElementById('sidebar-nome-global');
-                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
-                    
-                    const avatarEl = document.getElementById('sidebar-avatar-global');
-                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
-                }
-                if (localStorage.getItem('perfil')) {
-                    const roleEl = document.getElementById('sidebar-role-global');
-                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
-                }
-            });
-        </script>
-
         <main class="conteudo-principal">
             <header class="cabecalho-topo">
-                <div class="header-titulo">
-                    Portal do Coordenador
-                    <div class="header-links">
-                        <a href="#" style="color:var(--texto); text-decoration:none;">Visão Geral</a>
-                        <a href="#" style="color:var(--texto-light); text-decoration:none;">Calendário</a>
-                        <a href="#" style="color:var(--texto-light); text-decoration:none;">Suporte</a>
-                    </div>
-                </div>
-
-                <div class="acoes-usuario">
-                    <div class="caixa-busca">
-                        <input type="text" placeholder="Buscar aluno...">
-                        <i class='bx bx-search'></i>
-                    </div>
-                    <i class='bx bx-bell icon-header'></i>
-                    <img src="https://ui-avatars.com/api/?name=User&background=random" alt="Perfil" class="foto-perfil">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
             </header>
 

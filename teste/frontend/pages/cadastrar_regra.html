@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Cadastrar Regra de Atividade</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/editar_coordenador.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <style>
+        :root {
+            --senac-blue: #004587;
+            --senac-orange: #f39200;
+            --slate-50: #f8fafc;
+            --slate-100: #f1f5f9;
+            --slate-200: #e2e8f0;
+            --slate-600: #475569;
+            --slate-700: #334155;
+        }
+
+        .page-header-regra {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 20px;
+            align-items: start;
+        }
+
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            position: sticky;
+            top: 20px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--senac-blue);
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--slate-100);
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--slate-600);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--slate-200);
+            border-radius: 8px;
+            font-size: 13px;
+            color: var(--slate-700);
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            border-color: var(--senac-blue);
+            box-shadow: 0 0 0 3px rgba(0, 69, 135, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px;
+            background: var(--slate-50);
+            border-radius: 8px;
+            border: 1px dashed var(--slate-200);
+            cursor: pointer;
+        }
+
+        .checkbox-group input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+
+        .btn-save {
+            width: 100%;
+            background: var(--senac-blue);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .btn-save:hover {
+            background: #003366;
+            transform: translateY(-1px);
+        }
+
+        .list-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--slate-200);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Tabela Estilizada */
+        .regra-item {
+            display: grid;
+            grid-template-columns: 1fr 120px 100px 80px;
+            gap: 15px;
+            padding: 15px;
+            border-bottom: 1px solid var(--slate-100);
+            align-items: center;
+            transition: background 0.2s;
+        }
+
+        .regra-item:hover {
+            background: var(--slate-50);
+        }
+
+        .regra-info h4 {
+            margin: 0;
+            font-size: 14px;
+            color: var(--senac-blue);
+        }
+
+        .regra-info p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: var(--slate-600);
+        }
+
+        .badge-hour {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+        }
+
+        .badge-req {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+        }
+
+        .badge-req.sim { background: #fee2e2; color: #991b1b; }
+        .badge-req.nao { background: #f1f5f9; color: #64748b; }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-edit { background: #eff6ff; color: #2563eb; }
+        .btn-edit:hover { background: #dbeafe; }
+        .btn-del { background: #fff1f2; color: #e11d48; }
+        .btn-del:hover { background: #ffe4e6; }
+    </style>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao"></nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="logout();"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
+                </div>
+            </header>
+            <div class="page-header-regra">
+                <div>
+                    <span class="etiqueta-laranja">CONFIGURAÇÃO ACADÊMICA</span>
+                    <h1>Regras Acadêmicas</h1>
+                    <p>Gerencie diretrizes de horas por curso e categoria.</p>
+                </div>
+                <button class="btn-back" onclick="window.history.back()" style="padding: 8px 16px; font-size: 12px; background: white; border: 1px solid var(--slate-200);">
+                    <i class='bx bx-arrow-back'></i> VOLTAR
+                </button>
+            </div>
+
+            <div class="grid-layout">
+                <!-- Coluna Formulário -->
+                <div class="form-card">
+                    <div class="section-title">
+                        <i class='bx bx-plus-circle'></i> <span id="form-action-title">Nova Regra</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Curso</label>
+                        <select id="select-curso" class="form-control">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Categoria</label>
+                        <select id="select-categoria" class="form-control">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div class="form-group">
+                            <label class="form-label">H. Mínimas</label>
+                            <input type="number" id="input-min-horas" class="form-control" value="0">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">H. Máximas</label>
+                            <input type="number" id="input-max-horas" class="form-control" value="40">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-group" for="check-obrigatorio">
+                            <input type="checkbox" id="check-obrigatorio">
+                            <span style="font-size: 12px; font-weight: 600; color: var(--slate-700);">Categoria Obrigatória</span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Observações</label>
+                        <textarea id="input-notas" class="form-control" style="height: 80px; resize: none; font-size: 12px;" 
+                            placeholder="Instruções para o aluno..."></textarea>
+                    </div>
+
+                    <button class="btn-save" id="btn-salvar">
+                        <i class='bx bx-check-double'></i> SALVAR REGRA
+                    </button>
+                    <button id="btn-cancelar" style="display:none; width: 100%; background: none; border: 1px solid var(--slate-200); color: var(--slate-600); padding: 10px; border-radius: 8px; font-size: 12px; margin-top: 10px; cursor: pointer;">
+                        Cancelar Edição
+                    </button>
+
+                    <div id="msg-feedback" style="margin-top: 15px; padding: 10px; border-radius: 8px; display: none; font-size: 12px; font-weight: 600; text-align: center;"></div>
+                </div>
+
+                <!-- Coluna Listagem -->
+                <div class="list-card">
+                    <div class="section-title">
+                        <i class='bx bx-list-ul'></i> Regras Configuradas
+                    </div>
+                    
+                    <div id="lista-regras-container">
+                        <!-- Itens via JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+        </main>
+    </div>
+
+    <script>
+        let editandoId = null;
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const selectCurso = document.getElementById('select-curso');
+            const selectCat = document.getElementById('select-categoria');
+            const btnSalvar = document.getElementById('btn-salvar');
+
+            // Carregar Cursos
+            async function carregarCursos() {
+                try {
+                    const cursos = await apiGet('/coordenador/meus-cursos');
+                    selectCurso.innerHTML = '<option value="">Selecione um curso...</option>';
+                    cursos.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name;
+                        selectCurso.appendChild(opt);
+                    });
+                } catch (err) {
+                    console.error('Erro ao carregar cursos:', err);
+                    selectCurso.innerHTML = '<option value="">Erro ao carregar</option>';
+                }
+            }
+
+            // Carregar Categorias
+            async function carregarCategorias() {
+                try {
+                    const cats = await apiGet('/coordenador/categorias');
+                    selectCat.innerHTML = '<option value="">Selecione uma categoria...</option>';
+                    cats.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name;
+                        selectCat.appendChild(opt);
+                    });
+                } catch (err) {
+                    console.error('Erro ao carregar categorias:', err);
+                    selectCat.innerHTML = '<option value="">Erro ao carregar</option>';
+                }
+            }
+
+            // Carregar Regras
+            async function carregarRegras() {
+                const container = document.getElementById('lista-regras-container');
+                try {
+                    const regras = await apiGet('/coordenador/regras/todas');
+                    container.innerHTML = '';
+                    
+                    if (regras.length === 0) {
+                        container.innerHTML = '<div style="padding: 40px; text-align: center; color: #94a3b8; font-size: 13px;">Nenhuma regra configurada ainda.</div>';
+                        return;
+                    }
+
+                    regras.forEach(r => {
+                        const item = document.createElement('div');
+                        item.className = 'regra-item';
+                        item.innerHTML = `
+                            <div class="regra-info">
+                                <h4>${r.category_name}</h4>
+                                <p>${r.course_name}</p>
+                            </div>
+                            <div style="text-align:center">
+                                <span class="badge-hour">${r.min_hours}h - ${r.max_hours}h</span>
+                            </div>
+                            <div style="text-align:center">
+                                <span class="badge-req ${r.is_required ? 'sim' : 'nao'}">${r.is_required ? 'Obrigatória' : 'Opcional'}</span>
+                            </div>
+                            <div class="actions">
+                                <button class="btn-icon btn-edit" onclick="prepararEdicao(${JSON.stringify(r).replace(/"/g, '&quot;')})"><i class='bx bx-edit-alt'></i></button>
+                                <button class="btn-icon btn-del" onclick="deletarRegra(${r.id})"><i class='bx bx-trash'></i></button>
+                            </div>
+                        `;
+                        container.appendChild(item);
+                    });
+                } catch (err) {
+                    container.innerHTML = '<div style="padding: 20px; text-align: center; color: #ef4444;">Erro ao carregar listagem.</div>';
+                }
+            }
+
+            // Salvar / Atualizar
+            btnSalvar.addEventListener('click', async () => {
+                const cursoId = selectCurso.value;
+                const catId = selectCat.value;
+                const minH = document.getElementById('input-min-horas').value;
+                const maxH = document.getElementById('input-max-horas').value;
+                const isReq = document.getElementById('check-obrigatorio').checked;
+                const notas = document.getElementById('input-notas').value;
+
+                if (!cursoId || !catId) {
+                    alert('Por favor, selecione o curso e a categoria.');
+                    return;
+                }
+
+                btnSalvar.disabled = true;
+                btnSalvar.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> PROCESSANDO...';
+
+                try {
+                    const payload = {
+                        course_id: parseInt(cursoId),
+                        category_id: parseInt(catId),
+                        min_hours: parseFloat(minH),
+                        max_hours: parseFloat(maxH),
+                        is_required: isReq,
+                        notes: notas
+                    };
+
+                    if (editandoId) {
+                        await apiFetch(`/coordenador/regras/${editandoId}`, { method: 'PUT', body: payload });
+                    } else {
+                        await apiPost('/coordenador/regras', payload);
+                    }
+
+                    showFeedback(editandoId ? 'Atualizada!' : 'Cadastrada!', 'success');
+                    resetForm();
+                    await carregarRegras();
+                } catch (err) {
+                    showFeedback('Erro: ' + err.message, 'error');
+                } finally {
+                    btnSalvar.disabled = false;
+                    btnSalvar.innerHTML = editandoId ? '<i class="bx bx-save"></i> ATUALIZAR REGRA' : '<i class="bx bx-check-double"></i> SALVAR REGRA';
+                }
+            });
+
+            document.getElementById('btn-cancelar').addEventListener('click', resetForm);
+
+            // Inicialização
+            await carregarCursos();
+            await carregarCategorias();
+            await carregarRegras();
+
+            window.prepararEdicao = (regra) => {
+                editandoId = regra.id;
+                selectCurso.value = regra.course_id;
+                selectCurso.disabled = true;
+                selectCat.value = regra.category_id;
+                selectCat.disabled = true;
+                document.getElementById('input-min-horas').value = regra.min_hours;
+                document.getElementById('input-max-horas').value = regra.max_hours;
+                document.getElementById('check-obrigatorio').checked = regra.is_required;
+                document.getElementById('input-notas').value = regra.notes || '';
+                
+                document.getElementById('form-action-title').textContent = 'Editando Regra';
+                document.getElementById('btn-cancelar').style.display = 'block';
+                btnSalvar.innerHTML = '<i class="bx bx-save"></i> ATUALIZAR REGRA';
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+
+            window.deletarRegra = async (id) => {
+                if (!confirm('Deseja realmente excluir esta regra?')) return;
+                try {
+                    await apiFetch(`/coordenador/regras/${id}`, { method: 'DELETE' });
+                    showFeedback('Regra removida!', 'success');
+                    await carregarRegras();
+                } catch (err) {
+                    alert('Erro ao excluir: ' + err.message);
+                }
+            };
+
+            function resetForm() {
+                editandoId = null;
+                selectCurso.disabled = false;
+                selectCat.disabled = false;
+                document.getElementById('input-min-horas').value = 0;
+                document.getElementById('input-max-horas').value = 40;
+                document.getElementById('check-obrigatorio').checked = false;
+                document.getElementById('input-notas').value = '';
+                
+                document.getElementById('form-action-title').textContent = 'Nova Regra';
+                document.getElementById('btn-cancelar').style.display = 'none';
+                btnSalvar.innerHTML = '<i class="bx bx-check-double"></i> SALVAR REGRA';
+            }
+
+            function showFeedback(msg, type) {
+                const el = document.getElementById('msg-feedback');
+                el.style.display = 'block';
+                el.textContent = msg;
+                el.style.background = type === 'success' ? '#dcfce7' : '#fee2e2';
+                el.style.color = type === 'success' ? '#166534' : '#991b1b';
+                setTimeout(() => el.style.display = 'none', 3000);
+            }
+        });
+    </script>
+</body>
+
+</html>

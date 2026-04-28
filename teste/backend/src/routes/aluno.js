@@ -10,6 +10,8 @@ router.post('/submissao', authMiddleware(['student']), alunoController.postSubme
 router.put('/submissao/:id', authMiddleware(['student']), alunoController.putEditarSubmissao);
 router.delete('/submissao/:id', authMiddleware(['student']), alunoController.deleteSubmissao);
 router.get('/submissoes', authMiddleware(['student']), alunoController.getMinhasSubmissoes);
+router.get('/resumo-horas', authMiddleware(['student', 'coordinator', 'coordenador']), alunoController.getResumoHoras);
+router.get('/meus-dados', authMiddleware(['student', 'coordinator', 'coordenador']), alunoController.getMeusDados);
 
 // Upload separado — permite anexar/atualizar arquivo independente da submissão
 router.post('/submissao/:submission_id/arquivo', authMiddleware(['student']), uploadController.uploadCertificado);
