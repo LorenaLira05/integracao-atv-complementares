@@ -251,35 +251,32 @@
 
         <main class="conteudo-principal">
             <header class="cabecalho-topo">
-                <div>
-                    <span class="titulo-portal">Portal do Coordenador</span>
+                <div class="topo-links">
+                    <a href="Dasboard.html">Início</a>
+                    <a href="submissoes.html" class="active">Repositório de Certificados</a>
+                    <a href="extrato_certificado.html">Extrato de Horas</a>
                 </div>
             </header>
 
-            <!-- Header -->
-            <header class="cabecalho-submissoes">
+            <section class="secao-titulo-submissoes" style="display: flex; justify-content: space-between; align-items: center; padding: 30px 40px 10px;">
                 <div class="titulo-page">
-                    <h2>Repositório de Certificados</h2>
-                    <span class="titulo-muted">| VALIDADOS</span>
+                    <h1 style="margin: 0; font-size: 24px;">Repositório <span class="titulo-muted" style="font-weight: 400; font-size: 14px; color: #64748b;">| VALIDADOS</span></h1>
                 </div>
 
-                <div class="search-wrap">
-                    <i class='bx bx-search'></i>
-                    <input type="text" id="input-busca" placeholder="Buscar certificado...">
-                </div>
-
-                <div class="header-tools">
-                    <i class='bx bx-bell icon-btn'></i>
-                    <i class='bx bx-cog icon-btn'></i>
-                    <div class="header-profile">
-                        <div class="profile-text">
-                            <small id="header-role-global">COORDENADOR</small>
-                            <strong id="header-nome-global">Usuário</strong>
+                <div class="header-tools" style="display: flex; align-items: center; gap: 20px;">
+                    <div class="search-wrap" style="background: white; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: 300px; border: 1px solid #e2e8f0;">
+                        <i class='bx bx-search'></i>
+                        <input type="text" id="input-busca" placeholder="Buscar certificado..." style="border: none; outline: none; width: 100%; font-size: 13px;">
+                    </div>
+                    <div class="header-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
+                        <div class="profile-text" style="text-align: right;">
+                            <small id="header-role-global" style="display: block; font-size: 10px; color: #64748b; font-weight: 700;">ALUNO</small>
+                            <strong id="header-nome-global" style="font-size: 13px; color: #004587;">Usuário</strong>
                         </div>
-                        <img id="header-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" class="avatar">
+                        <img id="header-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" class="avatar" style="width: 32px; height: 32px; border-radius: 50%;">
                     </div>
                 </div>
-            </header>
+            </section>
 
             <!-- KPIs -->
             <section class="kpis-row">

@@ -18,18 +18,30 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             // Preencher os cursos vindos da API no formulário
-            apiGet('/admin/cursos').then(cursos => {
+            const perfil = localStorage.getItem('perfil') ? localStorage.getItem('perfil').toUpperCase() : '';
+            const endpoint = (perfil === 'COORDINATOR' || perfil === 'COORDENADOR') 
+                ? '/coordenador/meus-cursos' 
+                : '/admin/cursos';
+
+            apiGet(endpoint).then(cursos => {
                 const selectCurso = document.getElementById('cursoAluno');
                 if (selectCurso && cursos && Array.isArray(cursos)) {
-                    selectCurso.innerHTML = '';
+                    selectCurso.innerHTML = '<option value="">Selecione o curso</option>';
                     cursos.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.id;
-                        opt.textContent = c.nome_curso || c.nome;
+                        // O backend retorna 'name' no endpoint /coordenador/meus-cursos
+                        opt.textContent = c.name || c.nome_curso || c.nome;
                         selectCurso.appendChild(opt);
                     });
+                } else if (selectCurso) {
+                    selectCurso.innerHTML = '<option value="">Nenhum curso disponível</option>';
                 }
-            }).catch(() => console.error("Erro ao carregar cursos"));
+            }).catch(err => {
+                console.error("Erro ao carregar cursos", err);
+                const selectCurso = document.getElementById('cursoAluno');
+                if (selectCurso) selectCurso.innerHTML = '<option value="">Erro ao carregar cursos</option>';
+            });
 
             // Gerar RA automático de exemplo
             const inputRa = document.getElementById('raAluno');

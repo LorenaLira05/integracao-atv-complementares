@@ -1,6 +1,15 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-
+:root {
+    --azul-main: #004587;
+    --azul-dark: #0b1930;
+    --texto: #334155;
+    --texto-light: #64748b;
+    --laranja: #f6821f;
+    --borda: #e2e8f0;
+    --verde: #10b981;
+    --fundo: #f8fafc;
+}
 
 * {
     margin: 0;
@@ -9,28 +18,8 @@
     font-family: 'Outfit', 'Inter', sans-serif;
 }
 
-body {
-    background-color: #f8fafc;
-    color: var(--texto);
-    overflow-x: hidden;
-}
-
-.layout-geral {
-    display: flex;
-    min-height: 100vh;
-}
-
-/* === MAIN CONTENT ========== */
 .conteudo-principal {
-    flex: 1;
-    padding: 0 30px 30px;
     background: #f8fafc;
-    display: flex;
-    flex-direction: column;
-}
-
-.conteudo-principal > * {
-    width: 100%;
 }
 
 /* ========== HEADER ========== */

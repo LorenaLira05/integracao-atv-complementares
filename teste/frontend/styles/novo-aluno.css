@@ -1,12 +1,22 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-
+:root {
+    --azul-senac: #004587;
+    --azul-dark: #0b1930;
+    --azul-main: #0056b3;
+    --laranja: #f6821f;
+    --laranja-hover: #d46d18;
+    --texto: #334155;
+    --texto-light: #64748b;
+    --texto-suave: #94a3b8;
+    --fundo: #f8fafc;
+    --borda: #e2e8f0;
+    --bg-input: #f1f5f9;
+}
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Outfit', 'Inter', sans-serif;
 }
 
 body { background-color: var(--fundo); color: var(--texto); }

@@ -1,7 +1,14 @@
-/* Importação das fontes Montserrat e Poppins do Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-/* Reset global: remove margens/padrões e define o cálculo de largura */
+:root {
+    --azul-senac: #004a8e;
+    --laranja-senac: #f6821f;
+    --branco: #ffffff;
+    --fundo-pagina: #f8fafc;
+    --texto-suave: #64748b;
+    --azul-escuro: #1a2e5a;
+}
+
 * {
     margin: 0;
     padding: 0;
@@ -9,135 +16,54 @@
     font-family: 'Outfit', 'Inter', sans-serif;
 }
 
-/* Variáveis de cores para facilitar mudanças futuras */
-
-
-/* Configuração do layout principal */
 body {
     background-color: var(--fundo-pagina);
     color: var(--azul-escuro);
-    min-height: 100vh;
 }
 
-.layout-geral {
-    display: flex;
-}
-
-/* BARRA LATERAL (SIDEBAR) */
-.barra-lateral {
-    width: 260px;
-    background: var(--branco);
-    border-right: 1px solid #e2e8f0;
-    display: flex;
-    flex-direction: column;
-    padding: 2rem 0;
-    position: fixed; /* Fixa a barra para que ela não suma no scroll */
-    height: 100vh;
-    z-index: 100;
-}
-
-.logo-secao {
-    padding: 0 2rem;
-    margin-bottom: 2.5rem;
-}
-
-.logo-secao img {
-    width: 90px;
-}
-
-.logo-secao p {
-    font-size: 10px;
-    font-weight: 800;
-    color: var(--texto-suave);
-    margin-top: 5px;
-    letter-spacing: 0.5px;
-}
-
-/* Links do menu lateral */
-.menu-navegacao {
-    flex: 1;
-}
-
-.link-menu {
-    display: flex;
-    align-items: center;
-    padding: 12px 2rem;
-    text-decoration: none;
-    color: var(--texto-suave);
-    font-size: 14px;
-    font-weight: 600;
-    gap: 15px;
-    transition: 0.3s;
-}
-
-/* Estilo para o item clicado ou quando passa o mouse */
-.link-menu:hover, .link-menu.active {
-    background: var(--azul-senac);
-    color: var(--branco);
-}
-
-.link-menu.active {
-    border-radius: 0 50px 50px 0;
-    margin-right: 15px;
-}
-
-/* Rodapé da sidebar (Perfil) */
-.usuario-rodape {
-    padding: 1.5rem 2rem;
-    border-top: 1px solid #f1f5f9;
-}
-
-.foto-perfil {
-    width: 40px;
-    height: 40px;
-    background: #cbd5e1;
-    border-radius: 50%;
-    margin-bottom: 10px;
-}
-
-.info-usuario strong {
-    display: block;
-    font-size: 13px;
-}
-
-.info-usuario small {
-    color: var(--texto-suave);
-    font-size: 10px;
-    font-weight: 700;
-}
-
-.link-sair {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    margin-top: 15px;
-    text-decoration: none;
-    color: var(--texto-suave);
-    font-size: 12px;
-    font-weight: 700;
-}
-
-/* CONTEÚDO PRINCIPAL */
 .conteudo-principal {
-    flex: 1;
-    padding: 2rem 3.5rem;
+    background-color: var(--fundo-pagina);
 }
 
-/* Cabeçalho superior */
+/* Cabeçalho superior - Tabs de navegação */
+.cabecalho-topo {
+    margin-bottom: 30px;
+}
 
+.topo-links {
+    display: flex;
+    gap: 30px;
+    border-bottom: 1px solid #f1f5f9;
+    padding-bottom: 10px;
+}
 
-.aba {
+.topo-links a {
     text-decoration: none;
-    color: var(--texto-suave);
+    color: #64748b;
     font-weight: 700;
     font-size: 14px;
-    margin-right: 25px;
+    transition: 0.2s;
+    position: relative;
+    padding-bottom: 10px;
 }
 
-.aba.active {
-    color: var(--laranja-senac);
-    border-bottom: 3px solid var(--laranja-senac);
-    padding-bottom: 5px;
+.topo-links a.active {
+    color: #004a8e;
+}
+
+.topo-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: #f6821f;
+    border-radius: 2px;
+}
+
+.topo-links a:hover:not(.active) {
+    color: #004a8e;
 }
 
 .acoes-usuario {
