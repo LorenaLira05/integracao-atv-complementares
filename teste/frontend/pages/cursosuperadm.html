@@ -360,83 +360,114 @@
                 });
 
                 // Render Table
-                const tbody = document.querySelector('table tbody');
-                if (tbody) {
+                let filtroStatus = 'todos';
+                window.renderTabela = () => {
+                    const tbody = document.querySelector('table tbody');
+                    if (!tbody) return;
                     tbody.innerHTML = '';
 
-                    if (cursos.length === 0) {
+                    const busca = (document.getElementById('input-busca')?.value || '').toLowerCase();
+                    let lista = busca 
+                        ? cursos.filter(c => 
+                            c.name.toLowerCase().includes(busca) || 
+                            (c.code || '').toLowerCase().includes(busca)
+                          )
+                        : cursos;
+
+                    if (filtroStatus === 'ativos') {
+                        lista = lista.filter(c => c.is_active !== false);
+                    } else if (filtroStatus === 'inativos') {
+                        lista = lista.filter(c => c.is_active === false);
+                    }
+
+                    if (lista.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Nenhum curso encontrado.</td></tr>';
-                    } else {
-                        cursos.forEach(curso => {
-                            // Find coordinator
-                            const coord = coordenadores.find(c => c.course_ids && c.course_ids.includes(curso.id));
+                        return;
+                    }
 
-                            // Format date
-                            let dataCriacao = 'N/D';
-                            if (curso.created_at) {
-                                const d = new Date(curso.created_at);
-                                const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-                                dataCriacao = `${d.getDate().toString().padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
-                            }
+                    lista.forEach(curso => {
+                        const coord = coordenadores.find(c => c.course_ids && c.course_ids.includes(curso.id));
+                        let dataCriacao = 'N/D';
+                        if (curso.created_at) {
+                            const d = new Date(curso.created_at);
+                            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                            dataCriacao = `${d.getDate().toString().padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
+                        }
+                        const sigla = curso.code ? curso.code.substring(0, 3).toUpperCase() : (curso.name.substring(0, 3).toUpperCase());
+                        const isAtivo = curso.is_active !== false;
+                        const statusClass = isAtivo ? 'status-ativo' : 'status-inativo';
+                        const statusText = isAtivo ? 'Ativo' : 'Inativo';
 
-                            // Sigla
-                            const sigla = curso.code ? curso.code.substring(0, 3).toUpperCase() : (curso.name.substring(0, 3).toUpperCase());
+                        let coordHtml = `
+                            <div class="td-coordenador pendente">
+                                <div class="coord-avatar" style="background: #f8fafc; color: #cbd5e1; border: 1px dashed #cbd5e1;">NA</div>
+                                <span>Pendente vinculação</span>
+                            </div>
+                        `;
 
-                            // Status
-                            const isAtivo = curso.is_active !== false;
-                            const statusClass = isAtivo ? 'status-ativo' : 'status-inativo';
-                            const statusText = isAtivo ? 'Ativo' : 'Inativo';
-
-                            // Coordinator info
-                            let coordHtml = `
-                                <div class="td-coordenador pendente">
-                                    <div class="coord-avatar" style="background: #f8fafc; color: #cbd5e1; border: 1px dashed #cbd5e1;">NA</div>
-                                    <span>Pendente vinculação</span>
+                        if (coord) {
+                            const initial = coord.full_name ? coord.full_name.charAt(0).toUpperCase() : 'C';
+                            coordHtml = `
+                                <div class="td-coordenador">
+                                    <div class="coord-avatar">${initial}</div>
+                                    <span>${coord.full_name}</span>
                                 </div>
                             `;
+                        }
 
-                            if (coord) {
-                                const initial = coord.full_name ? coord.full_name.charAt(0).toUpperCase() : 'C';
-                                coordHtml = `
-                                    <div class="td-coordenador">
-                                        <div class="coord-avatar">${initial}</div>
-                                        <span>${coord.full_name}</span>
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>
+                                <div class="td-curso">
+                                    <div class="curso-sigla">${sigla}</div>
+                                    <div class="curso-info">
+                                        <strong>${curso.name}</strong>
+                                        <small>${curso.modalidade || 'Bacharelado'} • ${curso.semestres || 8} semestres</small>
                                     </div>
-                                `;
-                            }
-
-                            const tr = document.createElement('tr');
-                            tr.innerHTML = `
-                                <td>
-                                    <div class="td-curso">
-                                        <div class="curso-sigla">${sigla}</div>
-                                        <div class="curso-info">
-                                            <strong>${curso.name}</strong>
-                                            <small>${curso.modalidade || 'Bacharelado'} • ${curso.semestres || 8} semestres</small>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>${coordHtml}</td>
-                                <td class="td-data">${dataCriacao}</td>
-                                <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-                                <td>
-                                    <div class="td-acoes">
-                                        <a href="editar_curso.html?id=${curso.id}" style="color:inherit;" title="Editar"><i class='bx bx-pencil' style="cursor:pointer;"></i></a>
-                                        <i class='bx bx-show' style="cursor:pointer;" title="Visualizar"></i>
-                                        <i class='bx bx-download' style="cursor:pointer;" title="Exportar"></i>
-                                    </div>
-                                </td>
-                            `;
-                            tbody.appendChild(tr);
-                        });
-                    }
+                                </div>
+                            </td>
+                            <td>${coordHtml}</td>
+                            <td class="td-data">${dataCriacao}</td>
+                            <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <div class="td-acoes">
+                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;" title="Editar"><i class='bx bx-pencil' style="cursor:pointer;"></i></a>
+                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;" title="Visualizar"><i class='bx bx-show' style="cursor:pointer;"></i></a>
+                                    <i class='bx bx-download' style="cursor:pointer;" title="Exportar" onclick="exportarCSV_Curso(${curso.id})"></i>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
 
                     // Update pagination text
                     const paginationInfo = document.querySelector('.pagination-info');
                     if (paginationInfo) {
-                        paginationInfo.innerHTML = `Mostrando <strong>1-${cursos.length}</strong> de <strong>${cursos.length}</strong> cursos`;
+                        paginationInfo.innerHTML = `Mostrando <strong>1-${lista.length}</strong> de <strong>${cursos.length}</strong> cursos`;
                     }
-                }
+                };
+
+                // Inicial
+                renderTabela();
+
+                // Listener de busca
+                let debounce;
+                document.getElementById('input-busca')?.addEventListener('input', () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(() => renderTabela(), 250);
+                });
+
+                // Listener de Filtro
+                const btnFiltrar = document.querySelector('.btn-outline'); // O primeiro é o Filtrar
+                btnFiltrar?.addEventListener('click', () => {
+                    if (filtroStatus === 'todos') filtroStatus = 'ativos';
+                    else if (filtroStatus === 'ativos') filtroStatus = 'inativos';
+                    else filtroStatus = 'todos';
+
+                    const labelMap = { 'todos': 'Filtrar', 'ativos': 'Ativos', 'inativos': 'Inativos' };
+                    btnFiltrar.innerHTML = `<i class='bx bx-filter'></i> ${labelMap[filtroStatus]}`;
+                    renderTabela();
+                });
 
             } catch (err) {
                 console.error("Erro ao carregar dados:", err);
@@ -446,6 +477,56 @@
                 }
             }
         });
+
+        function exportarCSV_Curso(id) {
+            const curso = todosCursos.find(c => String(c.id) === String(id));
+            if (!curso) return;
+
+            const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
+            const linha = [
+                curso.id,
+                curso.name,
+                curso.code || '',
+                curso.minimum_required_hours || 0,
+                curso.semestres || '',
+                curso.modalidade || '',
+                curso.turno || '',
+                curso.is_active ? 'Ativo' : 'Inativo'
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+
+            const csv = [cabecalho.join(','), linha].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `curso_${curso.name.replace(/\s+/g, '_')}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function exportarGeralCSV() {
+            if (todosCursos.length === 0) return;
+            const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
+            const linhas = todosCursos.map(curso => [
+                curso.id,
+                curso.name,
+                curso.code || '',
+                curso.minimum_required_hours || 0,
+                curso.semestres || '',
+                curso.modalidade || '',
+                curso.turno || '',
+                curso.is_active ? 'Ativo' : 'Inativo'
+            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+
+            const csv = [cabecalho.join(','), ...linhas].join('\n');
+            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `lista_cursos_${new Date().toISOString().slice(0, 10)}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+        }
     </script>
 </body>
 

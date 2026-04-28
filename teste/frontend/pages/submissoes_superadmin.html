@@ -281,7 +281,10 @@
         // ─── Carrega dados do backend ─────────────────────────────────────────────
         async function carregarSubmissoes() {
             try {
-                const data = await apiGet('/admin/submissoes');
+                const [data, cursosList] = await Promise.all([
+                    apiGet('/admin/submissoes'),
+                    apiGet('/admin/cursos')
+                ]);
 
                 if (!data) {
                     exibirErro('Falha ao conectar com o servidor. Verifique se o backend está rodando.');
@@ -307,18 +310,29 @@
                 document.getElementById('kpi-total').textContent = total;
 
                 const pct = total > 0 ? Math.round((reprovadas / total) * 100) : 0;
-                document.getElementById('kpi-reprovadas-pct').textContent = `${pct}% do total`;
-                document.getElementById('btn-filter-pendentes').textContent = `Pendentes (${pendentes})`;
+                const pctEl = document.getElementById('kpi-reprovadas-pct');
+                if (pctEl) pctEl.textContent = `${pct}% do total`;
+                
+                const btnPend = document.getElementById('btn-filter-pendentes');
+                if (btnPend) btnPend.textContent = `Pendentes (${pendentes})`;
 
-                // ── Popula select de cursos ──
-                const cursos = [...new Set(todasSubmissoes.map(s => s.course_name).filter(Boolean))].sort();
+                // ── Popula select de cursos (Lista Real) ──
                 const selectCurso = document.getElementById('filtro-curso');
-                cursos.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c;
-                    opt.textContent = c;
-                    selectCurso.appendChild(opt);
-                });
+                if (selectCurso) {
+                    // Limpa opções exceto a primeira
+                    selectCurso.innerHTML = '<option value="">Todos os Cursos</option>';
+                    
+                    const cursosNomes = Array.isArray(cursosList) 
+                        ? cursosList.map(c => c.name).sort() 
+                        : [...new Set(todasSubmissoes.map(s => s.course_name).filter(Boolean))].sort();
+
+                    cursosNomes.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c;
+                        opt.textContent = c;
+                        selectCurso.appendChild(opt);
+                    });
+                }
 
                 // ── Renderiza tabela inicial ──
                 renderizarTabela();
@@ -334,8 +348,9 @@
             let lista = [...todasSubmissoes];
 
             // Filtro de status
-            if (filtroAtual !== 'all') {
-                lista = lista.filter(s => (s.status || '').toLowerCase() === filtroAtual);
+            const statusFiltro = document.querySelector('.tabs-filter button.active')?.dataset.status || 'TODAS';
+            if (statusFiltro !== 'TODAS') {
+                lista = lista.filter(s => (s.status || '').toLowerCase() === statusFiltro.toLowerCase());
             }
 
             // Filtro de curso
@@ -345,12 +360,12 @@
             }
 
             // Busca por nome ou atividade
-            if (buscaAtual.trim()) {
-                const q = buscaAtual.toLowerCase();
+            const busca = (document.getElementById('input-busca')?.value || '').toLowerCase();
+            if (busca) {
                 lista = lista.filter(s =>
-                    (s.student_name || '').toLowerCase().includes(q) ||
-                    (s.title || '').toLowerCase().includes(q) ||
-                    (s.student_ra || '').toLowerCase().includes(q)
+                    (s.student_name || '').toLowerCase().includes(busca) ||
+                    (s.title || '').toLowerCase().includes(busca) ||
+                    (s.student_ra || '').toLowerCase().includes(busca)
                 );
             }
 

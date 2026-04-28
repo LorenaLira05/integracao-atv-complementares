@@ -20,19 +20,21 @@
     <script>
         const params = new URLSearchParams(window.location.search);
         const coordId = params.get('id');
+        let todosCursos = [];
+        let cursosSelecionados = []; // [{id, name}]
 
         document.addEventListener('DOMContentLoaded', async () => {
             // Sidebar
-            const nome = localStorage.getItem('nome') || 'Usuário';
-            const perfil = localStorage.getItem('perfil');
+            const nomeUser = localStorage.getItem('nome') || 'Usuário';
+            const perfilUser = localStorage.getItem('perfil');
             const sideNome = document.getElementById('sidebar-nome-global');
             const sideRole = document.getElementById('sidebar-role-global');
             const sideAvatar = document.getElementById('sidebar-avatar-global');
-            if (sideNome) sideNome.textContent = nome;
-            if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
-            if (sideRole && perfil) {
+            if (sideNome) sideNome.textContent = nomeUser;
+            if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nomeUser)}&background=0056b3&color=fff`;
+            if (sideRole && perfilUser) {
                 const map = { 'super_admin': 'Super Admin', 'admin': 'Super Admin', 'coordinator': 'Coordenador' };
-                sideRole.textContent = map[perfil.toLowerCase()] || perfil;
+                sideRole.textContent = map[perfilUser.toLowerCase()] || perfilUser;
             }
 
             if (!coordId) {
@@ -41,19 +43,33 @@
                 return;
             }
 
+            // Dropdown cursos logic
+            document.getElementById('btn-toggle-dropdown').addEventListener('click', () => {
+                document.getElementById('cursos-dropdown').classList.toggle('open');
+            });
+
+            document.addEventListener('click', e => {
+                const dropdown = document.getElementById('cursos-dropdown');
+                const btn = document.getElementById('btn-toggle-dropdown');
+                if (dropdown && !dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+                    dropdown.classList.remove('open');
+                }
+            });
+
             await carregarDados();
         });
 
         async function carregarDados() {
             try {
-                // Carregar lista de coordenadores e achar o nosso
-                const [todos, cursos, alunos] = await Promise.all([
-                    apiGet('/admin/coordenadores'),
+                // Carregar cursos e coordenadores
+                const [cursos, coordenadores, alunos] = await Promise.all([
                     apiGet('/admin/cursos'),
+                    apiGet('/admin/coordenadores'),
                     apiGet('/admin/alunos')
                 ]);
 
-                const coord = Array.isArray(todos) ? todos.find(c => String(c.id) === String(coordId)) : null;
+                todosCursos = Array.isArray(cursos) ? cursos : [];
+                const coord = Array.isArray(coordenadores) ? coordenadores.find(c => String(c.id) === String(coordId)) : null;
 
                 if (!coord) {
                     alert('Coordenador não encontrado.');
@@ -61,16 +77,34 @@
                     return;
                 }
 
-                // Preencher dados pessoais
-                document.querySelector('.profile-card h2').textContent = coord.full_name || '—';
-                document.querySelector('.profile-id').textContent = `ID: COORD-${String(coord.id).padStart(6, '0')}`;
-                document.querySelector('.profile-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(coord.full_name || 'C')}&background=0056b3&color=fff&size=200`;
+                // Preencher dados no perfil lateral
+                document.getElementById('profile-name-title').textContent = coord.full_name || '—';
+                document.getElementById('profile-id-display').textContent = `ID: COORD-${String(coord.id).padStart(6, '0')}`;
+                document.getElementById('profile-avatar-img').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(coord.full_name || 'C')}&background=0056b3&color=fff&size=200`;
 
-                // Stats — cursos e alunos reais
-                const numCursos = Array.isArray(coord.course_names) ? coord.course_names.length : 0;
-                document.querySelectorAll('.stat-num')[0].textContent = numCursos;
+                // Preencher formulário
+                document.getElementById('input-nome').value = coord.full_name || '';
+                document.getElementById('input-cpf').value = coord.cpf || '';
+                document.getElementById('input-nascimento').value = coord.data_nascimento ? coord.data_nascimento.substring(0, 10) : '';
+                document.getElementById('input-email').value = coord.email || '';
+                document.getElementById('input-telefone').value = coord.phone || '';
+                document.getElementById('input-departamento').value = coord.departamento || '';
+                document.getElementById('input-cargo').value = coord.cargo || '';
+                document.getElementById('input-admissao').value = coord.data_admissao ? coord.data_admissao.substring(0, 10) : '';
+                document.getElementById('input-obs').value = coord.observacoes_internas || '';
 
-                // Contar alunos matriculados nos cursos deste coordenador
+                // Cursos selecionados
+                if (Array.isArray(coord.course_ids)) {
+                    cursosSelecionados = coord.course_ids.map((id, index) => ({
+                        id: id,
+                        name: coord.course_names[index]
+                    })).filter(c => c.id);
+                }
+                renderizarCursosSelecionados();
+                renderizarDropdown();
+
+                // Stats
+                document.getElementById('stat-cursos-count').textContent = cursosSelecionados.length;
                 const coordCourseNames = new Set((coord.course_names || []).map(n => n.toLowerCase()));
                 const numAlunos = Array.isArray(alunos)
                     ? alunos.filter(a =>
@@ -78,106 +112,83 @@
                         a.course_names.some(cn => coordCourseNames.has(cn.toLowerCase()))
                       ).length
                     : 0;
-                const statAlunos = document.querySelectorAll('.stat-num')[1];
-                if (statAlunos) statAlunos.textContent = numAlunos >= 1000 ? (numAlunos / 1000).toFixed(1) + 'k' : numAlunos;
+                document.getElementById('stat-alunos-count').textContent = numAlunos >= 1000 ? (numAlunos / 1000).toFixed(1) + 'k' : numAlunos;
 
-                // Formulário — Dados Pessoais
-                const inputs = document.querySelectorAll('.form-input');
-                // Nome, CPF, Nascimento, Email, Telefone (ordem no DOM)
-                setValInput('Nome Completo', coord.full_name);
-                setValInput('CPF', coord.cpf);
-                setValInput('Data de Nascimento', coord.data_nascimento ? coord.data_nascimento.substring(0, 10) : '');
-                setValInput('E-mail Institucional', coord.email);
-                setValInput('Telefone', coord.phone);
-
-                // Departamento
-                const selectDept = document.querySelector('.form-select');
-                if (selectDept && coord.departamento) {
-                    // Adiciona a opção se não existir
-                    const opt = Array.from(selectDept.options).find(o => o.text === coord.departamento);
-                    if (!opt) {
-                        const newOpt = document.createElement('option');
-                        newOpt.value = coord.departamento;
-                        newOpt.textContent = coord.departamento;
-                        selectDept.appendChild(newOpt);
-                    }
-                    selectDept.value = coord.departamento;
-                }
-
-                // Cargo e Data de Admissão
-                setValInput('Cargo', coord.cargo);
-                setValInput('Data de Admissão', coord.data_admissao ? coord.data_admissao.substring(0, 10) : '');
-
-                // Cursos tags
-                if (Array.isArray(coord.course_names) && coord.course_names.length > 0) {
-                    const tagsArea = document.querySelector('.cursos-tags-area');
-                    if (tagsArea) {
-                        const courseIds = Array.isArray(coord.course_ids) ? coord.course_ids : [];
-                        const existingTags = coord.course_names.map((name, i) => {
-                            const cid = courseIds[i] || '';
-                            return `<span class="curso-tag">${name.toUpperCase()} <i class='bx bx-x'></i></span>`;
-                        }).join('');
-                        tagsArea.innerHTML = existingTags + '<button class="btn-add-tag">+ ADICIONAR CURSO</button>';
-                    }
-                }
-
-                // Observações
-                const textarea = document.querySelector('.form-textarea');
-                if (textarea) textarea.value = coord.observacoes_internas || '';
-
-                // Botão salvar
-                const btnSalvar = document.querySelector('.btn-primary-edit');
-                if (btnSalvar) {
-                    btnSalvar.addEventListener('click', () => salvar(coord, cursos));
-                }
-
-                // Botão remover
-                const btnRemover = document.querySelector('.btn-danger');
-                if (btnRemover) {
-                    btnRemover.addEventListener('click', removerCoordenador);
-                }
+                // Listeners botões
+                document.getElementById('btn-atualizar').addEventListener('click', salvar);
+                document.getElementById('btn-remover').addEventListener('click', removerCoordenador);
 
             } catch (err) {
-                console.error('Erro ao carregar coordenador:', err);
+                console.error('Erro ao carregar:', err);
                 alert('Erro ao carregar dados: ' + err.message);
             }
         }
 
-        function setValInput(labelText, value) {
-            const labels = document.querySelectorAll('.form-label');
-            for (const lbl of labels) {
-                if (lbl.textContent.trim() === labelText) {
-                    const input = lbl.nextElementSibling;
-                    if (input && (input.tagName === 'INPUT' || input.tagName === 'TEXTAREA')) {
-                        input.value = value || '';
-                    }
-                    break;
-                }
+        function renderizarDropdown() {
+            const dropdown = document.getElementById('cursos-dropdown');
+            if (!dropdown) return;
+            const existingItems = dropdown.querySelectorAll('.curso-dropdown-item');
+            existingItems.forEach(el => el.remove());
+
+            const disponiveis = todosCursos.filter(c => !cursosSelecionados.find(s => String(s.id) === String(c.id)));
+            if (disponiveis.length === 0) {
+                const empty = document.createElement('div');
+                empty.className = 'curso-dropdown-item';
+                empty.style.color = '#94a3b8';
+                empty.textContent = 'Todos os cursos vinculados';
+                dropdown.appendChild(empty);
+                return;
             }
+            disponiveis.forEach(c => {
+                const item = document.createElement('div');
+                item.className = 'curso-dropdown-item';
+                item.textContent = c.name;
+                item.addEventListener('click', () => {
+                    cursosSelecionados.push({ id: c.id, name: c.name });
+                    renderizarCursosSelecionados();
+                    renderizarDropdown();
+                    dropdown.classList.remove('open');
+                });
+                dropdown.appendChild(item);
+            });
         }
 
-        async function salvar(coordAtual, cursos) {
-            const getLabelVal = (labelText) => {
-                const labels = document.querySelectorAll('.form-label');
-                for (const lbl of labels) {
-                    if (lbl.textContent.trim() === labelText) {
-                        const input = lbl.nextElementSibling;
-                        if (input) return input.value?.trim() || null;
-                    }
-                }
-                return null;
-            };
+        function renderizarCursosSelecionados() {
+            const lista = document.getElementById('cursos-selecionados-lista');
+            if (!lista) return;
+            lista.innerHTML = cursosSelecionados.map((c, i) => `
+                <div class="curso-selecionado-item">
+                    <span><i class='bx bx-book' style="margin-right:6px;font-size:14px;"></i>${c.name}</span>
+                    <button type="button" onclick="removerCurso(${i})"><i class='bx bx-x'></i></button>
+                </div>
+            `).join('');
+            const btn = document.getElementById('btn-toggle-dropdown');
+            if (btn) btn.innerHTML = `<i class='bx bx-plus'></i> Adicionar Curso`;
+            const stat = document.getElementById('stat-cursos-count');
+            if (stat) stat.textContent = cursosSelecionados.length;
+        }
+
+        function removerCurso(index) {
+            cursosSelecionados.splice(index, 1);
+            renderizarCursosSelecionados();
+            renderizarDropdown();
+        }
+
+        async function salvar() {
+            const btn = document.getElementById('btn-atualizar');
+            btn.disabled = true;
+            btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> SALVANDO...";
 
             const body = {
-                full_name: getLabelVal('Nome Completo'),
-                email: getLabelVal('E-mail Institucional'),
-                phone: getLabelVal('Telefone'),
-                departamento: document.querySelector('.form-select')?.value || null,
-                cargo: getLabelVal('Cargo'),
-                data_nascimento: getLabelVal('Data de Nascimento') || null,
-                data_admissao: getLabelVal('Data de Admissão') || null,
-                observacoes_internas: document.querySelector('.form-textarea')?.value?.trim() || null,
-                course_ids: coordAtual.course_ids || []
+                full_name: document.getElementById('input-nome').value.trim(),
+                email: document.getElementById('input-email').value.trim(),
+                phone: document.getElementById('input-telefone').value.trim(),
+                departamento: document.getElementById('input-departamento').value || null,
+                cargo: document.getElementById('input-cargo').value.trim(),
+                data_nascimento: document.getElementById('input-nascimento').value || null,
+                data_admissao: document.getElementById('input-admissao').value || null,
+                observacoes_internas: document.getElementById('input-obs').value.trim(),
+                course_ids: cursosSelecionados.map(c => c.id)
             };
 
             try {
@@ -196,6 +207,8 @@
                 window.location.href = 'coordenadores.html';
             } catch (err) {
                 alert('Erro: ' + err.message);
+                btn.disabled = false;
+                btn.innerHTML = "<i class='bx bx-save'></i> ATUALIZAR CADASTRO";
             }
         }
 
@@ -263,8 +276,8 @@
             <div class="page-header-edit">
                 <h1>Editar Coordenador</h1>
                 <div class="header-actions-edit">
-                    <button class="btn-danger"><i class='bx bx-trash'></i> REMOVER ACESSO</button>
-                    <button class="btn-primary-edit"><i class='bx bx-save'></i> ATUALIZAR CADASTRO</button>
+                    <button class="btn-danger" id="btn-remover"><i class='bx bx-trash'></i> REMOVER ACESSO</button>
+                    <button class="btn-primary-edit" id="btn-atualizar"><i class='bx bx-save'></i> ATUALIZAR CADASTRO</button>
                 </div>
             </div>
 
@@ -276,11 +289,11 @@
                     <!-- Profile Card -->
                     <div class="edit-card profile-card">
                         <div class="profile-avatar-wrap">
-                            <img src="https://i.pravatar.cc/300?img=11" alt="joao silva" class="profile-avatar">
+                            <img src="https://i.pravatar.cc/300?img=11" alt="Avatar" class="profile-avatar" id="profile-avatar-img">
                             <button class="edit-avatar-btn"><i class='bx bx-camera'></i></button>
                         </div>
-                        <h2>joao silva</h2>
-                        <p class="profile-id">ID: COORD-2024-089</p>
+                        <h2 id="profile-name-title">Nome</h2>
+                        <p class="profile-id" id="profile-id-display">ID: —</p>
 
                         <div class="badge-acesso">
                             ACESSO ATIVO
@@ -288,11 +301,11 @@
 
                         <div class="profile-stats">
                             <div class="stat-box">
-                                <span class="stat-num">42</span>
+                                <span class="stat-num" id="stat-cursos-count">0</span>
                                 <span class="stat-lbl">CURSOS</span>
                             </div>
                             <div class="stat-box">
-                                <span class="stat-num">1.2k</span>
+                                <span class="stat-num" id="stat-alunos-count">0</span>
                                 <span class="stat-lbl">ALUNOS</span>
                             </div>
                         </div>
@@ -338,28 +351,28 @@
 
                         <div class="form-group">
                             <label class="form-label">Nome Completo</label>
-                            <input type="text" class="form-input" value="joao silva">
+                            <input type="text" class="form-input" id="input-nome" value="">
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">CPF</label>
-                                <input type="text" class="form-input" value="123.456.789-00">
+                                <input type="text" class="form-input" id="input-cpf" value="">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Data de Nascimento</label>
-                                <input type="text" class="form-input" value="15/05/1982">
+                                <input type="date" class="form-input" id="input-nascimento" value="">
                             </div>
                         </div>
 
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">E-mail Institucional</label>
-                                <input type="email" class="form-input" value="joao.silva@senac.edu.br">
+                                <input type="email" class="form-input" id="input-email" value="">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Telefone</label>
-                                <input type="text" class="form-input" value="(11) 98765-4321">
+                                <input type="text" class="form-input" id="input-telefone" value="">
                             </div>
                         </div>
                     </div>
@@ -374,10 +387,14 @@
                         <div class="form-group">
                             <label class="form-label">Departamento Principal</label>
                             <div class="select-wrap">
-                                <select class="form-select">
+                                <select class="form-select" id="input-departamento">
+                                    <option value="">Selecione...</option>
                                     <option>Tecnologia da Informação</option>
                                     <option>Gestão e Negócios</option>
                                     <option>Saúde e Bem-estar</option>
+                                    <option>Comunicação e Artes</option>
+                                    <option>Educação</option>
+                                    <option>Hospitalidade e Lazer</option>
                                 </select>
                                 <i class='bx bx-chevron-down'></i>
                             </div>
@@ -386,21 +403,22 @@
                         <div class="form-row">
                             <div class="form-group">
                                 <label class="form-label">Cargo</label>
-                                <input type="text" class="form-input" value="Coordenadora de Área">
+                                <input type="text" class="form-input" id="input-cargo" value="">
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Data de Admissão</label>
-                                <input type="text" class="form-input" value="10/01/2020">
+                                <input type="date" class="form-input" id="input-admissao" value="">
                             </div>
                         </div>
 
                         <div class="form-group" style="margin-top: 10px;">
                             <label class="form-label">Cursos sob Responsabilidade</label>
-                            <div class="cursos-tags-area">
-                                <span class="curso-tag">BACHARELADO EM T.I. <i class='bx bx-x'></i></span>
-                                <span class="curso-tag">ENGENHARIA DE SOFTWARE <i class='bx bx-x'></i></span>
-                                <span class="curso-tag">CIBERSEGURANÇA <i class='bx bx-x'></i></span>
-                                <button class="btn-add-tag">+ ADICIONAR CURSO</button>
+                            <div class="cursos-select-wrap" id="cursos-selecionados-lista"></div>
+                            <button class="btn-add-curso" type="button" id="btn-toggle-dropdown" style="display: flex; align-items: center; gap: 8px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px 16px; font-size: 12px; font-weight: 600; color: #64748b; cursor: pointer; transition: 0.2s; width: 100%;">
+                                <i class='bx bx-plus'></i> Adicionar Curso
+                            </button>
+                            <div class="curso-dropdown" id="cursos-dropdown" style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); max-height: 220px; overflow-y: auto; display: none; flex-direction: column; position: absolute; z-index: 10; width: 300px;">
+                                <div style="padding: 8px 12px; font-size: 11px; color: #94a3b8; font-weight: 600;">CURSOS DISPONÍVEIS</div>
                             </div>
                         </div>
                     </div>
@@ -412,8 +430,7 @@
                             <h3>Observações Internas</h3>
                         </div>
 
-                        <textarea
-                            class="form-textarea">Coordenadora destaque no ano de 2023. Responsável pela implementação do novo currículo de T.I. Possui certificação PMP e doutorado em educação tecnológica.</textarea>
+                        <textarea class="form-textarea" id="input-obs"></textarea>
                     </div>
 
                 </div>

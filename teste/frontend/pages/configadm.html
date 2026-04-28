@@ -234,12 +234,34 @@
             color: #b91c1c;
         }
 
+        .card-logs {
+            background: #003366;
+            padding: 20px;
+            border-radius: 12px;
+            color: white;
+        }
+
+        #lista-logs {
+            max-height: 320px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        #lista-logs::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        #lista-logs::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
         .log-item {
             display: flex;
             gap: 12px;
             align-items: flex-start;
             padding: 10px 0;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .log-time {
@@ -302,14 +324,24 @@
             // Cadastrar atividade
             document.getElementById('btn-cadastrar-atividade').addEventListener('click', cadastrarAtividade);
 
-            // Busca na tabela de equipe
+            // Busca na tabela de equipe (Header Global + Local)
             let debounce;
-            document.getElementById('input-busca-equipe').addEventListener('input', e => {
+            const processarBusca = (val) => {
                 clearTimeout(debounce);
                 debounce = setTimeout(() => {
                     paginaEquipe = 1;
-                    renderizarEquipe(e.target.value);
+                    renderizarEquipe(val);
                 }, 250);
+            };
+
+            document.getElementById('input-busca-equipe')?.addEventListener('input', e => {
+                if (document.getElementById('input-busca-global')) document.getElementById('input-busca-global').value = e.target.value;
+                processarBusca(e.target.value);
+            });
+
+            document.getElementById('input-busca-global')?.addEventListener('input', e => {
+                if (document.getElementById('input-busca-equipe')) document.getElementById('input-busca-equipe').value = e.target.value;
+                processarBusca(e.target.value);
             });
         });
 
@@ -538,7 +570,7 @@
         // ─── Logs de Auditoria ────────────────────────────────────────────────────
         async function carregarLogs() {
             try {
-                const data = await apiGet('/admin/logs?limite=8');
+                const data = await apiGet('/admin/logs?limite=4');
                 const logs = Array.isArray(data) ? data : [];
                 const el = document.getElementById('lista-logs');
 
@@ -551,7 +583,8 @@
                     'CRIAR_CURSO': 'Novo Curso', 'ATUALIZAR_CURSO': 'Curso Atualizado',
                     'DELETAR_CURSO': 'Curso Removido', 'CRIAR_COORDENADOR': 'Novo Coordenador',
                     'DELETAR_COORDENADOR': 'Coordenador Removido', 'CRIAR_CATEGORIA': 'Nova Atividade',
-                    'DELETAR_CATEGORIA': 'Atividade Removida', 'ATUALIZAR_COORDENADOR': 'Coordenador Atualizado'
+                    'DELETAR_CATEGORIA': 'Atividade Removida', 'ATUALIZAR_COORDENADOR': 'Coordenador Atualizado',
+                    'VALIDAR_SUBMISSAO': 'Submissão Validada', 'CRIAR_SUBMISSAO': 'Nova Submissão'
                 };
 
                 el.innerHTML = logs.map(l => {

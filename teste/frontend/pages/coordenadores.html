@@ -207,12 +207,77 @@
             }
 
             // Input do header global
-            document.getElementById('input-busca-global')?.addEventListener('input', e => aplicarBusca(e.target.value));
-            // Input legado dentro da tabela (se existir)
-            document.querySelector('.busca-input')?.addEventListener('input', e => {
-                document.getElementById('input-busca-global').value = e.target.value;
-                aplicarBusca(e.target.value);
+            const inputBusca = document.getElementById('input-busca-global');
+            inputBusca?.addEventListener('input', e => aplicarBusca(e.target.value));
+
+            // Filtro por Badge (Todos / Vinculados)
+            let filtroStatus = 'todos';
+            const badgeFiltro = document.querySelector('.filtro-badge');
+            badgeFiltro?.addEventListener('click', () => {
+                filtroStatus = filtroStatus === 'todos' ? 'vinculados' : 'todos';
+                badgeFiltro.innerHTML = `Filtro: ${filtroStatus === 'todos' ? 'Todos' : 'Com Curso'} <i class='bx bx-chevron-down'></i>`;
+                renderTabela(todosCoord);
             });
+
+            window.renderTabela = (data) => {
+                const tbody = document.querySelector('.tabela-coordenadores tbody');
+                if (!tbody) return;
+
+                const inputBusca = document.getElementById('input-busca-global');
+                const busca = (inputBusca?.value || '').toLowerCase();
+                
+                let lista = busca
+                    ? data.filter(c =>
+                        (c.full_name || '').toLowerCase().includes(busca) ||
+                        (c.email || '').toLowerCase().includes(busca) ||
+                        (c.course_names || []).join(' ').toLowerCase().includes(busca)
+                    )
+                    : data;
+
+                if (filtroStatus === 'vinculados') {
+                    lista = lista.filter(c => Array.isArray(c.course_names) && c.course_names.length > 0);
+                }
+
+                if (lista.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">Nenhum coordenador encontrado.</td></tr>';
+                    const infoPag = document.querySelector('.info-pag');
+                    if (infoPag) infoPag.textContent = 'Nenhum coordenador encontrado';
+                    return;
+                }
+
+                tbody.innerHTML = lista.map(c => {
+                    const nome = c.full_name || 'Sem Nome';
+                    const email = c.email || '';
+                    let cursos = Array.isArray(c.course_names) && c.course_names.length > 0
+                        ? c.course_names.join(', ') : 'Não vinculado';
+                    const dataAdm = formatarData(c.data_admissao || c.created_at);
+                    const initials = getIniciais(nome);
+                    const colorCls = colorAvatar(nome);
+
+                    return `
+                        <tr>
+                            <td>
+                                <div class="user-cell">
+                                    <div class="av ${colorCls}">${initials}</div>
+                                    <div class="u-info">
+                                        <strong>${nome}</strong>
+                                        <span>${email}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="td-curso"><strong>${cursos}</strong></td>
+                            <td class="td-data">${dataAdm}</td>
+                            <td><span class="status-ativo">ATIVO</span></td>
+                            <td class="acoes-cell">
+                                <a href="editar_coordenador.html?id=${c.id}" class="btn-acao-icon" title="Editar"><i class='bx bx-pencil'></i></a>
+                                <a href="editar_coordenador.html?id=${c.id}" class="btn-acao-icon" title="Visualizar"><i class='bx bx-show'></i></a>
+                            </td>
+                        </tr>`;
+                }).join('');
+
+                const infoPag = document.querySelector('.info-pag');
+                if (infoPag) infoPag.textContent = `Exibindo ${lista.length} coordenadores`;
+            };
 
             // ── Exportar ──
             document.querySelector('.btn-export')?.addEventListener('click', () => exportarCSV(todosCoord));
@@ -289,9 +354,19 @@
                     const acaoLabel = {
                         'CRIAR_COORDENADOR': 'Novo Coordenador', 'ATUALIZAR_COORDENADOR': 'Cadastro Atualizado',
                         'DELETAR_COORDENADOR': 'Coordenador Removido', 'CRIAR_CURSO': 'Novo Curso',
-                        'VALIDAR_SUBMISSAO': 'Submissão Validada', 'CRIAR_CATEGORIA': 'Nova Atividade'
+                        'ATUALIZAR_CURSO': 'Curso Atualizado', 'DELETAR_CURSO': 'Curso Removido',
+                        'VALIDAR_SUBMISSAO': 'Submissão Validada', 'CRIAR_CATEGORIA': 'Nova Atividade',
+                        'DELETAR_CATEGORIA': 'Atividade Removida'
                     };
-                    const dotColors = { 'CRIAR_COORDENADOR': '', 'ATUALIZAR_COORDENADOR': 'blue', 'DELETAR_COORDENADOR': 'gray' };
+                    const dotColors = { 
+                        'CRIAR_COORDENADOR': 'orange', 
+                        'ATUALIZAR_COORDENADOR': 'blue', 
+                        'DELETAR_COORDENADOR': 'gray',
+                        'CRIAR_CURSO': 'orange',
+                        'ATUALIZAR_CURSO': 'blue',
+                        'VALIDAR_SUBMISSAO': 'orange',
+                        'CRIAR_CATEGORIA': 'orange'
+                    };
                     tlEl.innerHTML = logs.map(l => {
                         const d = new Date(l.created_at);
                         const agora = new Date();
@@ -322,59 +397,6 @@
             });
         });
 
-        function renderTabela(data) {
-            const tbody = document.querySelector('.tabela-coordenadores tbody');
-            if (!tbody) return;
-
-            const buscaAtual = (document.querySelector('.busca-input')?.value || '').toLowerCase();
-            const lista = buscaAtual
-                ? data.filter(c =>
-                    (c.full_name || '').toLowerCase().includes(buscaAtual) ||
-                    (c.email || '').toLowerCase().includes(buscaAtual) ||
-                    (c.course_names || []).join(' ').toLowerCase().includes(buscaAtual)
-                )
-                : data;
-
-            if (lista.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:24px;color:#64748b;">Nenhum coordenador encontrado.</td></tr>';
-                const infoPag = document.querySelector('.info-pag');
-                if (infoPag) infoPag.textContent = 'Nenhum coordenador encontrado';
-                return;
-            }
-
-            tbody.innerHTML = lista.map(c => {
-                const nome = c.full_name || 'Sem Nome';
-                const email = c.email || '';
-                let cursos = Array.isArray(c.course_names) && c.course_names.length > 0
-                    ? c.course_names.join(', ') : 'Não vinculado';
-                const dataAdm = formatarData(c.data_admissao || c.created_at);
-                const initials = getInitials(nome);
-                const colorCls = initialsColor(nome);
-
-                return `
-                    <tr>
-                        <td>
-                            <div class="user-cell">
-                                <div class="av ${colorCls}">${initials}</div>
-                                <div class="u-info">
-                                    <strong>${nome}</strong>
-                                    <span>${email}</span>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="td-curso"><strong>${cursos}</strong></td>
-                        <td class="td-data">${dataAdm}</td>
-                        <td><span class="status-ativo">ATIVO</span></td>
-                        <td class="acoes-cell">
-                            <a href="editar_coordenador.html?id=${c.id}" class="btn-acao-icon" title="Editar"><i class='bx bx-pencil'></i></a>
-                            <a href="#" class="btn-acao-icon" title="Visualizar"><i class='bx bx-show'></i></a>
-                        </td>
-                    </tr>`;
-            }).join('');
-
-            const infoPag = document.querySelector('.info-pag');
-            if (infoPag) infoPag.textContent = `Exibindo ${lista.length} coordenadores`;
-        }
 
         function exportarCSV(data) {
             const header = ['Nome', 'Email', 'Cursos', 'Data Admissão'];

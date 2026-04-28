@@ -13,8 +13,8 @@ router.post('/aluno', authMiddleware(['coordinator']), coordenadorController.pos
 router.get('/alunos/:course_id', authMiddleware(['coordinator']), coordenadorController.getAlunosDoCurso);
 router.put('/aluno/:id', authMiddleware(['coordinator']), coordenadorController.putAtualizarAluno);
 router.delete('/aluno/:id', authMiddleware(['coordinator']), coordenadorController.deleteAluno);
-router.get('/submissoes/:course_id', authMiddleware(['coordinator']), coordenadorController.getSubmissoes);
-router.get('/submissao/:id', authMiddleware(['coordinator']), coordenadorController.getSubmissaoPorId);
-router.patch('/validar/:id', authMiddleware(['coordinator']), coordenadorController.patchValidarSubmissao);
+router.get('/submissoes/:course_id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissoes);
+router.get('/submissao/:id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissaoPorId);
+router.patch('/validar/:id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.patchValidarSubmissao);
 
 module.exports = router;

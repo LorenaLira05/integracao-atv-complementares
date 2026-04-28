@@ -463,24 +463,29 @@ td {
 }
 
 .tl-dot {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    border: 3px solid white;
+    border: 2px solid white;
     box-shadow: 0 0 0 1px var(--laranja-senac);
     background: var(--laranja-senac);
     z-index: 1;
     margin-top: 2px;
 }
 
+.tl-dot.orange {
+    box-shadow: 0 0 0 1px var(--laranja-senac);
+    background: var(--laranja-senac);
+}
+
 .tl-dot.blue {
     box-shadow: 0 0 0 1px var(--azul-senac);
-    background: white;
+    background: var(--azul-senac);
 }
 
 .tl-dot.gray {
-    box-shadow: 0 0 0 1px #cbd5e1;
-    background: white;
+    box-shadow: 0 0 0 1px #94a3b8;
+    background: #94a3b8;
 }
 
 .tl-content {
