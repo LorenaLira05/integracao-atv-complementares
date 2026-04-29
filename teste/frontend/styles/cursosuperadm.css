@@ -394,11 +394,12 @@ td {
     font-size: 24px;
     font-weight: 800;
     margin-bottom: 15px;
+    color: #ffffff !important;
 }
 
 .module-relatorios p {
     font-size: 14px;
-    color: rgba(255,255,255,0.7);
+    color: #DBEAFECC !important;
     line-height: 1.6;
     margin-bottom: 30px;
     max-width: 400px;

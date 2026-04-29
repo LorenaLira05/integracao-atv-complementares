@@ -309,7 +309,7 @@ td {
 
 .card-dica i { font-size: 28px; margin-bottom: 15px; display: block; }
 .card-dica h4 { font-size: 18px; font-weight: 800; margin-bottom: 15px; }
-.card-dica p { font-size: 13px; line-height: 1.6; margin-bottom: 25px; opacity: 0.9; }
+.card-dica p { font-size: 13px; line-height: 1.6; margin-bottom: 25px; color: #FFF7EDCC !important; }
 .card-dica a { color: white; font-size: 13px; font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px; }
 
 .item-pendente {
@@ -353,4 +353,4 @@ td {
 .tl-header strong { font-size: 14px; color: var(--azul-dark); font-weight: 700; }
 .tl-header span { font-size: 10px; font-weight: 600; color: #94a3b8; }
 .tl-content p { font-size: 12px; color: var(--texto-suave); line-height: 1.5; }
-
+

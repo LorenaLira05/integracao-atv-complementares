@@ -229,8 +229,8 @@ body {
     gap: 20px;
 }
 
-.perf-left h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
-.perf-left p { font-size: 11px; line-height: 1.6; color: rgba(255,255,255,0.7); margin-bottom: 15px; }
+.perf-left h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #ffffff !important; }
+.perf-left p { font-size: 11px; line-height: 1.6; color: #DBEAFE !important; margin-bottom: 15px; }
 
 .perf-valor-box { text-align: center; }
 .perf-valor { font-size: 36px; font-weight: 800; display: block; }
@@ -238,7 +238,7 @@ body {
 
 .btn-perf-ver-relatorio {
     background: var(--laranja);
-    color: white;
+    color: #663800;
     padding: 8px 16px;
     border-radius: 8px;
     font-size: 9px;

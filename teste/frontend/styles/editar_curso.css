@@ -186,7 +186,7 @@ body { background: var(--bg-page); color: var(--texto-dark); }
 }
 .coord-box-label {
     font-size: 9px; font-weight: 800; letter-spacing: 1px;
-    color: rgba(255,255,255,0.5); text-transform: uppercase;
+    color: #ffffff !important; text-transform: uppercase;
     margin-bottom: 10px;
 }
 .coord-box-nome {
