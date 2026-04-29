@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="/styles/dasboardadm.css">
     <link rel="stylesheet" href="/styles/extrato_certificado.css">
     <link rel="stylesheet" href="/styles/sidebar.css">
+    <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
 </head>
 
@@ -46,6 +47,9 @@
 
         <!-- Script para ativar a aba atual e carregar dados do usuário -->
         <script>
+            // Proteção de rota — garante que o token esteja presente para a API
+            const auth = protegerPagina(['ALUNO', 'COORDENADOR', 'STUDENT', 'COORDINATOR']);
+
             document.addEventListener('DOMContentLoaded', () => {
                 if (localStorage.getItem('nome')) {
                     const nomeEl = document.getElementById('sidebar-nome-global');

@@ -4,11 +4,14 @@
  * Gerencia Autenticação, Guards de Rota e Transformação de Dados.
  */
  
-var API = ''; 
-// Se o frontend estiver rodando em porta diferente do backend (ex: Live Server), aponta para 3001
-if (window.location.port && window.location.port !== '3001') {
-    API = 'http://localhost:3001';
+// Força a conexão com o backend no IP 127.0.0.1 (mais estável que 'localhost')
+var API = 'http://127.0.0.1:3001';
+
+// Se já estivermos rodando dentro do próprio servidor, usamos caminho relativo
+if (window.location.origin.includes(':3001')) {
+    API = '';
 }
+window.API = API; // Garante visibilidade global
  
 /* ---------- Camada de Autenticação (Auth Service) ---------- */
  
