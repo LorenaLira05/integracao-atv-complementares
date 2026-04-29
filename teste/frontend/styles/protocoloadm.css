@@ -434,12 +434,13 @@ body {
     font-size: 24px;
     font-weight: 800;
     margin-bottom: 15px;
+    color: #fff !important;
 }
 
 .lote-content p {
     font-size: 14px;
     line-height: 1.6;
-    color: rgba(255,255,255,0.8);
+    color: #DBEAFE !important;
     margin-bottom: 25px;
 }
 
