@@ -10,7 +10,9 @@
     <link rel="stylesheet" href="/styles/coordenadores.css">
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'
+        rel='stylesheet'>
 </head>
 
 <body>
@@ -62,8 +64,8 @@
 
                 <div class="page-header">
                     <div class="page-title">
-                        <div class="breadcrumb">Portal > Gestão Administrativa > <span>Coordenadores</span></div>
-                        <h1>3b. Gestão de Coordenadores</h1>
+                        <div class="breadcrumb">PORTAL > <span>COORDENADORES</span></div>
+                        <h1>Gestão de Coordenadores</h1>
                         <p>Gerencie o corpo docente de coordenação, atribua cursos e acompanhe o histórico de vínculos
                             acadêmicos em toda a rede Senac.</p>
                     </div>
@@ -105,7 +107,7 @@
                 <div class="tabela-container">
                     <div class="tabela-header">
                         <h3>Lista de Coordenadores <span class="filtro-badge">Filtro: Todos <i
-                                     class='bx bx-chevron-down'></i></span></h3>
+                                    class='bx bx-chevron-down'></i></span></h3>
                         <div class="table-actions-right">
                             <button class="btn-export"><i class='bx bx-download'></i> Exportar Relatório</button>
                         </div>
@@ -190,7 +192,8 @@
                                         <strong>Novo Vínculo Estabelecido</strong>
                                         <span>HOJE, 09:45</span>
                                     </div>
-                                    <p>Mariana Silva foi designada como coordenadora de Bacharelado em Administração.</p>
+                                    <p>Mariana Silva foi designada como coordenadora de Bacharelado em Administração.
+                                    </p>
                                 </div>
                             </div>
                             <!-- Item 2 -->
@@ -223,7 +226,8 @@
                         <div class="card-dica">
                             <i class='bx bx-bulb'></i>
                             <h4>Dica de Gestão</h4>
-                            <p>"Manter os dados de coordenação atualizados garante que as submissões de notas e frequências fluam sem interrupções críticas no final do semestre."</p>
+                            <p>"Manter os dados de coordenação atualizados garante que as submissões de notas e
+                                frequências fluam sem interrupções críticas no final do semestre."</p>
                             <a href="#">Ver Guia de Melhores Práticas <i class='bx bx-right-arrow-alt'></i></a>
                         </div>
 
@@ -322,7 +326,7 @@
                     const email = c.email || '';
                     let cursos = Array.isArray(c.course_names) && c.course_names.length > 0
                         ? c.course_names.join(', ') : 'Não vinculado';
-                    
+
                     // Formatar data como no exemplo: "12 Abr, 2022"
                     let dataAdm = 'N/D';
                     if (c.data_admissao || c.created_at) {
@@ -332,7 +336,7 @@
                     }
 
                     const initials = getIniciais(nome);
-                    
+
                     // Mapear avatar color (simulado como na imagem)
                     const colorClsMap = { 0: 'av-blue', 1: 'av-orange', 2: 'av-purple', 3: 'av-green' };
                     const colorCls = colorClsMap[c.id % 4] || 'av-blue';
@@ -451,7 +455,10 @@
                         'DELETAR_COORDENADOR': 'Coordenador Removido', 'CRIAR_CURSO': 'Novo Curso',
                         'ATUALIZAR_CURSO': 'Curso Atualizado', 'DELETAR_CURSO': 'Curso Removido',
                         'VALIDAR_SUBMISSAO': 'Submissão Validada', 'CRIAR_CATEGORIA': 'Nova Atividade',
-                        'DELETAR_CATEGORIA': 'Atividade Removida'
+                        'DELETAR_CATEGORIA': 'Atividade Removida', 'CRIAR_ALUNO': 'Novo Aluno',
+                        'ATUALIZAR_ALUNO': 'Aluno Atualizado', 'DELETAR_ALUNO': 'Aluno Removido',
+                        'INATIVAR_ALUNO': 'Aluno Inativado', 'CRIAR_REGRA': 'Nova Regra',
+                        'ATUALIZAR_REGRA': 'Regra Atualizada', 'DELETAR_REGRA': 'Regra Removida'
                     };
                     const dotColors = {
                         'CRIAR_COORDENADOR': 'orange',
@@ -459,8 +466,13 @@
                         'DELETAR_COORDENADOR': 'gray',
                         'CRIAR_CURSO': 'orange',
                         'ATUALIZAR_CURSO': 'blue',
+                        'DELETAR_CURSO': 'gray',
                         'VALIDAR_SUBMISSAO': 'orange',
-                        'CRIAR_CATEGORIA': 'orange'
+                        'CRIAR_CATEGORIA': 'orange',
+                        'CRIAR_ALUNO': 'blue',
+                        'ATUALIZAR_ALUNO': 'blue',
+                        'DELETAR_ALUNO': 'gray',
+                        'INATIVAR_ALUNO': 'gray'
                     };
                     tlEl.innerHTML = logs.map(l => {
                         const d = new Date(l.created_at);
@@ -469,8 +481,8 @@
                         const quando = diffH < 2 ? 'HOJE, ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
                             : diffH < 25 ? 'ONTEM, ' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0')
                                 : d.toLocaleDateString('pt-BR');
-                        const label = acaoLabel[l.action] || l.action;
-                        const cor = dotColors[l.action] || '';
+                        const label = acaoLabel[l.action] || l.action.replace(/_/g, ' ');
+                        const cor = dotColors[l.action] || 'blue';
                         return `
                             <div class="tl-item">
                                 <div class="tl-dot ${cor}"></div>

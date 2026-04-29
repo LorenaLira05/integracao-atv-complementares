@@ -25,6 +25,14 @@
     --borda: #e2e8f0;
     --verde: #10b981;
     --vermelho: #ef4444;
+
+    /* Cores para Dashboard e Gráficos */
+    --azul-claro: #3b82f6;
+    --azul-acinzentado: #64748b;
+    --cinza-bg: #f8fafc;
+    --cinza-texto: #64748b;
+    --cinza-claro: #f1f5f9;
+    --cinza-borda: #e2e8f0;
 }
 
 /* ─── Layout Geral ─── */
@@ -147,21 +155,41 @@
     background: rgba(255,77,77,0.05) !important;
 }
 
-/* ─── Conteúdo Principal ─── */
+/* ─── Conteúdo Principal (Layout Base) ─── */
 .conteudo-principal {
     flex: 1 !important;
     padding: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     background: var(--fundo-pagina) !important;
+    gap: 0 !important; /* Previne que arquivos locais desloquem o conteúdo */
 }
 
+/* Espaçamento padrão para o conteúdo (Apenas containers de primeiro nível) */
 .conteudo-principal > section, 
 .conteudo-principal > div:not(.cabecalho-topo),
-.page-container, .secao-titulo, .head-action-header, .grid-cards-top, .kpi-grid, .tabela-container, .grid-inferior, .page-header, .cabecalho-pagina, .page-header-regra, .header-action-row {
+.page-container {
     padding-left: 40px !important;
     padding-right: 40px !important;
-    padding-top: 30px !important; /* Espaçamento padrão abaixo do header */
+    padding-top: 40px !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    width: 100% !important;
+}
+
+/* Estrutura de Cabeçalho de Página (H1 + Breadcrumb) */
+.page-header, .header-action-row, .secao-titulo, .head-action-header {
+    margin-top: 0 !important;
+    margin-bottom: 40px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+}
+
+.page-title, .titulo-esq {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0 !important;
 }
 
 /* ─── Header Topo ─── */
@@ -186,15 +214,22 @@
 }
 
 /* ─── Etiquetas e Breadcrumbs (Novo) ─── */
-.etiqueta-laranja, .etiqueta-amarela, .breadcrumb, .breadcrumb span {
+main .breadcrumb, .conteudo-principal .breadcrumb {
     font-family: 'Inter', sans-serif !important;
     font-size: 11px !important;
-    font-weight: 700 !important;
-    color: var(--laranja-senac) !important;
+    font-weight: 600 !important;
+    color: #94a3b8 !important;
     text-transform: uppercase !important;
-    letter-spacing: 1.5px !important;
-    margin-bottom: 5px !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 8px !important;
     display: block !important;
+    background: transparent !important;
+    padding: 0 !important;
+}
+
+main .breadcrumb span, .conteudo-principal .breadcrumb span, .etiqueta-laranja, .etiqueta-amarela {
+    color: var(--laranja-senac) !important;
+    font-weight: 700 !important;
 }
 
 /* ─── Tipografia ─── */

@@ -232,6 +232,41 @@ body {
     cursor: pointer;
 }
 
+/* Search Box in Table Filters */
+.search-box-table {
+    position: relative;
+    flex: 1;
+    max-width: 400px;
+}
+
+.search-box-table i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--texto-light);
+    font-size: 18px;
+}
+
+.search-box-table input {
+    width: 100%;
+    padding: 10px 15px 10px 45px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: #f8fafc;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--texto-dark);
+    outline: none;
+    transition: all 0.2s;
+}
+
+.search-box-table input:focus {
+    border-color: var(--azul-senac);
+    background: white;
+    box-shadow: 0 0 0 4px rgba(0, 69, 135, 0.05);
+}
+
 /* Table */
 table {
     width: 100%;

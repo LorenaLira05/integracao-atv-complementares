@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Configurações</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/configuracoes.css">
+    <script src="/services/script.js"></script>
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN', 'COORDENADOR', 'STUDENT', 'ADMIN', 'COORDINATOR']);
+    </script>
+
+    <div class="layout-geral">
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao"></nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Perfil</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="logout();"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Configurações da Conta</span>
+                </div>
+            </header>
+
+            <div class="page-container">
+                <div class="header-action-row">
+                    <div class="page-title">
+                        <div class="breadcrumb">PORTAL > <span>CONFIGURAÇÕES</span></div>
+                        <h1>Configurações de Acesso</h1>
+                        <p>Gerencie sua senha e preferências de segurança para manter sua conta protegida.</p>
+                    </div>
+                </div>
+
+                <div class="settings-grid">
+                    <!-- Card de Troca de Senha -->
+                    <div class="settings-card">
+                        <div class="card-header-settings">
+                            <div class="icon-box"><i class='bx bx-lock-alt'></i></div>
+                            <div>
+                                <h3>Alterar Senha</h3>
+                                <p>Sua nova senha deve ter pelo menos 6 caracteres.</p>
+                            </div>
+                        </div>
+
+                        <form id="form-trocar-senha" class="settings-form">
+                            <div class="input-group">
+                                <label for="senhaAtual">Senha Atual</label>
+                                <div class="input-with-icon">
+                                    <i class='bx bx-key'></i>
+                                    <input type="password" id="senhaAtual" placeholder="Digite sua senha atual" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="novaSenha">Nova Senha</label>
+                                <div class="input-with-icon">
+                                    <i class='bx bx-lock-open-alt'></i>
+                                    <input type="password" id="novaSenha" placeholder="Digite a nova senha" required>
+                                </div>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="confirmarSenha">Confirmar Nova Senha</label>
+                                <div class="input-with-icon">
+                                    <i class='bx bx-check-shield'></i>
+                                    <input type="password" id="confirmarSenha" placeholder="Repita a nova senha" required>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn-primary">
+                                    <i class='bx bx-save'></i> Atualizar Senha
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Card de Informações da Conta (Leitura apenas por enquanto) -->
+                    <div class="settings-card card-info">
+                        <div class="card-header-settings">
+                            <div class="icon-box box-blue"><i class='bx bx-user-circle'></i></div>
+                            <div>
+                                <h3>Dados da Conta</h3>
+                                <p>Informações básicas do seu perfil no sistema.</p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-list">
+                            <div class="info-item">
+                                <span class="label">Nome Completo</span>
+                                <span class="value" id="info-nome">Carregando...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">E-mail Institucional</span>
+                                <span class="value" id="info-email">Carregando...</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Perfil de Acesso</span>
+                                <span class="value" id="info-perfil">Carregando...</span>
+                            </div>
+                        </div>
+
+                        <div class="card-alert">
+                            <i class='bx bx-info-circle'></i>
+                            <span>Para alterar seus dados cadastrais, entre em contato com a secretaria acadêmica.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Carregar dados básicos do localStorage
+            const nome = localStorage.getItem('nome');
+            const email = localStorage.getItem('email');
+            const perfil = localStorage.getItem('perfil');
+
+            document.getElementById('info-nome').textContent = nome || 'N/D';
+            document.getElementById('info-email').textContent = email || 'N/D';
+            
+            const labelMap = {
+                'super_admin': 'Super Administrador',
+                'coordinator': 'Coordenador',
+                'student': 'Aluno'
+            };
+            document.getElementById('info-perfil').textContent = labelMap[perfil?.toLowerCase()] || perfil || 'N/D';
+
+            // Lógica do Formulário
+            const form = document.getElementById('form-trocar-senha');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const senhaAtual = document.getElementById('senhaAtual').value;
+                const novaSenha = document.getElementById('novaSenha').value;
+                const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+                if (novaSenha !== confirmarSenha) {
+                    alert('A nova senha e a confirmação não coincidem!');
+                    return;
+                }
+
+                if (novaSenha.length < 6) {
+                    alert('A nova senha deve ter pelo menos 6 caracteres!');
+                    return;
+                }
+
+                try {
+                    const res = await apiPost('/auth/trocar-senha', { senhaAtual, novaSenha });
+                    
+                    if (res.mensagem) {
+                        alert('Senha alterada com sucesso!');
+                        form.reset();
+                    } else if (res.erro) {
+                        alert('Erro: ' + res.erro);
+                    }
+                } catch (err) {
+                    console.error(err);
+                    alert('Erro ao processar solicitação.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -5,7 +5,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Senac - Gestão de Cursos</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="/styles/sidebar.css">
@@ -66,8 +67,9 @@
                 <!-- Title & Action -->
                 <div class="header-action-row">
                     <div class="page-title">
-                        <div class="breadcrumb">GESTÃO ACADÊMICA</div>
-                        <h1>3a. Gestão de Cursos <span>(Super Adm)</span></h1>
+                        <div class="breadcrumb">PORTAL > <span>CURSOS</span></div>
+                        <h1>Gestão de Cursos <span>(Super Adm)</span></h1>
+                        <p>Administração global de cursos, matrizes curriculares e carga horária acadêmica.</p>
                     </div>
                     <button class="btn-primary" onclick="window.location.href='criar_curso.html'">
                         <i class='bx bx-plus-circle'></i> Criar Novo Curso
@@ -309,7 +311,7 @@
             }
 
             if (perfil) {
-                const labelMap = { 'super_admin':'SUPER ADMIN','admin':'SUPER ADMIN','coordinator':'COORDENADOR','student':'ALUNO' };
+                const labelMap = { 'super_admin': 'SUPER ADMIN', 'admin': 'SUPER ADMIN', 'coordinator': 'COORDENADOR', 'student': 'ALUNO' };
                 const label = labelMap[perfil.toLowerCase()] || perfil.toUpperCase();
                 const sideRole = document.getElementById('sidebar-role-global');
                 if (sideRole) sideRole.textContent = label;
@@ -357,11 +359,11 @@
                     tbody.innerHTML = '';
 
                     const busca = (document.getElementById('input-busca')?.value || '').toLowerCase();
-                    let lista = busca 
-                        ? cursos.filter(c => 
-                            c.name.toLowerCase().includes(busca) || 
+                    let lista = busca
+                        ? cursos.filter(c =>
+                            c.name.toLowerCase().includes(busca) ||
                             (c.code || '').toLowerCase().includes(busca)
-                          )
+                        )
                         : cursos;
 
                     if (filtroStatus === 'ativos') {
@@ -384,7 +386,7 @@
                             dataCriacao = `${d.getDate().toString().padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
                         }
                         const sigla = curso.code ? curso.code.substring(0, 3).toUpperCase() : (curso.name.substring(0, 3).toUpperCase());
-                        
+
                         // Determinar classe da sigla baseado no nome (apenas para exemplo visual como na imagem)
                         let siglaClass = '';
                         if (sigla === 'ADM') siglaClass = 'sigla-amarela';
@@ -439,7 +441,7 @@
                     // Update pagination text
                     const paginationInfo = document.querySelector('.pagination-info');
                     const paginationControls = document.querySelector('.pagination-controls');
-                    
+
                     if (paginationInfo) {
                         const total = cursos.length;
                         const exibindo = lista.length;
@@ -448,7 +450,7 @@
 
                     if (paginationControls) {
                         paginationControls.innerHTML = ''; // Limpa os botões fixos (1, 2, 3... 31)
-                        
+
                         // Implementação simples: se tivermos dados, mostramos pelo menos a página 1
                         if (lista.length > 0) {
                             paginationControls.innerHTML = `

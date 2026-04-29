@@ -21,7 +21,7 @@ router.patch('/aluno/:id/status', authMiddleware(['coordinator', 'super_admin'])
 router.delete('/aluno/:id', authMiddleware(['coordinator']), coordenadorController.deleteAluno);
 router.get('/submissoes', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissoesGeral);
 router.get('/submissoes/:course_id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissoes);
-router.get('/submissao/:id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissaoPorId);
-router.patch('/validar/:id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.patchValidarSubmissao);
+router.get('/submissao/:id', authMiddleware(['coordinator']), coordenadorController.getSubmissaoPorId);
+router.patch('/validar/:id', authMiddleware(['coordinator']), coordenadorController.patchValidarSubmissao);
 
 module.exports = router;

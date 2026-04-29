@@ -1,7 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
 
-
-
+:root {
+    --azul-senac: #004587;
+    --azul-dark: #0b1930;
+    --laranja-senac: #d4800a;
+    --texto-dark: #1e293b;
+    --texto-light: #64748b;
+    --bg-page: #f8fafc;
+    --bg-card: #ffffff;
+    --border-color: #e2e8f0;
+    --input-bg: #f1f5f9;
+    --vermelho: #ef4444;
+}
 * {
     margin: 0;
     padding: 0;
@@ -103,9 +113,69 @@ body {
     background: var(--bg-card);
     border-radius: 16px;
     padding: 30px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     margin-bottom: 20px;
+    border: 1px solid var(--border-color);
 }
+
+/* KPIs (Standard Design) */
+.kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.kpi-card {
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 25px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
+    display: flex;
+    flex-direction: column;
+}
+
+.kpi-title {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--texto-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+}
+
+.kpi-value-wrap {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.kpi-value {
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--azul-dark);
+}
+
+.kpi-badge-green { color: #10b981; font-size: 12px; font-weight: 700; }
+.kpi-badge-gray { color: #cbd5e1; font-size: 12px; font-weight: 600; }
+
+.badge-urgente {
+    background: #fff7ed;
+    color: #d4800a;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    margin-left: 10px;
+}
+
+.kpi-card.kpi-blue {
+    background: var(--azul-dark);
+    color: white;
+}
+
+.kpi-blue .kpi-title, .kpi-blue .kpi-value { color: white; }
 
 /* --- COLUNA ESQUERDA --- */
 .profile-card {

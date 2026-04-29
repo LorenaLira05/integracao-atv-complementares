@@ -343,7 +343,7 @@ td {
 .tl-item::before { content: ''; position: absolute; left: 6px; top: 20px; bottom: -30px; width: 2px; background: #f1f5f9; }
 .tl-item:last-child::before { display: none; }
 
-.tl-dot { width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; z-index: 1; margin-top: 4px; }
+.tl-dot { width: 14px; height: 14px; border-radius: 50%; border: 3px solid white; z-index: 1; margin-top: 4px; background-color: #003b7a; }
 .tl-dot.orange { background: #d4800a; box-shadow: 0 0 0 4px #fffbeb; }
 .tl-dot.blue { background: #003b7a; box-shadow: 0 0 0 4px #eff6ff; }
 .tl-dot.gray { background: #e2e8f0; box-shadow: 0 0 0 4px #f8fafc; }

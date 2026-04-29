@@ -66,6 +66,7 @@
                 <!-- Title & Actions -->
                 <div class="header-action-row">
                     <div class="page-title">
+                        <div class="breadcrumb">Portal > <span>Submissões</span></div>
                         <h1>Listagem de Submissões</h1>
                         <p>Gestão de horas complementares e atividades extracurriculares.</p>
                     </div>
@@ -123,6 +124,10 @@
                             <button data-filter="approved">Aprovadas</button>
                             <button data-filter="rejected">Reprovadas</button>
                         </div>
+                        <div class="search-box-table">
+                            <i class='bx bx-search'></i>
+                            <input type="text" id="input-busca" placeholder="Buscar por aluno ou RA...">
+                        </div>
                         <div class="selects-filter">
                             <select id="filtro-curso">
                                 <option value="">Todos os Cursos</option>
@@ -143,7 +148,6 @@
                                 <th>HORAS</th>
                                 <th>DATA DE ENVIO</th>
                                 <th>STATUS</th>
-                                <th>AÇÕES</th>
                             </tr>
                         </thead>
                         <tbody id="tabela-submissoes">
@@ -346,8 +350,8 @@
             let lista = [...todasSubmissoes];
 
             // Filtro de status
-            const statusFiltro = document.querySelector('.tabs-filter button.active')?.dataset.status || 'TODAS';
-            if (statusFiltro !== 'TODAS') {
+            const statusFiltro = document.querySelector('.tabs-filter button.active')?.dataset.filter || 'all';
+            if (statusFiltro !== 'all') {
                 lista = lista.filter(s => (s.status || '').toLowerCase() === statusFiltro.toLowerCase());
             }
 
@@ -448,11 +452,6 @@
                         <td class="td-hours">${horas}h</td>
                         <td class="td-date">${dataEnvio}</td>
                         <td><span class="status-pill ${badgeClass}">${badgeText}</span></td>
-                        <td class="td-actions">
-                            <a href="analise_certificado.html?id=${s.id}" title="Ver detalhes" style="color:var(--texto-claro);">
-                                <i class='bx bx-dots-vertical-rounded'></i>
-                            </a>
-                        </td>
                     </tr>
                 `;
             }).join('');

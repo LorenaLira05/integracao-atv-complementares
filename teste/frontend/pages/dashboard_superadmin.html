@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Senac - Dashboard Coordenador</title>
+    <title>Senac - Dashboard Geral</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="/styles/dasboardadm.css">
     <link rel="stylesheet" href="/styles/sidebar.css">
@@ -14,7 +14,7 @@
 
 <body>
     <script>
-        protegerPagina(['COORDENADOR', 'COORDINATOR']);
+        protegerPagina(['SUPER_ADMIN', 'ADMIN']);
     </script>
 
     <div class="layout-geral">
@@ -29,7 +29,7 @@
                     <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
                     <div class="perfil-sidebar-info">
                         <strong id="sidebar-nome-global">Usuário</strong>
-                        <small id="sidebar-role-global">Coordenador</small>
+                        <small id="sidebar-role-global">Gestão</small>
                     </div>
                 </div>
                 <a href="#" class="link-menu link-sair" onclick="logout();"><i class='bx bx-log-out'></i> Sair</a>
@@ -39,7 +39,7 @@
         <main class="conteudo-principal">
             <header class="cabecalho-topo">
                 <div>
-                    <span class="titulo-portal">Portal do Coordenador</span>
+                    <span class="titulo-portal">Portal do Super Administrador</span>
                 </div>
             </header>
 
@@ -47,8 +47,8 @@
                 <div class="header-action-row">
                     <div class="page-title">
                         <div class="breadcrumb">PORTAL > <span>DASHBOARD</span></div>
-                        <h1>Dashboard</h1>
-                        <p>Visão geral das atividades e submissões do seu curso.</p>
+                        <h1>Dashboard Geral</h1>
+                        <p>Visão consolidada de todos os cursos e submissões do sistema.</p>
                     </div>
                     <div class="header-info-badges">
                         <strong id="label-semestre">Semestre Letivo 2026.1</strong>
@@ -67,10 +67,10 @@
                     </div>
 
                     <div class="card-kpi">
-                        <div class="card-kpi-titulo">TOTAL DE ALUNOS</div>
+                        <div class="card-kpi-titulo">TOTAL DE ALUNOS (GERAL)</div>
                         <div class="card-kpi-valor">
                             <span class="valor-escuro kpi-dash-valor" id="kpi-alunos">--</span>
-                            <span class="variacao variacao-neutra">matriculados</span>
+                            <span class="variacao variacao-neutra">em todos os cursos</span>
                         </div>
                         <div class="card-kpi-footer">
                             <i class='bx bx-group'></i> <span id="kpi-alunos-footer">Carregando dados...</span>
@@ -78,10 +78,10 @@
                     </div>
 
                     <div class="card-kpi">
-                        <div class="card-kpi-titulo">MÉDIA DE HORAS</div>
+                        <div class="card-kpi-titulo">MÉDIA DE HORAS / CURSO</div>
                         <div class="card-kpi-valor">
                             <span class="valor-laranja kpi-dash-valor" id="kpi-media-horas">--</span>
-                            <span class="variacao-texto">h/aluno</span>
+                            <span class="variacao-texto">h/semestre</span>
                         </div>
                         <div class="card-kpi-chart">
                             <div class="bar bar-laranja" style="width: 45%"></div>
@@ -110,14 +110,14 @@
                             <div class="skeleton-line" style="height:60px; margin-bottom:12px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite;"></div>
                         </div>
                         <div class="footer-atividades">
-                            <a href="protocoloadm.html">VER TODAS AS SUBMISSÕES</a>
+                            <a href="submissoes_superadmin.html">VER TODAS AS SUBMISSÕES</a>
                         </div>
                     </div>
                 </div>
 
                 <footer class="rodape-dashboard">
                     <h4>Senac</h4>
-                    <p>&copy; 2026 Senac Brasil - Gestão Acadêmica</p>
+                    <p>&copy; 2026 Senac Brasil - Gestão Consolidada</p>
                 </footer>
             </div>
         </main>
@@ -151,7 +151,7 @@
     <script>
         async function carregarDashboard() {
             try {
-                const data = await apiGet('/dashboard/coordenador');
+                const data = await apiGet('/dashboard/coordenador'); // Backend já filtra por Super Admin
 
                 if (!data || data.erro) {
                     mostrarErro(data?.erro || 'Erro ao carregar dados');
@@ -161,7 +161,7 @@
                 document.getElementById('kpi-pendentes').textContent = data.metricas?.pendentes ?? 0;
                 document.getElementById('kpi-alunos').textContent = data.total_alunos ?? 0;
                 document.getElementById('kpi-media-horas').textContent = data.metricas?.media_horas ?? '0.0';
-                document.getElementById('kpi-alunos-footer').textContent = `Dados referentes ao curso de ${data.curso || 'sua coordenação'}`;
+                document.getElementById('kpi-alunos-footer').textContent = `${data.total_cursos ?? 0} curso(s) ativos no sistema`;
 
                 const containerBarras = document.getElementById('barras-container');
                 if (data.por_categoria?.length > 0) {

@@ -211,9 +211,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let links = [];
         if (isSuperAdmin) {
             links = [
+                { href: 'dashboard_superadmin.html', icon: 'bx-grid-alt', text: 'Dashboard' },
                 { href: 'cursosuperadm.html', icon: 'bx-book', text: 'Cursos' },
                 { href: 'coordenadores.html', icon: 'bx-user-voice', text: 'Coordenadores' },
-                { href: 'submissoes_superadmin.html', icon: 'bx-check-square', text: 'Submissões' }
+                { href: 'submissoes_superadmin.html', icon: 'bx-check-square', text: 'Submissões' },
+                { href: 'configuracoes.html', icon: 'bx-cog', text: 'Configurações' }
             ];
         } else if (isCoordenador) {
             links = [
@@ -221,7 +223,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 { href: 'alunos.html', icon: 'bx-group', text: 'Alunos' },
                 { href: 'protocoloadm.html', icon: 'bx-upload', text: 'Submissões' },
                 { href: 'cadastrar_regra.html', icon: 'bx-list-check', text: 'Regras de Horas' },
-                { href: 'relatorios.html', icon: 'bx-bar-chart-alt-2', text: 'Relatórios' }
+                { href: 'relatorios.html', icon: 'bx-bar-chart-alt-2', text: 'Relatórios' },
+                { href: 'configuracoes.html', icon: 'bx-cog', text: 'Configurações' }
             ];
         }
 
@@ -239,7 +242,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             // Repositório e Extrato de Horas são visualizações vinculadas ao Dashboard (Início)
             else if (['submissoes.html', 'extrato_certificado.html'].includes(currentPage)) {
-                targetActive = 'dashboardadm.html';
+                targetActive = isSuperAdmin ? 'dashboard_superadmin.html' : 'dashboardadm.html';
+            }
+            // Cadastro de coordenador ativa o item "Coordenadores"
+            else if (['cadastrar_coordenador.html', 'editar_coordenador.html'].includes(currentPage)) {
+                targetActive = 'coordenadores.html';
             }
             
             const isActive = targetActive === l.href ? 'active' : '';
