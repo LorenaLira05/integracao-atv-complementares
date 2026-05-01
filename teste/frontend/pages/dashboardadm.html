@@ -160,6 +160,21 @@
                     return;
                 }
 
+                const updatedAt = data.updated_at;
+
+                    if (updatedAt) {
+                        const dataAtualizacao = new Date(updatedAt);
+
+                        document.getElementById('label-atualizacao').textContent =
+                            `Atualizado às ${dataAtualizacao.toLocaleTimeString('pt-BR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            })}`;
+                    } else {
+                        document.getElementById('label-atualizacao').textContent =
+                            'Sem atualizações ainda';
+                    }
+
                 document.getElementById('kpi-pendentes').textContent = data.metricas?.pendentes ?? 0;
                 document.getElementById('kpi-alunos').textContent = data.total_alunos ?? 0;
                 document.getElementById('kpi-media-horas').textContent = data.metricas?.media_horas ?? '0.0';

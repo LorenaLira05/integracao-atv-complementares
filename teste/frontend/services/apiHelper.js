@@ -9,7 +9,7 @@ var API = 'http://127.0.0.1:3001';
 
 // Se já estivermos rodando dentro do próprio servidor, usamos caminho relativo
 if (window.location.origin.includes(':3001')) {
-    API = '';
+    API = 'http://localhost:3001';
 }
 window.API = API; // Garante visibilidade global
  

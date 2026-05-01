@@ -23,5 +23,5 @@ router.get('/submissoes', authMiddleware(['coordinator', 'super_admin']), coorde
 router.get('/submissoes/:course_id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissoes);
 router.get('/submissao/:id', authMiddleware(['coordinator']), coordenadorController.getSubmissaoPorId);
 router.patch('/validar/:id', authMiddleware(['coordinator']), coordenadorController.patchValidarSubmissao);
-
+router.get('/resumo-geral', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getResumoGeral);
 module.exports = router;

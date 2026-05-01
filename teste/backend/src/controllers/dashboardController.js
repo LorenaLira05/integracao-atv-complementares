@@ -104,13 +104,26 @@ exports.getDashboardCoordenador = async (req, res) => {
             [course_ids]
         );
 
-        res.status(200).json({
+        const ultimaAtualizacao = await pool.query(
+            `SELECT MAX(s.submitted_at) AS updated_at
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            WHERE uc.course_id = ANY($1)`,
+            [course_ids]
+        );
+
+        const updatedAt = ultimaAtualizacao.rows[0].updated_at
+            ? new Date(ultimaAtualizacao.rows[0].updated_at).toISOString()
+            : null;
+
+       res.status(200).json({
             metricas: metricas.rows[0],
             total_alunos: parseInt(alunos.rows[0].total_alunos),
             total_cursos: totalCursos,
             por_categoria: porCategoria.rows,
             cursos_mais_envios: cursosMaisEnvios.rows,
-            ultimas_atividades: ultimasAtividades.rows
+            ultimas_atividades: ultimasAtividades.rows,
+            updated_at: updatedAt
         });
 
     } catch (err) {

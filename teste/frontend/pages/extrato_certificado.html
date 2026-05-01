@@ -63,61 +63,58 @@
                     if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
                 }
 
-                carregarResumo();
+                carregarResumoGeral();
                 carregarHistorico();
             });
 
-            async function carregarResumo() {
-                try {
-                    const resumo = await apiGet('/aluno/resumo-horas');
-                    if (!resumo || resumo.erro) return;
+            async function carregarResumoGeral() {
+                const data = await apiGet('/coordenador/resumo-geral');
+                if (!data || data.erro) return;
 
-                    // ── KPIs ──
-                    const kpiTotal = document.querySelector('.kpi-destaque .kpi-value');
-                    const kpiProgresso = document.querySelector('.kpi-progress-fill');
-                    const kpiSubtext = document.querySelector('.kpi-destaque .kpi-subtext');
-                    const kpiAnalise = document.querySelectorAll('.kpi-card .kpi-value')[1];
-                    const kpiAnaliseSub = document.querySelectorAll('.kpi-card .kpi-subtext')[0];
-                    const kpiAprovadas = document.querySelectorAll('.kpi-card .kpi-value')[2];
-                    const kpiRestante = document.querySelectorAll('.kpi-card .kpi-value')[3];
+                // KPIs
+                const kpiTotal = document.querySelector('.kpi-destaque .kpi-value');
+                const kpiAnalise = document.querySelectorAll('.kpi-card .kpi-value')[1];
+                const kpiAprovadas = document.querySelectorAll('.kpi-card .kpi-value')[2];
+                const kpiRestante = document.querySelectorAll('.kpi-card .kpi-value')[3];
+                const kpiSubtext = document.querySelector('.kpi-destaque .kpi-subtext');
 
-                    if (kpiTotal) kpiTotal.innerHTML = `${resumo.total_integralizado} <small>/ ${resumo.total_obrigatorio}h</small>`;
-                    if (kpiProgresso) kpiProgresso.style.width = `${resumo.percentual_total}%`;
-                    if (kpiSubtext) kpiSubtext.innerHTML = `Você atingiu <strong>${Math.round(resumo.percentual_total)}%</strong> da carga horária obrigatória.`;
-                    
-                    if (kpiAnalise) kpiAnalise.textContent = `${resumo.total_em_analise}h`;
-                    if (kpiAprovadas) kpiAprovadas.textContent = `${resumo.total_integralizado}h`;
-                    const restante = Math.max(0, resumo.total_obrigatorio - resumo.total_integralizado);
-                    if (kpiRestante) kpiRestante.textContent = `${restante}h`;
+                if (kpiTotal) kpiTotal.innerHTML = `${data.contadores.total_alunos} <small>alunos</small>`;
+                if (kpiAnalise) kpiAnalise.textContent = `${data.contadores.pendentes}`;
+                if (kpiAprovadas) kpiAprovadas.textContent = `${data.contadores.aprovadas}`;
+                if (kpiSubtext) kpiSubtext.textContent = `Visão geral de todos os alunos do curso.`;
 
-                    // ── Limites por Categoria ──
-                    const boxLimites = document.querySelector('.box-limites');
-                    if (boxLimites && resumo.limites) {
-                        boxLimites.innerHTML = '<div class="box-title">LIMITES POR CATEGORIA</div>';
-                        resumo.limites.forEach(l => {
-                            const item = document.createElement('div');
-                            item.className = 'limit-item';
-                            item.innerHTML = `
-                                <div class="limit-info">
-                                    <span>${l.categoria.toUpperCase()}</span>
-                                    <span><strong>${l.horas_aprovadas}</strong> / ${l.max_horas}h</span>
-                                </div>
-                                <div class="limit-bar-bg">
-                                    <div class="limit-bar-fill" style="width: ${l.percentual}%;"></div>
-                                </div>
-                            `;
-                            boxLimites.appendChild(item);
-                        });
-                    }
+                // Tabela
+                const tbody = document.querySelector('table tbody');
+                if (!tbody) return;
 
-                    // ── Info do curso ──
-                    const cursoInfo = document.querySelector('.page-title p');
-                    if (cursoInfo) cursoInfo.innerHTML = `Análise detalhada de atividades complementares: <strong>${resumo.curso}</strong>`;
-
-                } catch (err) {
-                    console.error('Erro ao carregar resumo:', err);
+                if (data.alunos.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">Nenhum aluno encontrado.</td></tr>';
+                    return;
                 }
-            }
+
+                tbody.innerHTML = data.alunos.map(a => {
+                    const percentual = a.total_obrigatorio > 0
+                        ? Math.round((a.total_integralizado / a.total_obrigatorio) * 100)
+                        : 0;
+                    return `
+                        <tr>
+                            <td>
+                                <div class="td-atividade">
+                                    <strong>${a.full_name}</strong>
+                                    <small>RA: ${a.ra || '—'}</small>
+                                </div>
+                            </td>
+                            <td><span class="badge-categoria">${a.course_name.toUpperCase()}</span></td>
+                            <td class="td-data">${a.total_em_analise}h em análise</td>
+                            <td class="td-horas">${a.total_integralizado}h / ${a.total_obrigatorio}h</td>
+                            <td><span class="status-badge ${percentual >= 100 ? 'status-aprovado' : 'status-analise'}">${percentual}%</span></td>
+                        </tr>
+                    `;
+                }).join('');
+
+                    const cursoInfo = document.querySelector('.page-title p');
+                    if (cursoInfo) cursoInfo.textContent = 'Visão geral de atividades complementares de todos os alunos.';
+                }
 
             async function carregarHistorico() {
                 const tbody = document.querySelector('table tbody');

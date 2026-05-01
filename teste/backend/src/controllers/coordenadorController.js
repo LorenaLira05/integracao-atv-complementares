@@ -668,3 +668,184 @@ exports.patchValidarSubmissao = async (req, res) => {
         client.release();
     }
 };
+
+exports.getResumoGeral = async (req, res) => {
+    const user_id = parseInt(req.usuario.id);
+    const isSuperAdmin = req.usuario.perfis && req.usuario.perfis.includes('super_admin');
+
+    try {
+        let course_ids = [];
+
+        // 1. Cursos do usuário
+        if (isSuperAdmin) {
+            const todos = await pool.query(
+                `SELECT id FROM courses WHERE is_active = true`
+            );
+            course_ids = todos.rows.map(r => parseInt(r.id));
+        } else {
+            const cursos = await pool.query(
+                `SELECT course_id 
+                 FROM course_coordinators 
+                 WHERE user_id = $1 AND is_active = true`,
+                [user_id]
+            );
+            course_ids = cursos.rows.map(r => parseInt(r.course_id));
+        }
+
+        if (course_ids.length === 0) {
+            return res.status(200).json({
+                alunos: [],
+                categorias: [],
+                contadores: {}
+            });
+        }
+
+        // 2. RESUMO POR ALUNO (geral)
+        const alunos = await pool.query(
+            `SELECT
+                u.id,
+                u.full_name,
+                u.email,
+                sp.ra,
+                c.id AS course_id,
+                c.name AS course_name,
+                c.minimum_required_hours AS total_obrigatorio,
+
+                COALESCE(
+                    SUM(s.approved_hours) FILTER (WHERE s.status = 'approved'),
+                    0
+                ) AS total_integralizado,
+
+                COUNT(s.id) AS total_submissoes
+
+             FROM users u
+             JOIN user_courses uc ON uc.user_id = u.id
+             JOIN courses c ON c.id = uc.course_id
+             LEFT JOIN student_profiles sp ON sp.user_id = u.id
+             LEFT JOIN submissions s ON s.user_course_id = uc.id
+             JOIN user_roles ur ON ur.user_id = u.id
+             JOIN roles r ON r.id = ur.role_id
+
+             WHERE uc.course_id = ANY($1)
+               AND r.name = 'student'
+               AND uc.is_active = true
+
+             GROUP BY 
+                u.id, u.full_name, u.email,
+                sp.ra,
+                c.id, c.name, c.minimum_required_hours
+
+             ORDER BY u.full_name`,
+            [course_ids]
+        );
+
+        // 3. 🔥 RESUMO POR CATEGORIA (NÚCLEO DO QUE VOCÊ QUER)
+        const categorias = await pool.query(
+            `SELECT
+                u.id AS user_id,
+                u.full_name,
+                c.id AS course_id,
+                c.name AS course_name,
+
+                cat.id AS category_id,
+                cat.name AS category_name,
+
+                car.min_hours,
+                car.max_hours,
+
+                COALESCE(
+                    SUM(s.approved_hours) FILTER (WHERE s.status = 'approved'),
+                    0
+                ) AS horas_aprovadas,
+
+                COALESCE(
+                    SUM(s.requested_hours) FILTER (WHERE s.status NOT IN ('approved','rejected')),
+                    0
+                ) AS horas_em_analise,
+
+                (
+                    car.max_hours - COALESCE(
+                        SUM(s.approved_hours) FILTER (WHERE s.status = 'approved'),
+                        0
+                    )
+                ) AS horas_restantes
+
+             FROM users u
+
+             JOIN user_courses uc 
+                ON uc.user_id = u.id
+
+             JOIN courses c 
+                ON c.id = uc.course_id
+
+             JOIN course_activity_rules car
+                ON car.course_id = uc.course_id
+
+             JOIN categories cat
+                ON cat.id = car.category_id
+
+             LEFT JOIN submissions s
+                ON s.user_course_id = uc.id
+               AND s.category_id = cat.id
+
+             JOIN user_roles ur 
+                ON ur.user_id = u.id
+
+             JOIN roles r 
+                ON r.id = ur.role_id
+
+             WHERE uc.course_id = ANY($1)
+               AND r.name = 'student'
+               AND uc.is_active = true
+
+             GROUP BY 
+                u.id, u.full_name,
+                c.id, c.name,
+                cat.id, cat.name,
+                car.min_hours,
+                car.max_hours
+
+             ORDER BY u.full_name, cat.name`,
+            [course_ids]
+        );
+
+        // 4. CONTADORES GERAIS
+        const contadores = await pool.query(
+            `SELECT
+                COUNT(DISTINCT u.id) AS total_alunos,
+
+                COUNT(s.id) FILTER (
+                    WHERE s.status NOT IN ('approved','rejected')
+                ) AS pendentes,
+
+                COUNT(s.id) FILTER (
+                    WHERE s.status = 'approved'
+                ) AS aprovadas
+
+             FROM users u
+             JOIN user_courses uc ON uc.user_id = u.id
+             JOIN user_roles ur ON ur.user_id = u.id
+             JOIN roles r ON r.id = ur.role_id
+             LEFT JOIN submissions s ON s.user_course_id = uc.id
+
+             WHERE uc.course_id = ANY($1)
+               AND r.name = 'student'
+               AND uc.is_active = true`,
+            [course_ids]
+        );
+
+        return res.status(200).json({
+            alunos: alunos.rows,
+            categorias: categorias.rows,
+            contadores: contadores.rows[0]
+        });
+
+    } catch (err) {
+        console.error("ERRO RESUMO POR CATEGORIA:", err);
+        console.error(err.stack);
+
+        return res.status(500).json({
+            erro: err.message
+        });
+    }
+};
