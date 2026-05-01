@@ -107,9 +107,11 @@ body {
 /* ========== KPI CARDS NEW DESIGN ========== */
 .kpi-row-new {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 20px;
-    margin-bottom: 40px;
+    margin-top: 24px;
+    margin-bottom: 0;
+    padding-bottom: 30px; /* troca margin por padding */
 }
 
 .kpi-card-new {
@@ -498,7 +500,7 @@ body {
 
 /* ========== FOOTER ========== */
 .main-footer {
-    padding: 40px 0;
+    padding: 20px 0;
     text-align: center;
     color: var(--texto-lighter);
     font-size: 12px;

@@ -417,9 +417,18 @@
                 document.getElementById('btn-ver-arquivo').style.display = 'none';
             }
 
-            // OCR
             if (d.ocr_extracted_text) {
-                document.getElementById('ocr-bar').style.display = 'flex';
+                const ocrBar = document.getElementById('ocr-bar');
+                ocrBar.style.display = 'flex';
+                ocrBar.style.flexDirection = 'column';
+                ocrBar.style.alignItems = 'flex-start';
+                ocrBar.innerHTML = `
+                    <div style="display:flex; align-items:center; gap:8px; font-weight:600;">
+                        <i class='bx bx-scan'></i> Texto extraído pelo OCR
+                    </div>
+                    <pre style="white-space:pre-wrap; font-size:13px; margin-top:8px; 
+                                max-height:200px; overflow-y:auto; width:100%;">${d.ocr_extracted_text}</pre>
+                `;
             }
 
             // Painel do aluno

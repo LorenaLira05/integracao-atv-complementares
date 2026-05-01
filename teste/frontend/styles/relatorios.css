@@ -23,6 +23,9 @@ body {
 .conteudo-principal {
     flex: 1;
     padding: 0 40px 40px;
+    display: flex;          
+    flex-direction: column; 
+    gap: 30px;              
 }
 
 /* ========== CABEÇALHO TOPO ========== */

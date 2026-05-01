@@ -83,38 +83,85 @@
                 if (kpiAprovadas) kpiAprovadas.textContent = `${data.contadores.aprovadas}`;
                 if (kpiSubtext) kpiSubtext.textContent = `Visão geral de todos os alunos do curso.`;
 
-                // Tabela
+                // Tabela de alunos
                 const tbody = document.querySelector('table tbody');
-                if (!tbody) return;
+                if (tbody) {
+                    if (data.alunos.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">Nenhum aluno encontrado.</td></tr>';
+                    } else {
+                        tbody.innerHTML = data.alunos.map(a => {
+                            const percentual = a.total_obrigatorio > 0
+                                ? Math.round((a.total_integralizado / a.total_obrigatorio) * 100)
+                                : 0;
+                            return `
+                                <tr>
+                                    <td>
+                                        <div class="td-atividade">
+                                            <strong>${a.full_name}</strong>
+                                            <small>RA: ${a.ra || '—'}</small>
+                                        </div>
+                                    </td>
+                                    <td><span class="badge-categoria">${a.course_name.toUpperCase()}</span></td>
+                                    <td class="td-data">${a.total_em_analise || 0}h em análise</td>
+                                    <td class="td-horas">${a.total_integralizado}h / ${a.total_obrigatorio}h</td>
+                                    <td><span class="status-badge ${percentual >= 100 ? 'status-aprovado' : 'status-analise'}">${percentual}%</span></td>
+                                </tr>
+                            `;
+                        }).join('');
+                    }
+                }
 
-                if (data.alunos.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">Nenhum aluno encontrado.</td></tr>';
+                const cursoInfo = document.querySelector('.page-title p');
+                if (cursoInfo) cursoInfo.textContent = 'Visão geral de atividades complementares de todos os alunos.';
+
+                // Limites por categoria
+                renderLimitesCategorias(data.categorias || []);
+            }
+
+            function renderLimitesCategorias(categorias) {
+                const box = document.querySelector('.box-limites');
+                if (!box) return;
+
+                if (!categorias || categorias.length === 0) {
+                    box.innerHTML = `
+                        <div class="box-title">LIMITES POR CATEGORIA</div>
+                        <p style="padding:20px; color:#64748b;">Nenhuma regra cadastrada.</p>
+                    `;
                     return;
                 }
 
-                tbody.innerHTML = data.alunos.map(a => {
-                    const percentual = a.total_obrigatorio > 0
-                        ? Math.round((a.total_integralizado / a.total_obrigatorio) * 100)
-                        : 0;
-                    return `
-                        <tr>
-                            <td>
-                                <div class="td-atividade">
-                                    <strong>${a.full_name}</strong>
-                                    <small>RA: ${a.ra || '—'}</small>
-                                </div>
-                            </td>
-                            <td><span class="badge-categoria">${a.course_name.toUpperCase()}</span></td>
-                            <td class="td-data">${a.total_em_analise}h em análise</td>
-                            <td class="td-horas">${a.total_integralizado}h / ${a.total_obrigatorio}h</td>
-                            <td><span class="status-badge ${percentual >= 100 ? 'status-aprovado' : 'status-analise'}">${percentual}%</span></td>
-                        </tr>
-                    `;
-                }).join('');
+                // Agrupa por categoria (vem duplicado por aluno)
+                const mapa = {};
+                categorias.forEach(c => {
+                    if (!mapa[c.category_name]) {
+                        mapa[c.category_name] = {
+                            min: c.min_hours || 0,
+                            max: c.max_hours || null,
+                            aprovadas: parseFloat(c.horas_aprovadas) || 0
+                        };
+                    }
+                });
 
-                    const cursoInfo = document.querySelector('.page-title p');
-                    if (cursoInfo) cursoInfo.textContent = 'Visão geral de atividades complementares de todos os alunos.';
-                }
+                box.innerHTML = `
+                    <div class="box-title">LIMITES POR CATEGORIA</div>
+                    ${Object.entries(mapa).map(([nome, r]) => {
+                        const pct = r.max > 0 ? Math.min(100, Math.round((r.aprovadas / r.max) * 100)) : 0;
+                        const maxLabel = r.max !== null ? `${r.max}h` : '∞';
+                        return `
+                            <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
+                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                                    <strong style="font-size:13px;">${nome}</strong>
+                                    <span style="font-size:12px; color:#64748b;">${r.aprovadas}h / ${maxLabel}</span>
+                                </div>
+                                <div style="background:#e2e8f0; border-radius:99px; height:6px;">
+                                    <div style="background:#0056b3; width:${pct}%; height:6px; border-radius:99px; transition: width 0.4s ease;"></div>
+                                </div>
+                                <small style="color:#94a3b8; margin-top:4px; display:block;"></small>
+                            </div>
+                        `;
+                    }).join('')}
+                `;
+            }
 
             async function carregarHistorico() {
                 const tbody = document.querySelector('table tbody');
@@ -211,12 +258,7 @@
                         <div class="kpi-subtext">TOTAL VALIDADO</div>
                     </div>
 
-                    <div class="kpi-card">
-                        <div class="kpi-label"><i class='bx bx-error-circle' style="color:var(--azul-senac);"></i>
-                            RESTANTE</div>
-                        <div class="kpi-value">...h</div>
-                        <div class="kpi-subtext">META DO CURSO</div>
-                    </div>
+            
 
                 </div>
 

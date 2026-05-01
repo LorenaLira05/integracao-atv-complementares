@@ -739,7 +739,7 @@ exports.getResumoGeral = async (req, res) => {
             [course_ids]
         );
 
-        // 3. 🔥 RESUMO POR CATEGORIA (NÚCLEO DO QUE VOCÊ QUER)
+        //  RESUMO POR CATEGORIA
         const categorias = await pool.query(
             `SELECT
                 u.id AS user_id,
