@@ -352,7 +352,11 @@
             // Filtro de status
             const statusFiltro = document.querySelector('.tabs-filter button.active')?.dataset.filter || 'all';
             if (statusFiltro !== 'all') {
-                lista = lista.filter(s => (s.status || '').toLowerCase() === statusFiltro.toLowerCase());
+                if (statusFiltro === 'submitted') {
+                    lista = lista.filter(s => ['submitted', 'returned_for_adjustment'].includes((s.status || '').toLowerCase()));
+                } else {
+                    lista = lista.filter(s => (s.status || '').toLowerCase() === statusFiltro.toLowerCase());
+                }
             }
 
             // Filtro de curso

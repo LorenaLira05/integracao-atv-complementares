@@ -79,6 +79,7 @@
     color: rgba(255,255,255,0.5) !important;
     letter-spacing: 2px !important;
     text-transform: uppercase !important;
+    font-family: 'Outfit', sans-serif !important;
 }
 
 /* Menu */
@@ -142,12 +143,14 @@
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+    font-family: 'Outfit', sans-serif !important;
 }
 
 .perfil-sidebar-info small {
     font-size: 11px !important;
     color: rgba(255,255,255,0.5) !important;
     text-transform: uppercase !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
 .link-sair:hover {
