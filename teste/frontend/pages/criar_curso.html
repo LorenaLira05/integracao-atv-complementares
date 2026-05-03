@@ -180,6 +180,14 @@
         let isAtivo = true;
 
         document.addEventListener('DOMContentLoaded', () => {
+                    const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+            links.forEach(link => {
+                if (link.getAttribute('href') === 'cursosuperadm.html') {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
             const nome = localStorage.getItem('nome') || 'Super Admin';
             const sideNome = document.getElementById('sidebar-nome-global');
             const sideAvatar = document.getElementById('sidebar-avatar-global');
