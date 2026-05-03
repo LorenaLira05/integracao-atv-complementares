@@ -228,13 +228,6 @@
 }
 
 /* Bottom Section Grid */
-.bottom-grid {
-    display: grid;
-    grid-template-columns: 350px 1fr;
-    gap: 30px;
-}
-
-/* Left Column */
 .box-limites {
     background: white;
     border-radius: 16px;
@@ -254,7 +247,7 @@
 }
 
 .limit-item {
-    margin-bottom: 20px;
+    margin-bottom: 18px;
 }
 
 .limit-item:last-child {
@@ -264,18 +257,31 @@
 .limit-info {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
     font-size: 13px;
     font-weight: 700;
     color: var(--texto-dark);
+    gap: 12px;
+}
+
+.limit-info span:first-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
 }
 
 .limit-info span:last-child {
+    white-space: nowrap;
     color: var(--texto-light);
+    font-weight: 500;
+    flex-shrink: 0;
 }
 
 .limit-info span:last-child strong {
     color: var(--texto-dark);
+    font-weight: 700;
 }
 
 .limit-bar-bg {
@@ -290,8 +296,8 @@
     height: 100%;
     background: var(--azul-senac);
     border-radius: 3px;
+    transition: width 0.4s ease;
 }
-
 /* Dica Box */
 .box-dica {
     background: #fffbeb;
@@ -583,4 +589,11 @@ td {
     .bottom-grid {
         grid-template-columns: 1fr;
     }
+}
+
+/* Bottom Section Grid */
+.bottom-grid {
+    display: grid;
+    grid-template-columns: 350px 1fr;
+    gap: 30px;
 }

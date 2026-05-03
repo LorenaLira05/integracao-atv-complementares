@@ -18,18 +18,13 @@
 <body>
     <div class="layout-geral">
 
-        <!-- Sidebar -->
-        <!-- Sidebar Unificada -->
         <aside class="sidebar-dark">
             <div class="logo-secao">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
                     class="logo-img">
                 <span class="logo-subtext">GESTÃO ACADÊMICA</span>
             </div>
-
-            <!-- Menu preenchido dinamicamente pelo script.js -->
             <nav class="menu-navegacao"></nav>
-
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
                     <img id="sidebar-avatar-global"
@@ -45,16 +40,13 @@
             </div>
         </aside>
 
-        <!-- Script para ativar a aba atual e carregar dados do usuário -->
         <script>
-            // Proteção de rota — garante que o token esteja presente para a API
             const auth = protegerPagina(['ALUNO', 'COORDENADOR', 'STUDENT', 'COORDINATOR']);
 
             document.addEventListener('DOMContentLoaded', () => {
                 if (localStorage.getItem('nome')) {
                     const nomeEl = document.getElementById('sidebar-nome-global');
                     if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
-
                     const avatarEl = document.getElementById('sidebar-avatar-global');
                     if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
                 }
@@ -63,21 +55,17 @@
                     if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
                 }
 
-                // Detecta o perfil e chama a função correta
                 const perfil = (localStorage.getItem('perfil') || '').toUpperCase();
                 const isCoord = ['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN'].includes(perfil);
 
                 if (isCoord) {
-                    // Coordenadores veem a lista de alunos do curso
                     carregarResumoGeral();
                 } else {
-                    // Alunos veem o próprio histórico de submissões com paginação
                     carregarHistorico(1);
                     carregarResumoAluno();
                 }
             });
 
-            // Variáveis de estado da paginação
             let paginaAtualHistorico = 1;
             let totalPaginasHistorico = 1;
 
@@ -89,7 +77,6 @@
                 totalPaginasHistorico = data.total_paginas || 1;
                 paginaAtualHistorico = data.pagina_atual || 1;
 
-                // Ajusta os cabeçalhos da tabela para a visão do coordenador
                 const cabecalho = document.getElementById('tabela-cabecalho');
                 if (cabecalho) {
                     cabecalho.innerHTML = `
@@ -100,7 +87,7 @@
                         <th>PROGRESSO</th>
                     `;
                 }
-                // KPIs
+
                 const kpis = document.querySelectorAll('.kpi-card .kpi-value');
                 const kpiTotal = document.querySelector('.kpi-destaque .kpi-value');
                 const kpiAnalise = kpis[1];
@@ -112,7 +99,6 @@
                 if (kpiAprovadas) kpiAprovadas.textContent = `${data.contadores.horas_aprovadas || 0}h`;
                 if (kpiSubtext) kpiSubtext.textContent = `Total de ${data.contadores.horas_pendentes || 0}h aguardando análise.`;
 
-                // Tabela de alunos
                 const tbody = document.querySelector('table tbody');
                 if (tbody) {
                     if (!data.alunos || data.alunos.length === 0) {
@@ -144,9 +130,6 @@
 
                 const cursoInfo = document.querySelector('.page-title p');
                 if (cursoInfo) cursoInfo.textContent = 'Visão geral de atividades complementares de todos os alunos.';
-
-                // Limites por categoria
-                renderLimitesCategorias(data.categorias || []);
             }
 
             async function carregarResumoAluno() {
@@ -154,11 +137,9 @@
                     const data = await apiGet('/aluno/resumo-horas');
                     if (!data || data.erro) return;
 
-                    // Atualiza informações do curso
                     const cursoInfo = document.querySelector('.page-title p');
                     if (cursoInfo) cursoInfo.innerHTML = `Curso: <strong>${data.curso}</strong>`;
 
-                    // KPIs
                     const kpiTotalValue = document.querySelector('.kpi-destaque .kpi-value');
                     const kpiTotalProgress = document.querySelector('.kpi-progress-fill');
                     const kpiTotalSubtext = document.querySelector('.kpi-destaque .kpi-subtext');
@@ -169,77 +150,15 @@
                     if (kpiTotalValue) kpiTotalValue.innerHTML = `${data.total_integralizado}h <small>/ ${data.total_obrigatorio}h</small>`;
                     if (kpiTotalProgress) kpiTotalProgress.style.width = `${data.percentual_total}%`;
                     if (kpiTotalSubtext) kpiTotalSubtext.textContent = `Progresso total: ${Math.round(data.percentual_total)}% concluído.`;
-                    
                     if (kpiAnalise) kpiAnalise.textContent = `${data.total_em_analise}h`;
                     if (kpiAprovadas) kpiAprovadas.textContent = `${data.total_integralizado}h`;
-
-                    // Limites por categoria
-                    renderLimitesCategorias(data.limites || [], true);
 
                 } catch (err) {
                     console.error('Erro ao carregar resumo do aluno:', err);
                 }
             }
 
-            function renderLimitesCategorias(categorias, isAluno = false) {
-                const box = document.querySelector('.box-limites');
-                if (!box) return;
-
-                if (!categorias || categorias.length === 0) {
-                    box.innerHTML = `
-                        <div class="box-title">LIMITES POR CATEGORIA</div>
-                        <p style="padding:20px; color:#64748b;">Nenhuma regra cadastrada.</p>
-                    `;
-                    return;
-                }
-
-                // Agrupa por categoria
-                const mapa = {};
-                categorias.forEach(c => {
-                    const key = isAluno ? c.categoria : c.category_name;
-                    const aprovadas = isAluno ? c.horas_aprovadas : parseFloat(c.horas_aprovadas);
-                    const max = isAluno ? c.max_horas : c.max_hours;
-
-                    if (!mapa[key]) {
-                        mapa[key] = {
-                            min: (isAluno ? c.min_horas : c.min_hours) || 0,
-                            max: max || null,
-                            aprovadas: aprovadas || 0
-                        };
-                    } else if (!isAluno) {
-                        // Se não for aluno (coordenador), soma as horas de todos os alunos
-                        mapa[key].aprovadas += aprovadas;
-                    }
-                });
-
-                box.innerHTML = `
-                    <div class="box-title">LIMITES POR CATEGORIA</div>
-                    ${Object.entries(mapa).map(([nome, r]) => {
-                        const pct = r.max > 0 ? Math.min(100, Math.round((r.aprovadas / (isAluno ? r.max : (r.max * (isAluno ? 1 : 1)))) * 100)) : 0; 
-                        // Nota: Para coordenador, o percentual individual não faz sentido se somarmos todos os alunos contra um único max_hours.
-                        // Mas o usuário quer ver se está de acordo com o banco.
-                        // Se for coordenador, talvez o 'max' devesse ser multiplicado pelo número de alunos?
-                        // Por agora, vamos mostrar o total acumulado vs o limite da regra.
-                        
-                        const maxLabel = r.max !== null ? `${r.max}h` : '∞';
-                        return `
-                            <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
-                                <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                                    <strong style="font-size:13px;">${nome}</strong>
-                                    <span style="font-size:12px; color:#64748b;">${r.aprovadas}h / ${isAluno ? maxLabel : 'limite individual ' + maxLabel}</span>
-                                </div>
-                                <div style="background:#e2e8f0; border-radius:99px; height:6px;">
-                                    <div style="background:#0056b3; width:${isAluno ? pct : 0}%; height:6px; border-radius:99px; transition: width 0.4s ease;"></div>
-                                </div>
-                                <small style="color:#94a3b8; margin-top:4px; display:block;"></small>
-                            </div>
-                        `;
-                    }).join('')}
-                `;
-            }
-
             async function carregarHistorico(pagina = 1) {
-                // Ajusta os cabeçalhos para a visão do aluno
                 const cabecalho = document.getElementById('tabela-cabecalho');
                 if (cabecalho) {
                     cabecalho.innerHTML = `
@@ -262,7 +181,7 @@
                     const subs = Array.isArray(res) ? res : (res.submissoes || []);
                     totalPaginasHistorico = res.total_pages || 1;
                     const totalRegistros = res.total || subs.length;
-                    
+
                     if (!subs || subs.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Nenhuma atividade registrada.</td></tr>';
                         renderizarPaginacaoHistorico(1, 1, 0);
@@ -312,13 +231,11 @@
                 }
 
                 let botoesHtml = '';
-                
-                // Botão Anterior
+
                 botoesHtml += `<button class="btn-pag" ${pagina <= 1 ? 'disabled' : ''} onclick="irPaginaHistorico(${pagina - 1})">
                     <i class='bx bx-chevron-left'></i> Anterior
                 </button>`;
 
-                // Numeração das Páginas
                 botoesHtml += `<div class="pag-numeros">`;
                 for (let i = 1; i <= totalPaginas; i++) {
                     if (i === 1 || i === totalPaginas || (i >= pagina - 1 && i <= pagina + 1)) {
@@ -329,7 +246,6 @@
                 }
                 botoesHtml += `</div>`;
 
-                // Botão Próximo
                 botoesHtml += `<button class="btn-pag" ${pagina >= totalPaginas ? 'disabled' : ''} onclick="irPaginaHistorico(${pagina + 1})">
                     Próximo <i class='bx bx-chevron-right'></i>
                 </button>`;
@@ -359,10 +275,8 @@
             }
         </script>
 
-        <!-- Main Content -->
         <main class="conteudo-principal">
 
-            <!-- Header Topo -->
             <header class="cabecalho-topo">
                 <div class="topo-links">
                     <a href="dashboardadm.html">Dashboard</a>
@@ -372,7 +286,7 @@
             </header>
 
             <div class="page-container">
-                    <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>EXTRATO DE HORAS</span></div>
+                <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>EXTRATO DE HORAS</span></div>
                 <div class="header-action-row">
                     <div class="page-title">
                         <h1>Extrato Acadêmico</h1>
@@ -383,9 +297,7 @@
                     </button>
                 </div>
 
-                <!-- KPIs -->
                 <div class="kpis-grid">
-
                     <div class="kpi-card kpi-destaque">
                         <div class="kpi-label">TOTAL DE HORAS INTEGRALIZADAS</div>
                         <div class="kpi-value">... <small>/ --h</small></div>
@@ -394,56 +306,34 @@
                         </div>
                         <div class="kpi-subtext">Calculando progresso...</div>
                     </div>
-
                     <div class="kpi-card">
-                        <div class="kpi-label"><i class='bx bx-time' style="color:var(--azul-senac);"></i> EM ANÁLISE
-                        </div>
+                        <div class="kpi-label"><i class='bx bx-time' style="color:var(--azul-senac);"></i> EM ANÁLISE</div>
                         <div class="kpi-value">...h</div>
                         <div class="kpi-subtext highlight">SOLICITAÇÕES PENDENTES</div>
                     </div>
-
                     <div class="kpi-card">
-                        <div class="kpi-label"><i class='bx bx-check-shield' style="color:var(--azul-senac);"></i>
-                            APROVADAS</div>
+                        <div class="kpi-label"><i class='bx bx-check-shield' style="color:var(--azul-senac);"></i> APROVADAS</div>
                         <div class="kpi-value">...h</div>
                         <div class="kpi-subtext">TOTAL VALIDADO</div>
                     </div>
-
-            
-
                 </div>
 
-                <!-- Bottom Layout -->
                 <div class="bottom-grid">
 
-                    <!-- Left Col -->
                     <div class="col-esquerda">
-
-                        <!-- Limites -->
-                        <div class="box-limites">
-                            <div class="box-title">LIMITES POR CATEGORIA</div>
-                            <p style="padding:20px; color:#64748b;">Carregando regras...</p>
-                        </div>
-
-                        <!-- Dica do Coordenador -->
                         <div class="box-dica">
                             <div class="dica-header">
                                 <i class='bx bx-bulb'></i> DICA DO SISTEMA
                             </div>
                             <p>Mantenha seus certificados sempre atualizados para garantir a contagem correta de horas ao final do semestre.</p>
                         </div>
-
                     </div>
 
-                    <!-- Right Col: Tabela -->
                     <div class="col-direita">
-
                         <div class="box-tabela">
-
                             <div class="tabela-header-row">
                                 <div class="tabela-title">HISTÓRICO DE ATIVIDADES</div>
                             </div>
-
                             <table>
                                 <thead>
                                     <tr id="tabela-cabecalho">
@@ -454,22 +344,19 @@
                                         <th>PROGRESSO</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- JS Render -->
-                                </tbody>
+                                <tbody></tbody>
                             </table>
-
                             <div id="paginacao-historico" class="paginacao-container"></div>
                         </div>
-
                     </div>
 
                 </div>
-
             </div>
-                    <footer class="rodape-dashboard" style="text-align: center;">
-                        <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
-                    </footer>
+
+            <footer class="rodape-dashboard" style="text-align: center;">
+                <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+            </footer>
+
         </main>
     </div>
 </body>
