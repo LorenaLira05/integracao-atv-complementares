@@ -45,7 +45,7 @@
 
             // Busca
             let debounce;
-            document.querySelector('.caixa-busca input')?.addEventListener('input', e => {
+            document.querySelector('.caixa-busca-input')?.addEventListener('input', e => {
                 clearTimeout(debounce);
                 debounce = setTimeout(() => {
                     buscaAtual = e.target.value;
@@ -322,6 +322,10 @@
             <section class="cartao-tabela-container">
                 <div class="filtros-barra">
                     <div class="grupo-filtro-linha">
+                        <div class="select-wrapper">
+                            <i class='bx bx-search select-icon'></i>
+                            <input type="text" class="caixa-busca-input select-filtro-compact" placeholder="Buscar aluno..." style="padding-left:32px; min-width:200px;">
+                        </div>
                         <div class="select-wrapper">
                             <i class='bx bx-filter-alt select-icon'></i>
                             <select id="select-curso" class="select-filtro-compact">
