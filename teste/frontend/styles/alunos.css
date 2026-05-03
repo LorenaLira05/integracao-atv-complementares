@@ -22,16 +22,13 @@ body {
 /* === MAIN CONTENT ========== */
 .conteudo-principal {
     flex: 1;
-    padding: 0 30px 30px;
-    background: #f8fafc;
 }
 
 /* ========== CABEÇALHO TOPO ========== */
-
-
-
-
-.caixa-busca {
+.topo-links {
+    display: flex;
+    gap: 30px;
+}
     background: #f1f5f9;
     padding: 8px 16px;
     border-radius: 12px;
@@ -181,26 +178,30 @@ body {
 }
 
 .kpi-kpi-titulo {
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--texto-light);
     letter-spacing: 0.5px;
-    margin-bottom: 12px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    display: block;
 }
 
 .kpi-kpi-valor-row h2 {
-    font-size: 28px;
+    font-size: 48px;
     font-weight: 800;
     color: var(--azul-main);
     margin-bottom: 10px;
+    line-height: 1;
 }
 
 .badge-kpi {
-    font-size: 9px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
     display: flex;
     align-items: center;
     gap: 4px;
+    margin-top: 5px;
 }
 .badge-verde-subir { color: var(--verde); }
 .badge-cinza-claro-kpi { color: var(--texto-light); opacity: 0.7; }
@@ -233,8 +234,8 @@ body {
 .perf-left p { font-size: 11px; line-height: 1.6; color: #DBEAFE !important; margin-bottom: 15px; }
 
 .perf-valor-box { text-align: center; }
-.perf-valor { font-size: 36px; font-weight: 800; display: block; }
-.perf-valor-label { font-size: 8px; font-weight: 800; text-transform: uppercase; opacity: 0.6; }
+.perf-valor { font-size: 48px; font-weight: 800; display: block; line-height: 1; }
+.perf-valor-label { font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: 0.8; }
 
 .btn-perf-ver-relatorio {
     background: var(--laranja);

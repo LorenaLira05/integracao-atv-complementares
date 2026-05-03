@@ -109,9 +109,13 @@
 
                     <div class="table-header">
                         <h2>Listagem de Cursos</h2>
-                        <div class="table-actions">
+                        <div class="table-actions" style="display: flex; gap: 15px; align-items: center;">
+                            <div class="search-box-table" style="position: relative;">
+                                <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                                <input type="text" id="input-busca" placeholder="Buscar curso..." style="padding: 10px 10px 10px 35px; border: 1px solid var(--borda, #e2e8f0); border-radius: 8px; font-size: 13px; outline: none; width: 250px; color: var(--texto-base, #1e293b);">
+                            </div>
                             <button class="btn-outline"><i class='bx bx-filter'></i> Filtrar</button>
-                            <button class="btn-outline"><i class='bx bx-download'></i> Exportar CSV</button>
+                            <button class="btn-outline" onclick="exportarGeralCSV()"><i class='bx bx-download'></i> Exportar CSV</button>
                         </div>
                     </div>
 
@@ -326,6 +330,8 @@
 
                 const cursos = Array.isArray(cursosResponse) ? cursosResponse : [];
                 const coordenadores = Array.isArray(coordResponse) ? coordResponse : [];
+                window.cursos = cursos; // Para exportarGeralCSV
+                window.todosCursos = cursos; // Para exportarCSV_Curso
 
                 // Update KPIs
                 document.getElementById('kpi-total-cursos').textContent = cursos.length;
@@ -353,6 +359,9 @@
 
                 // Render Table
                 let filtroStatus = 'todos';
+                let paginaAtual = 1;
+                const POR_PAGINA = 5;
+
                 window.renderTabela = () => {
                     const tbody = document.querySelector('table tbody');
                     if (!tbody) return;
@@ -372,12 +381,25 @@
                         lista = lista.filter(c => c.is_active === false);
                     }
 
-                    if (lista.length === 0) {
+                    // Paginação
+                    const total = lista.length;
+                    const totalPaginas = Math.ceil(total / POR_PAGINA) || 1;
+                    if (paginaAtual > totalPaginas) paginaAtual = 1;
+
+                    const inicio = (paginaAtual - 1) * POR_PAGINA;
+                    const paginados = lista.slice(inicio, inicio + POR_PAGINA);
+
+                    if (paginados.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Nenhum curso encontrado.</td></tr>';
+                        
+                        const paginationInfo = document.querySelector('.pagination-info');
+                        if (paginationInfo) paginationInfo.innerHTML = 'Nenhum curso encontrado';
+                        const paginationControls = document.querySelector('.pagination-controls');
+                        if (paginationControls) paginationControls.innerHTML = '';
                         return;
                     }
 
-                    lista.forEach(curso => {
+                    paginados.forEach(curso => {
                         const coord = coordenadores.find(c => c.course_ids && c.course_ids.includes(curso.id));
                         let dataCriacao = 'N/D';
                         if (curso.created_at) {
@@ -443,23 +465,27 @@
                     const paginationControls = document.querySelector('.pagination-controls');
 
                     if (paginationInfo) {
-                        const total = cursos.length;
-                        const exibindo = lista.length;
-                        paginationInfo.innerHTML = `Mostrando <strong>1-${exibindo}</strong> de <strong>${total}</strong> cursos`;
+                        const inicioExibido = inicio + 1;
+                        const fimExibido = Math.min(inicio + POR_PAGINA, total);
+                        paginationInfo.innerHTML = `Mostrando <strong>${inicioExibido}-${fimExibido}</strong> de <strong>${total}</strong> cursos`;
                     }
 
                     if (paginationControls) {
-                        paginationControls.innerHTML = ''; // Limpa os botões fixos (1, 2, 3... 31)
+                        let htmlControles = `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}><i class='bx bx-chevron-left'></i></button>`;
 
-                        // Implementação simples: se tivermos dados, mostramos pelo menos a página 1
-                        if (lista.length > 0) {
-                            paginationControls.innerHTML = `
-                                <button class="page-btn arrow"><i class='bx bx-chevron-left'></i></button>
-                                <button class="page-btn active">1</button>
-                                <button class="page-btn arrow"><i class='bx bx-chevron-right'></i></button>
-                            `;
+                        for (let i = 1; i <= totalPaginas; i++) {
+                            htmlControles += `<button class="page-btn ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
                         }
+
+                        htmlControles += `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}><i class='bx bx-chevron-right'></i></button>`;
+
+                        paginationControls.innerHTML = htmlControles;
                     }
+                };
+
+                window.mudarPagina = (n) => {
+                    paginaAtual = n;
+                    renderTabela();
                 };
 
                 // Função Deletar
@@ -481,7 +507,10 @@
                 let debounce;
                 document.getElementById('input-busca')?.addEventListener('input', () => {
                     clearTimeout(debounce);
-                    debounce = setTimeout(() => renderTabela(), 250);
+                    debounce = setTimeout(() => {
+                        paginaAtual = 1;
+                        renderTabela();
+                    }, 250);
                 });
 
                 // Listener de Filtro
@@ -493,6 +522,7 @@
 
                     const labelMap = { 'todos': 'Filtrar', 'ativos': 'Ativos', 'inativos': 'Inativos' };
                     btnFiltrar.innerHTML = `<i class='bx bx-filter'></i> ${labelMap[filtroStatus]}`;
+                    paginaAtual = 1;
                     renderTabela();
                 });
 
@@ -532,27 +562,28 @@
         }
 
         function exportarGeralCSV() {
-            if (todosCursos.length === 0) return;
-            const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
-            const linhas = todosCursos.map(curso => [
-                curso.id,
-                curso.name,
-                curso.code || '',
-                curso.minimum_required_hours || 0,
-                curso.semestres || '',
-                curso.modalidade || '',
-                curso.turno || '',
-                curso.is_active ? 'Ativo' : 'Inativo'
-            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            if (typeof cursos !== 'undefined' && cursos.length > 0) {
+                const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
+                const linhas = cursos.map(curso => [
+                    curso.id,
+                    curso.name,
+                    curso.code || '',
+                    curso.minimum_required_hours || 0,
+                    curso.semestres || '',
+                    curso.modalidade || '',
+                    curso.turno || '',
+                    curso.is_active ? 'Ativo' : 'Inativo'
+                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
 
-            const csv = [cabecalho.join(','), ...linhas].join('\n');
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `lista_cursos_${new Date().toISOString().slice(0, 10)}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+                const csv = [cabecalho.join(','), ...linhas].join('\n');
+                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `lista_cursos_${new Date().toISOString().slice(0, 10)}.csv`;
+                link.click();
+                URL.revokeObjectURL(url);
+            }
         }
     </script>
 </body>

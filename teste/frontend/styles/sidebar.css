@@ -158,32 +158,31 @@
 /* ─── Conteúdo Principal (Layout Base) ─── */
 .conteudo-principal {
     flex: 1 !important;
-    padding: 20px !important;
+    padding: 0 !important;
     display: flex !important;
     flex-direction: column !important;
     background: var(--fundo-pagina) !important;
-     gap: 30px !important; 
 }
 
 /* Espaçamento padrão para o conteúdo (Apenas containers de primeiro nível) */
 .conteudo-principal > section, 
 .conteudo-principal > div:not(.cabecalho-topo),
 .page-container {
-    padding-left: 40px !important;
-    padding-right: 40px !important;
-    padding-top: 40px !important;
-    max-width: 1400px !important;
-    margin: 0 auto !important;
+    padding-left: 50px !important;
+    padding-right: 50px !important;
+    padding-top: 35px !important;
+    max-width: 1600px !important;
+    margin: 0 !important;
     width: 100% !important;
 }
 
 /* Estrutura de Cabeçalho de Página (H1 + Breadcrumb) */
-.page-header, .header-action-row, .secao-titulo, .head-action-header {
+.page-header, .header-action-row, .secao-titulo, .head-action-header, .cabecalho-pagina {
     margin-top: 0 !important;
-    margin-bottom: 40px !important;
+    margin-bottom: 30px !important;
     display: flex !important;
     justify-content: space-between !important;
-    align-items: flex-start !important;
+    align-items: center !important;
 }
 
 .page-title, .titulo-esq {
@@ -202,6 +201,10 @@
     padding: 0 40px !important;
     border-bottom: 1px solid #edf2f7 !important;
     width: 100% !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 100 !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
 }
 
 .titulo-portal {
@@ -216,13 +219,15 @@
 /* ─── Etiquetas e Breadcrumbs (Novo) ─── */
 main .breadcrumb, .conteudo-principal .breadcrumb {
     font-family: 'Inter', sans-serif !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
     color: #94a3b8 !important;
     text-transform: uppercase !important;
-    letter-spacing: 1px !important;
-    margin-bottom: 8px !important;
-    display: block !important;
+    letter-spacing: 1.5px !important;
+    margin-bottom: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
     background: transparent !important;
     padding: 0 !important;
 }

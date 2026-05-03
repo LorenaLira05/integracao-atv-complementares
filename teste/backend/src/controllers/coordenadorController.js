@@ -438,7 +438,7 @@ exports.getSubmissoesGeral = async (req, res) => {
              JOIN categories cat ON cat.id = s.category_id
              WHERE uc.course_id = ANY($1)
              ${filtroStatus}
-             ORDER BY s.submitted_at DESC
+             ORDER BY COALESCE(s.updated_at, s.submitted_at) DESC
              LIMIT $${params.length - 1} OFFSET $${params.length}`,
             params
         );
@@ -515,7 +515,7 @@ exports.getSubmissoes = async (req, res) => {
              JOIN categories cat ON cat.id = s.category_id
              WHERE uc.course_id = $1
              ${filtroStatus}
-             ORDER BY s.submitted_at DESC
+             ORDER BY COALESCE(s.updated_at, s.submitted_at) DESC
              LIMIT $${params.length - 1} OFFSET $${params.length}`,
             params
         );
@@ -643,14 +643,13 @@ exports.patchValidarSubmissao = async (req, res) => {
             await pool.query(
                 `INSERT INTO notifications (user_id, submission_id, type, title, message)
             VALUES (
-                (SELECT uc.user_id FROM submissions s JOIN user_courses uc ON uc.id = s.user_course_id WHERE s.id = $2),
-                $2,
-                $3::notification_type_enum,
-                $4,
-                $5
+                (SELECT uc.user_id FROM submissions s JOIN user_courses uc ON uc.id = s.user_course_id WHERE s.id = $1),
+                $1,
+                $2::notification_type_enum,
+                $3,
+                $4
             )`,
                 [
-                    submissao.rows[0].user_course_id,
                     submissao.rows[0].id,
                     `submission_${status_final}`,
                     `Sua submissão foi ${status_final === 'approved' ? 'aprovada' : status_final === 'rejected' ? 'reprovada' : 'devolvida para ajuste'}`,
@@ -672,6 +671,7 @@ exports.patchValidarSubmissao = async (req, res) => {
 exports.getResumoGeral = async (req, res) => {
     const user_id = parseInt(req.usuario.id);
     const isSuperAdmin = req.usuario.perfis && req.usuario.perfis.includes('super_admin');
+    const { page, limit } = req.query;
 
     try {
         let course_ids = [];
@@ -696,9 +696,15 @@ exports.getResumoGeral = async (req, res) => {
             return res.status(200).json({
                 alunos: [],
                 categorias: [],
-                contadores: {}
+                contadores: {},
+                total_paginas: 0
             });
         }
+
+        // Paginação
+        const itensPorPagina = parseInt(limit) || 10;
+        const paginaAtual = Math.max(parseInt(page) || 1, 1);
+        const offset = (paginaAtual - 1) * itensPorPagina;
 
         // 2. RESUMO POR ALUNO (geral)
         const alunos = await pool.query(
@@ -715,6 +721,11 @@ exports.getResumoGeral = async (req, res) => {
                     SUM(s.approved_hours) FILTER (WHERE s.status = 'approved'),
                     0
                 ) AS total_integralizado,
+
+                COALESCE(
+                    SUM(s.requested_hours) FILTER (WHERE s.status NOT IN ('approved','rejected')),
+                    0
+                ) AS total_em_analise,
 
                 COUNT(s.id) AS total_submissoes
 
@@ -735,9 +746,25 @@ exports.getResumoGeral = async (req, res) => {
                 sp.ra,
                 c.id, c.name, c.minimum_required_hours
 
-             ORDER BY u.full_name`,
+             ORDER BY u.full_name
+             LIMIT $2 OFFSET $3`,
+            [course_ids, itensPorPagina, offset]
+        );
+
+        // Count total students for pagination
+        const countAlunos = await pool.query(
+            `SELECT COUNT(DISTINCT u.id) as total
+             FROM users u
+             JOIN user_courses uc ON uc.user_id = u.id
+             JOIN user_roles ur ON ur.user_id = u.id
+             JOIN roles r ON r.id = ur.role_id
+             WHERE uc.course_id = ANY($1)
+               AND r.name = 'student'
+               AND uc.is_active = true`,
             [course_ids]
         );
+        const totalAlunos = parseInt(countAlunos.rows[0].total);
+        const totalPaginas = Math.ceil(totalAlunos / itensPorPagina);
 
         //  RESUMO POR CATEGORIA
         const categorias = await pool.query(
@@ -820,7 +847,10 @@ exports.getResumoGeral = async (req, res) => {
 
                 COUNT(s.id) FILTER (
                     WHERE s.status = 'approved'
-                ) AS aprovadas
+                ) AS aprovadas,
+
+                COALESCE(SUM(s.requested_hours) FILTER (WHERE s.status NOT IN ('approved','rejected')), 0) AS horas_pendentes,
+                COALESCE(SUM(s.approved_hours) FILTER (WHERE s.status = 'approved'), 0) AS horas_aprovadas
 
              FROM users u
              JOIN user_courses uc ON uc.user_id = u.id
@@ -837,7 +867,10 @@ exports.getResumoGeral = async (req, res) => {
         return res.status(200).json({
             alunos: alunos.rows,
             categorias: categorias.rows,
-            contadores: contadores.rows[0]
+            contadores: contadores.rows[0],
+            total: totalAlunos,
+            total_paginas: totalPaginas,
+            pagina_atual: paginaAtual
         });
 
     } catch (err) {

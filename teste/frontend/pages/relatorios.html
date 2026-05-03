@@ -7,159 +7,425 @@
     <title>Senac - Relatórios Acadêmicos</title>
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <link rel="stylesheet" href="/styles/relatorios.css">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
     <script src="/services/script.js"></script>
     <script src="/services/apiHelper.js"></script>
+
+    <style>
+        /* ── Gráfico de Barras ───────────────────────────────────── */
+        .bar-chart-wrapper {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 15px;
+            height: 200px;
+            padding: 20px 10px 0;
+            margin-bottom: 8px;
+        }
+        .bar-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            flex: 1;
+            height: 100%;
+            gap: 8px;
+        }
+        .bar-valor {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--azul-main, #0056b3);
+            min-height: 18px;
+            text-align: center;
+        }
+        .bar-col:has(.bar-fill.destaque) .bar-valor { color: var(--laranja, #f97316); }
+        
+        .bar-fill {
+            width: 100%;
+            max-width: 60px;
+            border-radius: 8px 8px 0 0;
+            background: #4a7db3; /* Azul mais suave do print */
+            transition: height 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s;
+            min-height: 4px;
+        }
+        .bar-fill:hover { opacity: 0.8; }
+        .bar-fill.destaque { background: var(--laranja, #f97316); }
+        .bar-fill.vazio    { background: #e2e8f0; }
+
+        .chart-labels-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0 10px;
+            margin-top: 10px;
+        }
+        .bar-label {
+            flex: 1;
+            font-size: 12px;
+            color: #94a3b8;
+            font-weight: 500;
+            text-align: center;
+        }
+        .bar-label.destaque { color: var(--laranja, #f97316); font-weight: 700; }
+
+        /* ── Tabela e Status ──────────────────────────────────────── */
+        .status {
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 8px;
+            display: inline-block;
+            text-transform: uppercase;
+        }
+        .status.validado   { color: #10b981; background: #ecfdf5; }
+        .status.devolvido  { color: #f59e0b; background: #fffbeb; }
+        .status.reprovado  { color: #ef4444; background: #fef2f2; }
+        .status.em-analise { color: #6366f1; background: #eef2ff; }
+
+        .td-categoria {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: #1e293b;
+        }
+        .td-categoria i {
+            color: #64748b;
+            font-size: 18px;
+        }
+        .td-aluno { color: #64748b; }
+        .td-horas { font-weight: 700; color: #1e293b; }
+        .td-data { color: #64748b; font-size: 13px; }
+
+        /* ── Paginação ───────────────────────────────────────────── */
+        .paginacao {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 24px 0 0;
+            border-top: 1px solid #f1f5f9;
+        }
+        .paginacao-info {
+            font-size: 14px;
+            color: #94a3b8;
+        }
+        .paginacao-botoes {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-pag-nav {
+            background: none;
+            border: none;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 6px;
+            transition: 0.2s;
+        }
+        .btn-pag-nav:hover:not(:disabled) { color: var(--azul-main, #0056b3); background: #f1f5f9; }
+        .btn-pag-nav:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        .btn-pag-num {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            border: none;
+            background: #f1f5f9;
+            color: #475569;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-pag-num.active { background: var(--azul-main, #0056b3); color: white; }
+        .btn-pag-num:hover:not(.active) { background: #e2e8f0; }
+    </style>
 
     <script>
         protegerPagina(['COORDINATOR', 'SUPER_ADMIN', 'COORDENADOR']);
 
+        // ── Estado global da tabela ───────────────────────────────
+        let paginaAtual = 1;
+        let periodoAtual = '90';
+        let totalPaginas = 1;
+
         function formatarDataLocal(data) {
             if (!data) return '—';
             const d = new Date(data);
-            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' }).replace(' de ', ' ').toUpperCase();
+            return d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                .replace(' de ', ' ').toUpperCase();
         }
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            const chartContent = document.querySelector('.chart-content');
-            const chartLabels = document.querySelector('.chart-labels');
-            const svgLine = document.querySelector('.svg-line');
-            const listaProgresso = document.querySelector('.lista-progresso');
-            const tbody = document.querySelector('.tabela-logs tbody');
+        const statusMap = {
+            'approved':                { label: 'VALIDADO',   css: 'validado'   },
+            'under_review':            { label: 'EM ANÁLISE', css: 'em-analise' },
+            'submitted':               { label: 'EM ANÁLISE', css: 'em-analise' },
+            'returned_for_adjustment': { label: 'DEVOLVIDO',  css: 'devolvido'  },
+            'rejected':                { label: 'REPROVADO',  css: 'reprovado'  },
+        };
 
-            // Limpeza inicial
-            if (chartContent) chartContent.querySelectorAll('.bar-group').forEach(b => b.remove());
-            if (svgLine) svgLine.innerHTML = '';
-            if (chartLabels) chartLabels.innerHTML = '';
-            if (listaProgresso) listaProgresso.innerHTML = '<div style="padding: 20px; text-align:center; color:#94a3b8;">Sincronizando dados reais...</div>';
+        // ── Carrega só a tabela (filtro/paginação) ────────────────
+        async function carregarTabela(periodo, pagina) {
+            const tbody       = document.querySelector('.tabela-logs tbody');
+            const paginacaoEl = document.getElementById('paginacao');
+
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8;">Carregando...</td></tr>';
 
             try {
-                const dados = await apiGet('/dashboard/relatorios');
+                const dados = await apiGet(`/dashboard/relatorios?periodo=${periodo}&page=${pagina}`);
 
-                // 1. KPIs
+                totalPaginas = dados.log_total_paginas || 1;
+                paginaAtual  = dados.log_pagina        || 1;
+
+                const categoryIcons = {
+                    'Publicações': 'bx-news',
+                    'Extensão Universitária': 'bx-buildings',
+                    'Curso Livre': 'bx-book-open',
+                    'Monitoria Acadêmica': 'bx-id-card',
+                    'Projetos Sociais': 'bx-heart',
+                    'Iniciação Científica': 'bx-flask',
+                    'Estágio': 'bx-briefcase'
+                };
+
+                // Tabela
+                if (dados.log_atividades && dados.log_atividades.length > 0) {
+                    tbody.innerHTML = dados.log_atividades.map(a => {
+                        const s = statusMap[a.status] || {
+                            label: (a.status || 'PENDENTE').toUpperCase(),
+                            css: 'pendente'
+                        };
+                        const icon = categoryIcons[a.category_name] || 'bx-grid-alt';
+                        return `
+                            <tr>
+                                <td><div class="td-categoria"><i class='bx ${icon}'></i> ${a.category_name || 'Geral'}</div></td>
+                                <td class="td-aluno">${a.nome_aluno || '—'}</td>
+                                <td class="td-horas">${a.approved_hours || a.requested_hours || '0'}h</td>
+                                <td class="td-data">${formatarDataLocal(a.data_validacao || a.submitted_at)}</td>
+                                <td><span class="status ${s.css}">${s.label}</span></td>
+                            </tr>`;
+                    }).join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Nenhuma atividade nesse período.</td></tr>';
+                }
+
+                // Paginação
+                renderizarPaginacao(paginaAtual, totalPaginas, dados.log_total);
+
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#ef4444;">Erro ao carregar dados.</td></tr>';
+            }
+        }
+
+        function renderizarPaginacao(pagina, total, totalRegistros) {
+            const el = document.getElementById('paginacao');
+            if (!el) return;
+
+            const inicio = ((pagina - 1) * 10) + 1;
+            const fim    = Math.min(pagina * 10, totalRegistros);
+
+            let botoesHtml = '';
+
+            // Botão anterior
+            botoesHtml += `<button class="btn-pag-nav" ${pagina <= 1 ? 'disabled' : ''} onclick="irPagina(${pagina - 1})">
+                <i class='bx bx-chevron-left'></i> Anterior
+            </button>`;
+
+            // Páginas numeradas
+            for (let i = 1; i <= total; i++) {
+                if (i === 1 || i === total || (i >= pagina - 2 && i <= pagina + 2)) {
+                    botoesHtml += `<button class="btn-pag-num ${i === pagina ? 'active' : ''}" onclick="irPagina(${i})">${i}</button>`;
+                } else if (i === pagina - 3 || i === pagina + 3) {
+                    botoesHtml += `<span style="color:#94a3b8;">...</span>`;
+                }
+            }
+
+            // Botão próximo
+            botoesHtml += `<button class="btn-pag-nav" ${pagina >= total ? 'disabled' : ''} onclick="irPagina(${pagina + 1})">
+                Próximo <i class='bx bx-chevron-right'></i>
+            </button>`;
+
+            el.innerHTML = `
+                <span class="paginacao-info">Mostrando ${totalRegistros > 0 ? inicio : 0}–${fim} de ${totalRegistros} registros</span>
+                <div class="paginacao-botoes">${botoesHtml}</div>
+            `;
+        }
+
+        function irPagina(pagina) {
+            if (pagina < 1 || pagina > totalPaginas) return;
+            paginaAtual = pagina;
+            carregarTabela(periodoAtual, paginaAtual);
+        }
+
+        // ── Carregamento inicial completo ─────────────────────────
+        window.addEventListener('DOMContentLoaded', async () => {
+            const listaProgresso = document.querySelector('.lista-progresso');
+            const barChart       = document.getElementById('bar-chart');
+            const labelsRow      = document.getElementById('bar-labels');
+            const selectPeriodo  = document.getElementById('select-periodo');
+
+            // Listener do filtro de período
+            if (selectPeriodo) {
+                selectPeriodo.addEventListener('change', () => {
+                    periodoAtual = selectPeriodo.value;
+                    paginaAtual  = 1;
+                    carregarTabela(periodoAtual, paginaAtual);
+                });
+            }
+
+            if (listaProgresso) listaProgresso.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Sincronizando...</div>';
+
+            try {
+                const dados = await apiGet(`/dashboard/relatorios?periodo=${periodoAtual}&page=1`);
+
+                // ── KPIs ──────────────────────────────────────────
                 const elHoras = document.querySelector('.kpi-card:nth-child(1) h2');
                 if (elHoras) elHoras.textContent = Number(dados.total_horas || 0).toLocaleString('pt-BR');
 
                 const elEficiencia = document.querySelector('.kpi-card:nth-child(2) h2');
                 if (elEficiencia) elEficiencia.innerHTML = `${dados.eficiencia?.eficiencia_percentual || 0} <small>%</small>`;
 
-                const elPendentes = document.querySelector('.kpi-card:nth-child(3) h2');
-                if (elPendentes) elPendentes.textContent = dados.eficiencia?.pendentes || 0;
-
-                const elMedia = document.querySelector('.kpi-card:nth-child(4) h2');
+                const elMedia = document.querySelector('.kpi-card:nth-child(3) h2');
                 if (elMedia) elMedia.textContent = dados.eficiencia?.media_horas_aluno || 0;
 
-                // 2. Gráfico de Linha
-                if (chartContent && chartLabels && svgLine && dados.horas_mensais && dados.horas_mensais.length > 0) {
-                    const maxHoras = Math.max(...dados.horas_mensais.map(m => m.horas), 10);
-                    const width = 600;
-                    const height = 200;
-                    const stepX = width / (dados.horas_mensais.length + 1);
-                    
-                    let pointsArr = [];
-                    dados.horas_mensais.forEach((m, i) => {
-                        const x = (i + 1) * stepX;
-                        const y = height - (m.horas / maxHoras * (height - 40)) - 20;
-                        pointsArr.push(`${x},${y}`);
+                // ── Gráfico de Barras ─────────────────────────────
+                if (barChart && labelsRow) {
+                    const hoje = new Date();
+                    const ultimos6 = Array.from({ length: 6 }, (_, i) => {
+                        const d   = new Date(hoje.getFullYear(), hoje.getMonth() - 5 + i, 1);
+                        const anoLong = d.getFullYear();
+                        const mesNum = String(d.getMonth() + 1).padStart(2, '0');
+                        const key = `${anoLong}-${mesNum}`; // Formato YYYY-MM
 
-                        const group = document.createElement('div');
-                        group.className = 'bar-group';
-                        const div = document.createElement('div');
-                        div.className = 'bar bg-cinza-claro';
-                        div.style.height = '100%';
-                        div.style.opacity = (i === dados.horas_mensais.length - 1) ? '1' : '0.4';
-                        group.appendChild(div);
-                        chartContent.insertBefore(group, svgLine);
+                        const mesPT = d.toLocaleString('pt-BR', { month: 'short' })
+                            .replace('.', '').replace(/^\w/, c => c.toUpperCase());
+                        const label = `${mesPT}/${String(anoLong).slice(2)}`;
 
-                        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                        circle.setAttribute("cx", x);
-                        circle.setAttribute("cy", y);
-                        circle.setAttribute("r", "5");
-                        circle.setAttribute("fill", "var(--azul-main)");
-                        circle.setAttribute("stroke", "white");
-                        circle.setAttribute("stroke-width", "2");
-                        svgLine.appendChild(circle);
+                        return { label, key, horas: 0 };
                     });
 
-                    const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
-                    polyline.setAttribute("points", pointsArr.join(' '));
-                    polyline.setAttribute("fill", "none");
-                    polyline.setAttribute("stroke", "var(--laranja)");
-                    polyline.setAttribute("stroke-width", "3");
-                    svgLine.prepend(polyline);
+                    if (dados.horas_mensais) {
+                        dados.horas_mensais.forEach(m => {
+                            const idx = ultimos6.findIndex(u => u.key === m.mes);
+                            if (idx !== -1) ultimos6[idx].horas = parseFloat(m.horas) || 0;
+                        });
+                    }
 
-                    chartLabels.innerHTML = dados.horas_mensais.map(m => `<span>${m.mes}</span>`).join('');
-                } else if (chartLabels) {
-                    chartLabels.innerHTML = '<div style="width:100%; text-align:center; color:#94a3b8; font-size:12px; margin-top:20px;">Nenhum volume registrado nos últimos meses.</div>';
+                    const maxHoras = Math.max(...ultimos6.map(m => m.horas), 1);
+                    const mesAtual = ultimos6[ultimos6.length - 1].label;
+
+                    barChart.innerHTML  = '';
+                    labelsRow.innerHTML = '';
+
+                    ultimos6.forEach(m => {
+                        const pct     = Math.max((m.horas / maxHoras) * 100, m.horas > 0 ? 5 : 0);
+                        const isAtual = m.label === mesAtual;
+                        const isEmpty = m.horas === 0;
+
+                        const col = document.createElement('div');
+                        col.className = 'bar-col';
+
+                        const valor = document.createElement('div');
+                        valor.className = 'bar-valor';
+                        valor.textContent = m.horas > 0 ? `${m.horas.toFixed(1)}h` : '';
+                        col.appendChild(valor);
+
+                        const fill = document.createElement('div');
+                        fill.className = 'bar-fill' +
+                            (isAtual ? ' destaque' : '') +
+                            (isEmpty ? ' vazio'    : '');
+                        fill.style.height = isEmpty ? '4px' : `${pct}%`;
+                        col.appendChild(fill);
+
+                        barChart.appendChild(col);
+
+                        const label = document.createElement('div');
+                        label.className = 'bar-label' + (isAtual ? ' destaque' : '');
+                        label.textContent = m.label;
+                        labelsRow.appendChild(label);
+                    });
                 }
 
-                // 3. Eficiência por Curso
+                // ── Eficiência por Curso ──────────────────────────
                 if (listaProgresso) {
                     if (dados.eficiencia_por_curso && dados.eficiencia_por_curso.length > 0) {
                         listaProgresso.innerHTML = dados.eficiencia_por_curso.map(c => {
                             const bgClass = c.eficiencia < 70 ? 'bg-laranja' : 'bg-azul-main';
                             return `
                                 <div class="item-progresso">
-                                    <div class="info-progresso"><span>${c.nome_curso.toUpperCase()}</span> <strong>${c.eficiencia}%</strong></div>
-                                    <div class="barra-fundo">
-                                        <div class="barra-preenchida ${bgClass}" style="width: ${c.eficiencia}%;"></div>
+                                    <div class="info-progresso">
+                                        <span>${c.nome_curso.toUpperCase()}</span>
+                                        <strong>${c.eficiencia}%</strong>
                                     </div>
-                                </div>
-                            `;
+                                    <div class="barra-fundo">
+                                        <div class="barra-preenchida ${bgClass}" style="width:${c.eficiencia}%;"></div>
+                                    </div>
+                                </div>`;
                         }).join('');
                     } else {
-                        listaProgresso.innerHTML = '<div style="padding: 20px; text-align:center; color:#94a3b8;">Nenhum curso com atividades.</div>';
+                        listaProgresso.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;">Nenhum curso com atividades.</div>';
                     }
                 }
 
-                // 4. Tabela de Logs
-                if (tbody) {
-                    if (dados.log_atividades && dados.log_atividades.length > 0) {
-                        tbody.innerHTML = dados.log_atividades.map(a => `
+                // ── Tabela inicial ────────────────────────────────
+                totalPaginas = dados.log_total_paginas || 1;
+                paginaAtual  = 1;
+
+                const tbody = document.querySelector('.tabela-logs tbody');
+                if (tbody && dados.log_atividades && dados.log_atividades.length > 0) {
+                    tbody.innerHTML = dados.log_atividades.map(a => {
+                        const s = statusMap[a.status] || {
+                            label: (a.status || 'PENDENTE').toUpperCase(),
+                            css: 'pendente'
+                        };
+                        return `
                             <tr>
                                 <td><div class="td-curso"><i class='bx bx-category icon-curso'></i> ${a.category_name || 'Geral'}</div></td>
                                 <td>${a.nome_aluno || '—'}</td>
                                 <td><strong>${a.approved_hours || a.requested_hours || '0'}h</strong></td>
-                                <td>${formatarDataLocal(a.submitted_at)}</td>
-                                <td><span class="status ${a.status === 'approved' ? 'validado' : 'pendente'}">
-                                    ${a.status === 'approved' ? 'VALIDADO' : 'PENDENTE'}
-                                </span></td>
-                            </tr>
-                        `).join('');
-                    } else {
-                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:#94a3b8;">Sem atividades recentes.</td></tr>';
-                    }
+                                <td>${formatarDataLocal(a.data_validacao || a.submitted_at)}</td>
+                                <td><span class="status ${s.css}">${s.label}</span></td>
+                            </tr>`;
+                    }).join('');
+                } else if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">Sem atividades nesse período.</td></tr>';
                 }
+
+                renderizarPaginacao(paginaAtual, totalPaginas, dados.log_total);
 
             } catch (err) {
                 console.error('Erro ao carregar relatórios:', err);
-                if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 40px; color:#ef4444;">Erro na conexão com o banco de dados.</td></tr>';
+                const tbody = document.querySelector('.tabela-logs tbody');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#ef4444;">Erro na conexão com o banco de dados.</td></tr>';
             }
         });
     </script>
-    <link rel="stylesheet" href="/styles/sidebar.css">
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
 </head>
 
 <body>
     <div class="layout-geral">
+
         <!-- Sidebar -->
-        <!-- Sidebar Unificada -->
         <aside class="sidebar-dark">
             <div class="logo-secao">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
-                    class="logo-img">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
                 <span class="logo-subtext">GESTÃO ACADÊMICA</span>
             </div>
-
-            <!-- Menu preenchido dinamicamente pelo script.js -->
             <nav class="menu-navegacao">
                 <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
                 <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
-                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
-                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
-                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="alunos.html"       class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html"       class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html"   class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
             </nav>
-
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
                     <img id="sidebar-avatar-global"
@@ -170,49 +436,39 @@
                     </div>
                 </div>
                 <a href="#" class="link-menu link-sair"
-                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
-                        class='bx bx-log-out'></i> Sair</a>
+                    onclick="if(typeof logout==='function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
             </div>
         </aside>
 
-        <!-- Script para ativar a aba atual e carregar dados do usuário -->
         <script>
             document.addEventListener('DOMContentLoaded', () => {
                 const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
-                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
-                links.forEach(link => {
-                    if (link.getAttribute('href') === currentPage) {
-                        link.classList.add('active');
-                    } else {
-                        link.classList.remove('active');
-                    }
+                document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu').forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === currentPage);
                 });
-
-                if (localStorage.getItem('nome')) {
+                const nome = localStorage.getItem('nome');
+                if (nome) {
                     const nomeEl = document.getElementById('sidebar-nome-global');
-                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
-
+                    if (nomeEl) nomeEl.textContent = nome;
                     const avatarEl = document.getElementById('sidebar-avatar-global');
-                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(nome) + '&background=0056b3&color=fff';
                 }
-                if (localStorage.getItem('perfil')) {
+                const perfil = localStorage.getItem('perfil');
+                if (perfil) {
                     const roleEl = document.getElementById('sidebar-role-global');
-                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                    if (roleEl) roleEl.textContent = perfil;
                 }
             });
         </script>
 
-        <!-- Main Content -->
         <main class="conteudo-principal">
 
-            <!-- Header Topo -->
-            
             <header class="cabecalho-topo">
-            <div>
-                <span class="titulo-portal">Portal do Coordenador</span>
-            </div>
-        </header>
-            <!-- Page Header -->
+                <div><span class="titulo-portal">Portal do Coordenador</span></div>
+            </header>
+
             <section class="cabecalho-pagina">
                 <div>
                     <span class="etiqueta-laranja">VISÃO GERAL ANALÍTICA</span>
@@ -226,132 +482,47 @@
 
             <!-- KPI Cards -->
             <section class="kpi-grid">
-                <!-- Card 1 -->
                 <div class="kpi-card">
-                    <div class="kpi-header">
-                        <p class="kpi-titulo">TOTAL DE HORAS PROCESSADAS</p>
-                    </div>
-                    <div class="kpi-valor">
-                        <h2>12,480</h2>
-                    </div>
+                    <div class="kpi-header"><p class="kpi-titulo">TOTAL DE HORAS PROCESSADAS</p></div>
+                    <div class="kpi-valor"><h2>—</h2></div>
                     <div class="kpi-footer verde">
-                        <span><i class='bx bx-trending-up'></i> 12%</span>
+                        <span><i class='bx bx-trending-up'></i></span>
                         <small>Horas verificadas este semestre</small>
                     </div>
                 </div>
-
-                <!-- Card 2 -->
                 <div class="kpi-card">
-                    <div class="kpi-header">
-                        <p class="kpi-titulo">EFICIÊNCIA MÉDIA</p>
-                    </div>
-                    <div class="kpi-valor">
-                        <h2>94.2 %</h2>
-                    </div>
+                    <div class="kpi-header"><p class="kpi-titulo">EFICIÊNCIA MÉDIA</p></div>
+                    <div class="kpi-valor"><h2>— <small>%</small></h2></div>
                     <div class="kpi-footer azul">
-                        <span class="badge-azul">~ 94%</span>
+                        <span class="badge-azul">Carregando...</span>
                         <small>Taxa de resposta global</small>
                     </div>
                 </div>
 
-                <!-- Card 3 -->
                 <div class="kpi-card">
-                    <div class="kpi-header">
-                        <p class="kpi-titulo">PROTOCOLOS PENDENTES</p>
-                    </div>
-                    <div class="kpi-valor">
-                        <h2 class="laranja">142</h2>
-                    </div>
-                    <div class="kpi-footer laranja-claro">
-                        <span><i class='bx bx-error-alt'></i> Alta</span>
-                        <small>Requer revisão imediata</small>
-                    </div>
-                </div>
-
-                <!-- Card 4 -->
-                <div class="kpi-card">
-                    <div class="kpi-header">
-                        <p class="kpi-titulo">MÉDIA DE HORAS / ALUNO</p>
-                    </div>
-                    <div class="kpi-valor">
-                        <h2>0</h2>
-                    </div>
+                    <div class="kpi-header"><p class="kpi-titulo">MÉDIA DE HORAS / ALUNO</p></div>
+                    <div class="kpi-valor"><h2>—</h2></div>
                     <div class="kpi-footer cinza">
                         <small>Média de horas aprovadas por estudante</small>
                     </div>
                 </div>
             </section>
 
-            <!-- Charts Section -->
+            <!-- Gráficos -->
             <section class="graficos-grid">
-                <!-- Line Chart -->
                 <div class="card-grafico principal">
                     <div class="header-grafico">
                         <div>
                             <h3>Horas Processadas Mensalmente</h3>
-                            <p>Comparação entre anos acadêmicos</p>
-                        </div>
-                        <div class="legenda">
-                            <span>
-                                <div class="bolinha azul-escuro"></div> 2026
-                            </span>
-                            <span>
-                                <div class="bolinha laranja"></div> 2025
-                            </span>
+                            <p>Últimos 6 meses — barra laranja = mês atual</p>
                         </div>
                     </div>
                     <div class="chart-container">
-                        <div class="grid-lines">
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                            <div></div>
-                        </div>
-                        <div class="chart-content">
-                            <!-- Bars -->
-                            <div class="bar-group">
-                                <div class="bar bg-cinza-claro" style="height: 40%;"></div>
-                            </div>
-                            <div class="bar-group">
-                                <div class="bar bg-cinza-claro" style="height: 55%;"></div>
-                            </div>
-                            <div class="bar-group">
-                                <div class="bar bg-cinza-claro" style="height: 45%;"></div>
-                            </div>
-                            <div class="bar-group">
-                                <div class="bar bg-cinza-claro" style="height: 70%;"></div>
-                            </div>
-                            <div class="bar-group">
-                                <div class="bar bg-cinza-claro" style="height: 90%;"></div>
-                            </div>
-                            <div class="bar-group">
-                                <div class="bar bg-cinza-claro" style="height: 60%;"></div>
-                            </div>
-                            <!-- SVG Line -->
-                            <svg viewBox="0 0 600 200" preserveAspectRatio="none" class="svg-line">
-                                <polyline points="50,110 150,80 250,105 350,55 450,15 550,75" fill="none"
-                                    stroke="var(--laranja)" stroke-width="3" />
-                                <circle cx="50" cy="110" r="4" fill="var(--azul-main)" />
-                                <circle cx="150" cy="80" r="4" fill="var(--azul-main)" />
-                                <circle cx="250" cy="105" r="4" fill="var(--azul-main)" />
-                                <circle cx="350" cy="55" r="4" fill="var(--azul-main)" />
-                                <circle cx="450" cy="15" r="4" fill="var(--azul-main)" />
-                                <circle cx="550" cy="75" r="4" fill="var(--azul-main)" />
-                            </svg>
-                        </div>
-                        <div class="chart-labels">
-                            <span>JAN</span>
-                            <span>FEV</span>
-                            <span>MAR</span>
-                            <span>ABR</span>
-                            <span>MAI</span>
-                            <span>JUN</span>
-                        </div>
+                        <div class="bar-chart-wrapper" id="bar-chart"></div>
+                        <div class="chart-labels-row" id="bar-labels"></div>
                     </div>
                 </div>
 
-                <!-- Progress Bars -->
                 <div class="card-grafico secundario">
                     <div class="header-grafico">
                         <div>
@@ -360,48 +531,22 @@
                         </div>
                     </div>
                     <div class="lista-progresso">
-                        <div class="item-progresso">
-                            <div class="info-progresso"><span>SISTEMAS DE INFORMAÇÃO</span> <strong>98%</strong></div>
-                            <div class="barra-fundo">
-                                <div class="barra-preenchida bg-azul-main" style="width: 98%;"></div>
-                            </div>
-                        </div>
-                        <div class="item-progresso">
-                            <div class="info-progresso"><span>DESIGN GRÁFICO</span> <strong>82%</strong></div>
-                            <div class="barra-fundo">
-                                <div class="barra-preenchida bg-azul-main" style="width: 82%;"></div>
-                            </div>
-                        </div>
-                        <div class="item-progresso">
-                            <div class="info-progresso"><span>GASTRONOMIA</span> <strong>75%</strong></div>
-                            <div class="barra-fundo">
-                                <div class="barra-preenchida bg-azul-main" style="width: 75%;"></div>
-                            </div>
-                        </div>
-                        <div class="item-progresso">
-                            <div class="info-progresso"><span>ADMINISTRAÇÃO</span> <strong>91%</strong></div>
-                            <div class="barra-fundo">
-                                <div class="barra-preenchida bg-azul-main" style="width: 91%;"></div>
-                            </div>
-                        </div>
-                        <div class="item-progresso">
-                            <div class="info-progresso"><span>MODA</span> <strong>64%</strong></div>
-                            <div class="barra-fundo">
-                                <div class="barra-preenchida bg-laranja" style="width: 64%;"></div>
-                            </div>
-                        </div>
+                        <div style="padding:20px;text-align:center;color:#94a3b8;">Carregando...</div>
                     </div>
                     <button class="btn-link-central">VER MÉTRICAS DETALHADAS</button>
                 </div>
             </section>
 
-            <!-- Table Section -->
+            <!-- Tabela -->
             <section class="tabela-secao">
                 <div class="header-tabela">
                     <h3>Atividades Recentes</h3>
                     <div class="filtro-tabela">
-                        Mostrar: <select>
-                            <option>Últimos 7 Dias</option>
+                        Período:
+                        <select id="select-periodo">
+                            <option value="7">Últimos 7 dias</option>
+                            <option value="30">Últimos 30 dias</option>
+                            <option value="90" selected>Últimos 3 meses</option>
                         </select>
                     </div>
                 </div>
@@ -418,40 +563,18 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>
-                                <div class="td-curso"><i class='bx bx-category icon-curso'></i> ADS</div>
+                            <td colspan="5" style="text-align:center;padding:40px;color:#94a3b8;">
+                                Carregando atividades...
                             </td>
-                            <td>Ricardo Oliveira</td>
-                            <td><strong>100h</strong></td>
-                            <td>Oct 12, 2023</td>
-                            <td><span class="status validado">VALIDADO</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="td-curso">JOGOS DIGITAIS</div>
-                            </td>
-                            <td>Camila Santos</td>
-                            <td><strong>100h</strong></td>
-                            <td>Oct 11, 2025</td>
-                            <td><span class="status pendente">PENDENTE</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="td-curso">MARKETING</div>
-                            </td>
-                            <td>Marcos Lima</td>
-                            <td><strong>100h</strong></td>
-                            <td>Oct 10, 2026</td>
-                            <td><span class="status validado">VALIDADO</span></td>
                         </tr>
                     </tbody>
                 </table>
-                <div class="footer-tabela">
-                    <button class="btn-ver-todas">VER TODAS</button>
-                </div>
+
+                <!-- Paginação -->
+                <div class="paginacao" id="paginacao"></div>
             </section>
+
         </main>
     </div>
 </body>
-
 </html>

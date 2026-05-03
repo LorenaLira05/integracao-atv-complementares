@@ -44,7 +44,7 @@
                 const cursoVal = selectCurso ? selectCurso.value : 'all';
                 const tabAtiva = document.querySelector('.tab-link.active');
                 const statusMap = {
-                    'Pendentes': 'submitted',
+                    'Pendentes': 'PENDENTE',
                     'Aprovadas': 'approved',
                     'Reprovadas': 'rejected',
                     'Todas': 'TODAS'
@@ -60,8 +60,18 @@
                     url += `?status=${status}`;
 
                     const resposta = await apiGet(url);
-                    const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                    let subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
                     const contadores = resposta.contadores || null;
+
+                    const selectOrdem = document.getElementById('filtro-ordem-coord');
+                    const ordem = selectOrdem ? selectOrdem.value : 'desc';
+                    
+                    subs.sort((a, b) => {
+                        const da = new Date(a.updated_at || a.submitted_at || a.data_envio || a.created_at || 0);
+                        const db = new Date(b.updated_at || b.submitted_at || b.data_envio || b.created_at || 0);
+                        return ordem === 'desc' ? db - da : da - db;
+                    });
+
                     renderTable(subs, contadores);
 
                 } catch (err) {
@@ -72,6 +82,8 @@
 
             // ── Event Listeners ──
             selectCurso?.addEventListener('change', carregarDados);
+            const selectOrdem = document.getElementById('filtro-ordem-coord');
+            selectOrdem?.addEventListener('change', carregarDados);
             tabs.forEach(tab => {
                 tab.addEventListener('click', () => {
                     tabs.forEach(t => t.classList.remove('active'));
@@ -259,8 +271,9 @@
                         <select class="filter-select">
                             <option>Todos os Cursos</option>
                         </select>
-                        <select class="filter-select">
-                            <option>Mais recentes</option>
+                        <select class="filter-select" id="filtro-ordem-coord">
+                            <option value="desc">Mais recentes</option>
+                            <option value="asc">Mais antigas</option>
                         </select>
                     </div>
                 </div>

@@ -18,11 +18,24 @@
     font-family: 'Outfit', 'Inter', sans-serif;
 }
 
-.conteudo-principal {
-    background: #f8fafc;
+.topo-links {
+    display: flex;
+    gap: 30px;
 }
 
-/* ========== HEADER ========== */
+.topo-links a {
+    text-decoration: none;
+    color: var(--texto-light);
+    font-weight: 500;
+    font-size: 15px;
+}
+
+.topo-links a.active {
+    color: var(--azul-main);
+    font-weight: 600;
+    border-bottom: 3px solid var(--laranja);
+    padding-bottom: 6px;
+}
 .cert-meta {
     display: flex;
     justify-content: space-between;
@@ -116,10 +129,11 @@
 
 .profile-text small {
     display: block;
-    font-size: 8px;
+    font-size: 11px;
     font-weight: 700;
     color: var(--texto-light);
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
 }
 
 .profile-text strong {
@@ -169,18 +183,20 @@
 }
 
 .kpi-label {
-    font-size: 9px;
-    font-weight: 800;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--texto-light);
     letter-spacing: 0.5px;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
 }
 
 .kpi-value {
-    font-size: 24px;
+    font-size: 48px;
     font-weight: 800;
     color: var(--azul-main);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    line-height: 1;
 }
 
 .kpi-value small {
@@ -468,6 +484,10 @@
 .btn-export:hover { opacity: 0.9; transform: translateY(-1px); }
 
 /* ========== RIGHT WIDGETS ========== */
+.conteudo-principal {
+    flex: 1;
+}
+
 .right-widgets {
     width: 320px;
     flex-shrink: 0;

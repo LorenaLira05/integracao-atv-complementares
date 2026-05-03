@@ -36,7 +36,7 @@ exports.getDashboardCoordenador = async (req, res) => {
 
         const metricas = await pool.query(
             `SELECT
-                COUNT(*) FILTER (WHERE s.status = 'submitted') AS pendentes,
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected')) AS pendentes,
                 COUNT(*) FILTER (WHERE s.status = 'approved') AS aprovadas,
                 COUNT(*) FILTER (WHERE s.status = 'rejected') AS reprovadas,
                 ROUND(COALESCE(AVG(s.approved_hours) FILTER (WHERE s.status = 'approved'), 0), 1) AS media_horas

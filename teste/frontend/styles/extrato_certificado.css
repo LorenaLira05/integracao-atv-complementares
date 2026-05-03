@@ -20,9 +20,6 @@
     background-color: #f8fafc;
 }
 
-/* ========== CABEÇALHO TOPO ========== */
-
-
 .topo-links {
     display: flex;
     gap: 30px;
@@ -151,12 +148,12 @@
 }
 
 .kpi-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     color: var(--texto-light);
+    letter-spacing: 0.5px;
     margin-bottom: 15px;
+    text-transform: uppercase;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -171,16 +168,17 @@
 }
 
 .kpi-value {
-    font-size: 38px;
-    font-weight: 700;
+    font-size: 48px;
+    font-weight: 800;
     color: var(--texto-dark);
     line-height: 1;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
 }
 
 .kpi-card.kpi-destaque .kpi-value {
     color: white;
     font-size: 48px;
+    font-weight: 800;
 }
 
 .kpi-value small {
@@ -490,6 +488,91 @@ td {
     height: 6px;
     border-radius: 50%;
     background: var(--vermelho-erro);
+}
+
+/* Paginação Histórico */
+.paginacao-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+.paginacao-info {
+    font-size: 13px;
+    color: var(--texto-light);
+    font-weight: 500;
+}
+
+.paginacao-controles {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.btn-pag {
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: all 0.2s;
+}
+
+.btn-pag:hover:not(:disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.btn-pag:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pag-numeros {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.btn-pag-num {
+    background: transparent;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--texto-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.btn-pag-num:hover:not(.active) {
+    background: #f1f5f9;
+    color: var(--texto-dark);
+}
+
+.btn-pag-num.active {
+    background: var(--azul-senac);
+    color: white;
+}
+
+.pag-dots {
+    color: var(--texto-light);
+    font-weight: 600;
+    padding: 0 5px;
 }
 
 /* Responsividade */

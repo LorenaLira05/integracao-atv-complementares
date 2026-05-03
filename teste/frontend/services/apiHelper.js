@@ -127,6 +127,12 @@ if (typeof apiPost === 'undefined') {
 if (typeof apiPatch === 'undefined') {
     window.apiPatch = (endpoint, body) => apiCall(endpoint, 'PATCH', body);
 }
+if (typeof apiPut === 'undefined') {
+    window.apiPut = (endpoint, body) => apiCall(endpoint, 'PUT', body);
+}
+if (typeof apiDelete === 'undefined') {
+    window.apiDelete = (endpoint) => apiCall(endpoint, 'DELETE');
+}
  
 /* ---------- Camada de UI/Formatadores (Component Helpers) ---------- */
  

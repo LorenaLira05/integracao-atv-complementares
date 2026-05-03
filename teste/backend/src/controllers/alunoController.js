@@ -198,7 +198,7 @@ exports.deleteSubmissao = async (req, res) => {
 
 exports.getMinhasSubmissoes = async (req, res) => {
     const user_id = req.usuario.id;
-    const { status, course_id } = req.query;
+    const { status, course_id, page, limit } = req.query;
 
     try {
         let params = [user_id];
@@ -212,6 +212,52 @@ exports.getMinhasSubmissoes = async (req, res) => {
         if (course_id) {
             filtros += ` AND uc.course_id = $${params.length + 1}`;
             params.push(course_id);
+        }
+
+        // Se `page` for fornecido, aplicamos paginação
+        if (page) {
+            const itensPorPagina = parseInt(limit) || 5;
+            const paginaAtual = Math.max(parseInt(page) || 1, 1);
+            const offset = (paginaAtual - 1) * itensPorPagina;
+
+            const countResult = await pool.query(
+                `SELECT COUNT(*) as total
+                 FROM submissions s
+                 JOIN user_courses uc ON uc.id = s.user_course_id
+                 WHERE uc.user_id = $1
+                 ${filtros}`,
+                params
+            );
+
+            const total = parseInt(countResult.rows[0].total);
+            const totalPaginas = Math.ceil(total / itensPorPagina) || 1;
+
+            const resultado = await pool.query(
+                `SELECT
+                    s.*,
+                    c.name AS course_name,
+                    cat.name AS category_name,
+                    sf.original_filename,
+                    sf.storage_path,
+                    sf.ocr_confidence
+                 FROM submissions s
+                 JOIN user_courses uc ON uc.id = s.user_course_id
+                 JOIN courses c ON c.id = uc.course_id
+                 JOIN categories cat ON cat.id = s.category_id
+                 LEFT JOIN submission_files sf ON sf.submission_id = s.id
+                 WHERE uc.user_id = $1
+                 ${filtros}
+                 ORDER BY s.submitted_at DESC
+                 LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+                [...params, itensPorPagina, offset]
+            );
+
+            return res.status(200).json({
+                submissoes: resultado.rows,
+                total,
+                total_pages: totalPaginas,
+                current_page: paginaAtual
+            });
         }
 
         const resultado = await pool.query(
@@ -243,7 +289,7 @@ exports.getMinhasSubmissoes = async (req, res) => {
 exports.getResumoHoras = async (req, res) => {
     const user_id = req.usuario.id;
     try {
-        // 1. Pegar o curso do aluno
+        
         const userCourse = await pool.query(
             `SELECT uc.course_id, c.name as course_name, c.minimum_required_hours
              FROM user_courses uc
@@ -258,7 +304,6 @@ exports.getResumoHoras = async (req, res) => {
 
         const { course_id, minimum_required_hours } = userCourse.rows[0];
 
-        // 2. Pegar as regras (limites por categoria)
         const regras = await pool.query(
             `SELECT car.*, cat.name as category_name
              FROM course_activity_rules car
@@ -267,7 +312,6 @@ exports.getResumoHoras = async (req, res) => {
             [course_id]
         );
 
-        // 3. Pegar as horas aprovadas por categoria
         const aprovadas = await pool.query(
             `SELECT s.category_id, SUM(s.approved_hours) as total_aprovado
              FROM submissions s
@@ -277,7 +321,6 @@ exports.getResumoHoras = async (req, res) => {
             [user_id, course_id]
         );
 
-        // 4. Pegar as horas em análise (pendentes)
         const emAnalise = await pool.query(
             `SELECT SUM(s.requested_hours) as total_pendente
              FROM submissions s

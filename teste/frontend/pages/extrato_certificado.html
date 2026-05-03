@@ -63,31 +63,61 @@
                     if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
                 }
 
-                carregarResumoGeral();
-                carregarHistorico();
+                // Detecta o perfil e chama a função correta
+                const perfil = (localStorage.getItem('perfil') || '').toUpperCase();
+                const isCoord = ['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN'].includes(perfil);
+
+                if (isCoord) {
+                    // Coordenadores veem a lista de alunos do curso
+                    carregarResumoGeral();
+                } else {
+                    // Alunos veem o próprio histórico de submissões com paginação
+                    carregarHistorico(1);
+                    carregarResumoAluno();
+                }
             });
 
-            async function carregarResumoGeral() {
-                const data = await apiGet('/coordenador/resumo-geral');
+            // Variáveis de estado da paginação
+            let paginaAtualHistorico = 1;
+            let totalPaginasHistorico = 1;
+
+            async function carregarResumoGeral(pagina = 1) {
+                const limit = 10;
+                const data = await apiGet(`/coordenador/resumo-geral?page=${pagina}&limit=${limit}`);
                 if (!data || data.erro) return;
 
+                totalPaginasHistorico = data.total_paginas || 1;
+                paginaAtualHistorico = data.pagina_atual || 1;
+
+                // Ajusta os cabeçalhos da tabela para a visão do coordenador
+                const cabecalho = document.getElementById('tabela-cabecalho');
+                if (cabecalho) {
+                    cabecalho.innerHTML = `
+                        <th>ALUNO</th>
+                        <th>CURSO</th>
+                        <th>EM ANÁLISE</th>
+                        <th>HORAS INTEGRALIZADAS</th>
+                        <th>PROGRESSO</th>
+                    `;
+                }
                 // KPIs
+                const kpis = document.querySelectorAll('.kpi-card .kpi-value');
                 const kpiTotal = document.querySelector('.kpi-destaque .kpi-value');
-                const kpiAnalise = document.querySelectorAll('.kpi-card .kpi-value')[1];
-                const kpiAprovadas = document.querySelectorAll('.kpi-card .kpi-value')[2];
-                const kpiRestante = document.querySelectorAll('.kpi-card .kpi-value')[3];
+                const kpiAnalise = kpis[1];
+                const kpiAprovadas = kpis[2];
                 const kpiSubtext = document.querySelector('.kpi-destaque .kpi-subtext');
 
-                if (kpiTotal) kpiTotal.innerHTML = `${data.contadores.total_alunos} <small>alunos</small>`;
-                if (kpiAnalise) kpiAnalise.textContent = `${data.contadores.pendentes}`;
-                if (kpiAprovadas) kpiAprovadas.textContent = `${data.contadores.aprovadas}`;
-                if (kpiSubtext) kpiSubtext.textContent = `Visão geral de todos os alunos do curso.`;
+                if (kpiTotal) kpiTotal.innerHTML = `${data.contadores.total_alunos || 0} <small>alunos</small>`;
+                if (kpiAnalise) kpiAnalise.textContent = `${data.contadores.pendentes || 0}`;
+                if (kpiAprovadas) kpiAprovadas.textContent = `${data.contadores.horas_aprovadas || 0}h`;
+                if (kpiSubtext) kpiSubtext.textContent = `Total de ${data.contadores.horas_pendentes || 0}h aguardando análise.`;
 
                 // Tabela de alunos
                 const tbody = document.querySelector('table tbody');
                 if (tbody) {
-                    if (data.alunos.length === 0) {
+                    if (!data.alunos || data.alunos.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#64748b; padding:20px;">Nenhum aluno encontrado.</td></tr>';
+                        renderizarPaginacaoHistorico(1, 1, 0);
                     } else {
                         tbody.innerHTML = data.alunos.map(a => {
                             const percentual = a.total_obrigatorio > 0
@@ -108,6 +138,7 @@
                                 </tr>
                             `;
                         }).join('');
+                        renderizarPaginacaoHistorico(pagina, totalPaginasHistorico, data.total);
                     }
                 }
 
@@ -118,7 +149,39 @@
                 renderLimitesCategorias(data.categorias || []);
             }
 
-            function renderLimitesCategorias(categorias) {
+            async function carregarResumoAluno() {
+                try {
+                    const data = await apiGet('/aluno/resumo-horas');
+                    if (!data || data.erro) return;
+
+                    // Atualiza informações do curso
+                    const cursoInfo = document.querySelector('.page-title p');
+                    if (cursoInfo) cursoInfo.innerHTML = `Curso: <strong>${data.curso}</strong>`;
+
+                    // KPIs
+                    const kpiTotalValue = document.querySelector('.kpi-destaque .kpi-value');
+                    const kpiTotalProgress = document.querySelector('.kpi-progress-fill');
+                    const kpiTotalSubtext = document.querySelector('.kpi-destaque .kpi-subtext');
+                    const kpis = document.querySelectorAll('.kpi-card .kpi-value');
+                    const kpiAnalise = kpis[1];
+                    const kpiAprovadas = kpis[2];
+
+                    if (kpiTotalValue) kpiTotalValue.innerHTML = `${data.total_integralizado}h <small>/ ${data.total_obrigatorio}h</small>`;
+                    if (kpiTotalProgress) kpiTotalProgress.style.width = `${data.percentual_total}%`;
+                    if (kpiTotalSubtext) kpiTotalSubtext.textContent = `Progresso total: ${Math.round(data.percentual_total)}% concluído.`;
+                    
+                    if (kpiAnalise) kpiAnalise.textContent = `${data.total_em_analise}h`;
+                    if (kpiAprovadas) kpiAprovadas.textContent = `${data.total_integralizado}h`;
+
+                    // Limites por categoria
+                    renderLimitesCategorias(data.limites || [], true);
+
+                } catch (err) {
+                    console.error('Erro ao carregar resumo do aluno:', err);
+                }
+            }
+
+            function renderLimitesCategorias(categorias, isAluno = false) {
                 const box = document.querySelector('.box-limites');
                 if (!box) return;
 
@@ -130,31 +193,43 @@
                     return;
                 }
 
-                // Agrupa por categoria (vem duplicado por aluno)
+                // Agrupa por categoria
                 const mapa = {};
                 categorias.forEach(c => {
-                    if (!mapa[c.category_name]) {
-                        mapa[c.category_name] = {
-                            min: c.min_hours || 0,
-                            max: c.max_hours || null,
-                            aprovadas: parseFloat(c.horas_aprovadas) || 0
+                    const key = isAluno ? c.categoria : c.category_name;
+                    const aprovadas = isAluno ? c.horas_aprovadas : parseFloat(c.horas_aprovadas);
+                    const max = isAluno ? c.max_horas : c.max_hours;
+
+                    if (!mapa[key]) {
+                        mapa[key] = {
+                            min: (isAluno ? c.min_horas : c.min_hours) || 0,
+                            max: max || null,
+                            aprovadas: aprovadas || 0
                         };
+                    } else if (!isAluno) {
+                        // Se não for aluno (coordenador), soma as horas de todos os alunos
+                        mapa[key].aprovadas += aprovadas;
                     }
                 });
 
                 box.innerHTML = `
                     <div class="box-title">LIMITES POR CATEGORIA</div>
                     ${Object.entries(mapa).map(([nome, r]) => {
-                        const pct = r.max > 0 ? Math.min(100, Math.round((r.aprovadas / r.max) * 100)) : 0;
+                        const pct = r.max > 0 ? Math.min(100, Math.round((r.aprovadas / (isAluno ? r.max : (r.max * (isAluno ? 1 : 1)))) * 100)) : 0; 
+                        // Nota: Para coordenador, o percentual individual não faz sentido se somarmos todos os alunos contra um único max_hours.
+                        // Mas o usuário quer ver se está de acordo com o banco.
+                        // Se for coordenador, talvez o 'max' devesse ser multiplicado pelo número de alunos?
+                        // Por agora, vamos mostrar o total acumulado vs o limite da regra.
+                        
                         const maxLabel = r.max !== null ? `${r.max}h` : '∞';
                         return `
                             <div style="padding: 12px 16px; border-bottom: 1px solid #f1f5f9;">
                                 <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
                                     <strong style="font-size:13px;">${nome}</strong>
-                                    <span style="font-size:12px; color:#64748b;">${r.aprovadas}h / ${maxLabel}</span>
+                                    <span style="font-size:12px; color:#64748b;">${r.aprovadas}h / ${isAluno ? maxLabel : 'limite individual ' + maxLabel}</span>
                                 </div>
                                 <div style="background:#e2e8f0; border-radius:99px; height:6px;">
-                                    <div style="background:#0056b3; width:${pct}%; height:6px; border-radius:99px; transition: width 0.4s ease;"></div>
+                                    <div style="background:#0056b3; width:${isAluno ? pct : 0}%; height:6px; border-radius:99px; transition: width 0.4s ease;"></div>
                                 </div>
                                 <small style="color:#94a3b8; margin-top:4px; display:block;"></small>
                             </div>
@@ -163,16 +238,34 @@
                 `;
             }
 
-            async function carregarHistorico() {
+            async function carregarHistorico(pagina = 1) {
+                // Ajusta os cabeçalhos para a visão do aluno
+                const cabecalho = document.getElementById('tabela-cabecalho');
+                if (cabecalho) {
+                    cabecalho.innerHTML = `
+                        <th>ATIVIDADE</th>
+                        <th>CATEGORIA</th>
+                        <th>DATA</th>
+                        <th>HORAS</th>
+                        <th>STATUS</th>
+                    `;
+                }
+
                 const tbody = document.querySelector('table tbody');
                 if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Carregando histórico...</td></tr>';
 
                 try {
-                    const subs = await apiGet('/aluno/submissoes');
+                    const limit = 5;
+                    const res = await apiGet(`/aluno/submissoes?page=${pagina}&limit=${limit}`);
                     if (!tbody) return;
 
+                    const subs = Array.isArray(res) ? res : (res.submissoes || []);
+                    totalPaginasHistorico = res.total_pages || 1;
+                    const totalRegistros = res.total || subs.length;
+                    
                     if (!subs || subs.length === 0) {
                         tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:#64748b;">Nenhuma atividade registrada.</td></tr>';
+                        renderizarPaginacaoHistorico(1, 1, 0);
                         return;
                     }
 
@@ -201,9 +294,67 @@
                         `;
                     }).join('');
 
+                    renderizarPaginacaoHistorico(pagina, totalPaginasHistorico, totalRegistros);
+
                 } catch (err) {
                     console.error('Erro ao carregar histórico:', err);
                     if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#ef4444; padding:20px;">Erro ao carregar dados.</td></tr>';
+                }
+            }
+
+            function renderizarPaginacaoHistorico(pagina, totalPaginas, total) {
+                const el = document.getElementById('paginacao-historico');
+                if (!el) return;
+
+                if (total === 0) {
+                    el.innerHTML = '';
+                    return;
+                }
+
+                let botoesHtml = '';
+                
+                // Botão Anterior
+                botoesHtml += `<button class="btn-pag" ${pagina <= 1 ? 'disabled' : ''} onclick="irPaginaHistorico(${pagina - 1})">
+                    <i class='bx bx-chevron-left'></i> Anterior
+                </button>`;
+
+                // Numeração das Páginas
+                botoesHtml += `<div class="pag-numeros">`;
+                for (let i = 1; i <= totalPaginas; i++) {
+                    if (i === 1 || i === totalPaginas || (i >= pagina - 1 && i <= pagina + 1)) {
+                        botoesHtml += `<button class="btn-pag-num ${i === pagina ? 'active' : ''}" onclick="irPaginaHistorico(${i})">${i}</button>`;
+                    } else if (i === pagina - 2 || i === pagina + 2) {
+                        botoesHtml += `<span class="pag-dots">...</span>`;
+                    }
+                }
+                botoesHtml += `</div>`;
+
+                // Botão Próximo
+                botoesHtml += `<button class="btn-pag" ${pagina >= totalPaginas ? 'disabled' : ''} onclick="irPaginaHistorico(${pagina + 1})">
+                    Próximo <i class='bx bx-chevron-right'></i>
+                </button>`;
+
+                el.innerHTML = `
+                    <div class="paginacao-info">
+                        Mostrando página ${pagina} de ${totalPaginas} (${total} registros no total)
+                    </div>
+                    <div class="paginacao-controles">
+                        ${botoesHtml}
+                    </div>
+                `;
+            }
+
+            function irPaginaHistorico(pagina) {
+                if (pagina < 1 || pagina > totalPaginasHistorico) return;
+                paginaAtualHistorico = pagina;
+
+                const perfil = (localStorage.getItem('perfil') || '').toUpperCase();
+                const isCoord = ['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN'].includes(perfil);
+
+                if (isCoord) {
+                    carregarResumoGeral(pagina);
+                } else {
+                    carregarHistorico(pagina);
                 }
             }
         </script>
@@ -295,12 +446,12 @@
 
                             <table>
                                 <thead>
-                                    <tr>
-                                        <th>ATIVIDADE</th>
-                                        <th>CATEGORIA</th>
-                                        <th>DATA</th>
+                                    <tr id="tabela-cabecalho">
+                                        <th>ALUNO</th>
+                                        <th>CURSO</th>
+                                        <th>EM ANÁLISE</th>
                                         <th>HORAS</th>
-                                        <th>STATUS</th>
+                                        <th>PROGRESSO</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -308,6 +459,7 @@
                                 </tbody>
                             </table>
 
+                            <div id="paginacao-historico" class="paginacao-container"></div>
                         </div>
 
                     </div>
