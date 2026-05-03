@@ -210,6 +210,13 @@ body {
     align-items: center;
 }
 
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
 .card-header h2 {
     font-size: 18px;
     font-weight: 700;

@@ -240,6 +240,18 @@ main .breadcrumb span, .conteudo-principal .breadcrumb span, .etiqueta-laranja, 
     font-weight: 700 !important;
 }
 
+/* ─── Ritmo Vertical e Espaçamento (Padronização) ─── */
+.page-container, .conteudo-principal > .page-container, main > .page-container {
+    padding: 35px 50px !important;
+}
+
+.header-action-row, .page-header, .page-header-edit, .secao-titulo-submissoes, .head-action-header {
+    margin-bottom: 35px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+}
+
 /* ─── Tipografia ─── */
 h1 { 
     font-family: 'Outfit', sans-serif !important; 
@@ -251,3 +263,4 @@ h1 {
 }
 h2, h3 { font-family: 'Outfit', sans-serif !important; color: var(--azul-senac) !important; }
 p, .page-title p, .header-action-row p, .page-header p, .head-title-wrap p, .secao-titulo p { font-family: 'Inter', sans-serif !important; font-size: 14px !important; font-weight: 500 !important; color: var(--texto-suave) !important; line-height: 1.5 !important; }
+
