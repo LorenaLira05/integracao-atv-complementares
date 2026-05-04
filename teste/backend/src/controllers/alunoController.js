@@ -4,6 +4,9 @@ const { emailNovaSubmissao } = require('../services/emailService');
 
 
 exports.postSubmeterAtividade = async (req, res) => {
+
+    const body = req.body || {};
+
     const {
         course_id,
         category_id,
@@ -14,16 +17,28 @@ exports.postSubmeterAtividade = async (req, res) => {
         organizer_name,
         requested_hours,
         activity_date
-    } = req.body;
+    } = body;
 
     const user_id = req.usuario.id; // vem do token
     const arquivo = req.file;
 
+    const userIdNumber = parseInt(user_id);
+    const courseIdNumber = parseInt(course_id);
+    const categoryIdNumber = parseInt(category_id);
+
     try {
+
+        console.log("BODY:", body);
+        console.log("FILE:", req.file);
+
+        console.log("user_id:", user_id);
+        console.log("course_id:", course_id);
+        console.log("convertido:", courseIdNumber);
+
         const userCourse = await pool.query(
             `SELECT id FROM user_courses
              WHERE user_id = $1 AND course_id = $2 AND is_active = true`,
-            [user_id, course_id]
+            [userIdNumber, courseIdNumber]
         );
 
         if (userCourse.rows.length === 0) {
@@ -36,7 +51,7 @@ exports.postSubmeterAtividade = async (req, res) => {
         const regra = await pool.query(
             `SELECT * FROM course_activity_rules
              WHERE course_id = $1 AND category_id = $2`,
-            [course_id, category_id]
+            [courseIdNumber, categoryIdNumber]
         );
 
         if (regra.rows.length === 0) {

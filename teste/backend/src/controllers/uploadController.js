@@ -47,6 +47,8 @@ exports.uploadCertificado = [
             return res.status(400).json({ erro: 'Nenhum arquivo enviado.' });
         }
 
+        console.log("FILE:", req.file);
+
         try {
             // Verifica se a submissão existe e pertence ao aluno
             const submissao = await pool.query(
@@ -73,7 +75,7 @@ exports.uploadCertificado = [
                     submission_id,
                     req.file.originalname,
                     `/uploads/${req.file.filename}`,
-                    getFileType(req.file.mimetype),
+                    getFileType(req.file.mimetype, req.file.originalname),
                     req.file.mimetype,
                     Math.round(req.file.size / 1024),
                     resultadoOCR.texto,
@@ -86,7 +88,8 @@ exports.uploadCertificado = [
                 arquivo: resultado.rows[0]
             });
 
-        } catch (err) {
+        }  catch (err) {
+            console.error("ERRO COMPLETO:", err);  // 👈 ADICIONE ISSO
             res.status(500).json({ erro: err.message });
         }
     }

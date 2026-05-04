@@ -51,11 +51,15 @@ const processarPdf = async (caminhoArquivo) => {
     console.log("Existe?", fs.existsSync(pagina.path));
 
     // processa imagem
-    const resultado = await processarImagem(pagina.path);
+    const caminhoImagem = pagina.path || path.join(tmpDir, pagina.name);
+
+    console.log("Caminho final da imagem:", caminhoImagem);
+
+    const resultado = await processarImagem(caminhoImagem);
 
     // remove imagem temporária
-    if (fs.existsSync(pagina.path)) {
-        fs.unlinkSync(pagina.path);
+    if (fs.existsSync(caminhoImagem)) {
+    fs.unlinkSync(caminhoImagem);
     }
 
     return resultado;
