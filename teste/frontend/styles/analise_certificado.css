@@ -742,3 +742,210 @@ body {
     }
 }
 
+/* ========== DADOS EXTRAÍDOS OCR ========== */
+.box-ocr-dados {
+    border: 1px solid var(--borda-dark);
+    border-radius: 14px;
+    padding: 25px;
+    background: white;
+}
+
+.box-ocr-dados > .box-label {
+    margin-bottom: 18px;
+    display: block;
+}
+
+.input-wrapper-ocr {
+    margin-bottom: 14px;
+}
+
+.input-wrapper-ocr label {
+    display: block;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--texto-lighter);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.input-wrapper-ocr input {
+    width: 100%;
+    border: 1px solid var(--borda-dark);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--texto);
+    outline: none;
+    transition: 0.2s;
+    background: #f8fafc;
+}
+
+.input-wrapper-ocr input:focus {
+    border-color: var(--azul-main);
+    background: white;
+}
+
+.box-ocr-dados .input-col label {
+    display: block;
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--texto-lighter);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.box-ocr-dados .input-col input {
+    width: 100%;
+    border: 1px solid var(--borda-dark);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--texto);
+    outline: none;
+    transition: 0.2s;
+    background: #f8fafc;
+}
+
+.box-ocr-dados .input-col input:focus {
+    border-color: var(--azul-main);
+    background: white;
+}
+
+/* ========== AÇÕES RÁPIDAS ========== */
+.secao-acoes-rapidas {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label-acoes-rapidas {
+    font-size: 9px;
+    font-weight: 800;
+    color: var(--texto-lighter);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.pill-acao-rapida {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.pill-acao-rapida:hover {
+    transform: translateY(-1px);
+}
+
+.pill-verde {
+    background: #eafbee;
+    color: #118139;
+    border-color: #bbf7d0;
+}
+.pill-verde:hover {
+    background: #dcfce7;
+}
+
+.pill-laranja {
+    background: #fff4e5;
+    color: #db540b;
+    border-color: #fde68a;
+}
+.pill-laranja:hover {
+    background: #fef3c7;
+}
+
+.pill-vermelho {
+    background: #fdf2f2;
+    color: #c92a2a;
+    border-color: #fecaca;
+}
+.pill-vermelho:hover {
+    background: #fee2e2;
+}
+
+/* ========== BOTÕES DE AÇÃO HORIZONTAIS ========== */
+.action-buttons-horizontal {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 10px;
+    width: 100%;
+}
+
+.btn-horizontal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 16px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    letter-spacing: 0.5px;
+}
+
+.btn-horizontal i {
+    font-size: 24px;
+}
+
+.btn-horizontal-reprovar {
+    background: #fdf2f2;
+    color: #c92a2a;
+    border: 1.5px solid #fecaca;
+}
+
+.btn-horizontal-reprovar:hover {
+    background: #fee2e2;
+    transform: translateY(-1px);
+}
+
+.btn-horizontal-aprovar {
+    background: var(--azul-main);
+    color: white;
+    box-shadow: 0 4px 12px rgba(0, 69, 135, 0.15);
+}
+
+.btn-horizontal-aprovar:hover {
+    background: var(--azul-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(0, 43, 94, 0.25);
+}
+
+.btn-horizontal:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Estilo para o input do Tipo de Atividade no Parecer */
+.input-atividade-parecer {
+    width: 100%;
+    border: 1px solid var(--borda-dark);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--azul-main);
+    outline: none;
+    transition: 0.2s;
+    background: white;
+}
+.input-atividade-parecer:focus {
+    border-color: var(--azul-main);
+}
+
+

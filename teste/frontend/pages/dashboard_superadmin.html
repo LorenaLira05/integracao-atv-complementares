@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="/styles/dasboardadm.css">
     <link rel="stylesheet" href="/styles/sidebar.css">
     <script src="/services/script.js"></script>
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'
+        rel='stylesheet'>
 </head>
 
 <body>
@@ -20,13 +22,15 @@
     <div class="layout-geral">
         <aside class="sidebar-dark">
             <div class="logo-secao">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
                 <span class="logo-subtext">GESTÃO ACADÊMICA</span>
             </div>
             <nav class="menu-navegacao"></nav>
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
-                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
                     <div class="perfil-sidebar-info">
                         <strong id="sidebar-nome-global">Usuário</strong>
                         <small id="sidebar-role-global">Gestão</small>
@@ -92,13 +96,43 @@
                     </div>
                 </div>
 
+                <!-- VISÃO MACRO DE RISCO — full width -->
+                <div class="card-content card-risco-macro" style="margin-bottom: 25px;">
+                    <div class="card-header">
+                        <h2>Visão Macro de Risco &mdash; Cursos Críticos</h2>
+                    </div>
+                    <table class="tabela-risco" id="tabela-risco">
+                        <thead>
+                            <tr>
+                                <th>RANKING</th>
+                                <th>NOME DO CURSO</th>
+                                <th>TOTAL DE ALUNOS EM RISCO</th>
+                                <th>RISCO %</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-risco">
+                            <tr>
+                                <td colspan="3" style="text-align:center; padding:30px; color:#94a3b8;">
+                                    <div class="skeleton-line"
+                                        style="height:24px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- GRID: Envios por Categoria + Últimas Atividades -->
                 <div class="grid-middle">
                     <div class="card-content">
                         <div class="card-header">
                             <h2>Envios por Categoria</h2>
                         </div>
                         <div class="barras-container" id="barras-container">
-                            <div class="skeleton-line" style="height:32px; margin-bottom:12px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;"></div>
+                            <div class="skeleton-line"
+                                style="height:32px; margin-bottom:12px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;">
+                            </div>
                         </div>
                     </div>
 
@@ -107,7 +141,9 @@
                             <h2>Últimas Atividades</h2>
                         </div>
                         <div class="lista-atividades" id="lista-atividades">
-                            <div class="skeleton-line" style="height:60px; margin-bottom:12px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite;"></div>
+                            <div class="skeleton-line"
+                                style="height:60px; margin-bottom:12px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite;">
+                            </div>
                         </div>
                         <div class="footer-atividades">
                             <a href="submissoes_superadmin.html">VER TODAS AS SUBMISSÕES</a>
@@ -124,34 +160,149 @@
     </div>
 
     <style>
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
-        /* Ajustes locais para compatibilidade com o novo layout */
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
         .kpis-grid-dash {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 20px;
             margin-bottom: 30px;
         }
+
         .header-info-badges {
             text-align: right;
             display: flex;
             flex-direction: column;
             gap: 5px;
         }
+
         .header-info-badges strong {
             font-size: 14px;
             color: var(--azul-senac);
         }
+
         .header-info-badges span {
             font-size: 11px;
             color: var(--texto-suave);
+        }
+
+        /* === TABELA DE RISCO === */
+        .card-risco-macro .card-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--azul-dark, #1e2a3a);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .tabela-risco {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .tabela-risco thead tr {
+            border-bottom: 1px solid #e8edf5;
+        }
+
+        .tabela-risco th {
+            font-size: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            padding: 0 10px 12px 10px;
+            text-align: left;
+        }
+
+        .tabela-risco td {
+            padding: 18px 10px;
+            font-size: 13px;
+            color: #374151;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
+        }
+
+        .tabela-risco tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .ranking-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #f1f5f9;
+            font-size: 12px;
+            font-weight: 800;
+            color: #64748b;
+        }
+
+        .ranking-badge.top1 {
+            background: #fff4e5;
+            color: #e07b00;
+        }
+
+        .ranking-badge.top2 {
+            background: #f0f4ff;
+            color: #3b5bdb;
+        }
+
+        .ranking-badge.top3 {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+
+        .curso-nome-risco {
+            font-weight: 700;
+            font-size: 13px;
+            color: #1e2a3a;
+            letter-spacing: 0.3px;
+        }
+
+        .risco-valor {
+            font-weight: 700;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .risco-perc {
+            font-weight: 700;
+            font-size: 13px;
+            color: #374151;
+        }
+
+        .barra-risco-wrap {
+            width: 100px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            height: 7px;
+            overflow: hidden;
+        }
+
+        .barra-risco-fill {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #f97316, #fb923c);
+            transition: width 0.6s ease;
         }
     </style>
 
     <script>
         async function carregarDashboard() {
             try {
-                const data = await apiGet('/dashboard/coordenador'); // Backend já filtra por Super Admin
+                const data = await apiGet('/dashboard/coordenador');
 
                 if (!data || data.erro) {
                     mostrarErro(data?.erro || 'Erro ao carregar dados');
@@ -163,17 +314,49 @@
                 document.getElementById('kpi-media-horas').textContent = data.metricas?.media_horas ?? '0.0';
                 document.getElementById('kpi-alunos-footer').textContent = `${data.total_cursos ?? 0} curso(s) ativos no sistema`;
 
+                // --- TABELA VISÃO MACRO DE RISCO ---
+                const tbody = document.getElementById('tbody-risco');
+                const totalAlunos = parseInt(data.total_alunos) || 1;
+                const rankingClasses = ['top1', 'top2', 'top3'];
+
+                // Usa por_categoria como proxy de cursos críticos
+                if (data.por_categoria && data.por_categoria.length > 0) {
+                    const totalEnvios = data.por_categoria.reduce((s, c) => s + parseInt(c.total), 0) || 1;
+                    const itens = data.por_categoria.slice(0, 3).map((cat, i) => {
+                        const qtd = parseInt(cat.total);
+                        const perc = Math.round((qtd / totalEnvios) * 100);
+                        const badgeClass = rankingClasses[i] || '';
+                        const nomeCurso = cat.categoria.toUpperCase();
+                        return `
+                            <tr>
+                                <td><span class="ranking-badge ${badgeClass}">${i + 1}</span></td>
+                                <td><span class="curso-nome-risco">${nomeCurso}</span></td>
+                                <td><span class="risco-valor">${qtd}</span></td>
+                                <td><span class="risco-perc">${perc}%</span></td>
+                                <td>
+                                    <div class="barra-risco-wrap">
+                                        <div class="barra-risco-fill" style="width:${perc}%"></div>
+                                    </div>
+                                </td>
+                            </tr>`;
+                    });
+                    tbody.innerHTML = itens.join('');
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8;">Nenhum dado disponível.</td></tr>';
+                }
+                // -----------------------------------
+
                 const containerBarras = document.getElementById('barras-container');
                 if (data.por_categoria?.length > 0) {
                     const max = Math.max(...data.por_categoria.map(c => parseInt(c.total)));
                     const cores = ['bg-azul-escuro', 'bg-azul-claro', 'bg-laranja', 'bg-azul-acinzentado'];
                     containerBarras.innerHTML = data.por_categoria.map((cat, i) => {
                         const total = parseInt(cat.total);
-                        const perc = max > 0 ? (total/max)*100 : 0;
+                        const perc = max > 0 ? (total / max) * 100 : 0;
                         return `
                             <div class="linha-barra">
                                 <span class="rotulo-barra">${cat.categoria.toUpperCase()}</span>
-                                <div class="barra-fundo"><div class="barra-preenchimento ${cores[i%4]}" style="width:${perc}%"></div></div>
+                                <div class="barra-fundo"><div class="barra-preenchimento ${cores[i % 4]}" style="width:${perc}%"></div></div>
                                 <span class="valor-barra">${total}</span>
                             </div>`;
                     }).join('');
@@ -208,13 +391,14 @@
         }
 
         function mostrarErro(msg) {
-            ['barras-container', 'lista-atividades'].forEach(id => {
+            ['barras-container', 'lista-atividades', 'tbody-risco'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) el.innerHTML = `<p style="padding:20px; color:#ef4444;">${msg}</p>`;
+                if (el) el.innerHTML = `<tr><td colspan="5" style="padding:20px; color:#ef4444;">${msg}</td></tr>`;
             });
         }
 
         document.addEventListener('DOMContentLoaded', carregarDashboard);
     </script>
 </body>
+
 </html>
