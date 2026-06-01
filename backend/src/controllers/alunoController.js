@@ -1,0 +1,393 @@
+const pool = require('../config/database');
+const registrarLog = require('../utils/logger');
+const { emailNovaSubmissao } = require('../services/emailService');
+const { processarEInserirArquivo } = require('./uploadController');
+
+/**
+ * POST /aluno/submissao
+ * Cria uma submissão e já processa múltiplos arquivos de certificado no mesmo request.
+ * Campo multipart: "certificados" (múltiplos arquivos, obrigatório ao menos um).
+ */
+exports.postSubmeterAtividade = async (req, res) => {
+    const {
+        course_id,
+        category_id,
+        title,
+        description,
+        institution_name,
+        certificate_number,
+        organizer_name,
+        requested_hours,
+        activity_date
+    } = req.body;
+
+    const user_id = req.usuario.id;
+    const arquivos = req.files || [];
+
+    if (arquivos.length === 0) {
+        return res.status(400).json({
+            erro: 'É obrigatório enviar ao menos um arquivo de certificado.'
+        });
+    }
+    
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        const userCourse = await client.query(
+            `SELECT id FROM user_courses
+             WHERE user_id = $1 AND course_id = $2 AND is_active = true`,
+            [user_id, course_id]
+        );
+
+        if (userCourse.rows.length === 0) {
+            await client.query('ROLLBACK');
+            client.release();
+            return res.status(403).json({
+                erro: 'Você não está matriculado neste curso.'
+            });
+        }
+
+        const user_course_id = userCourse.rows[0].id;
+
+        const regra = await client.query(
+            `SELECT * FROM course_activity_rules
+             WHERE course_id = $1 AND category_id = $2`,
+            [course_id, category_id]
+        );
+
+        if (regra.rows.length === 0) {
+            await client.query('ROLLBACK');
+            client.release();
+            return res.status(404).json({
+                erro: 'Categoria não permitida para este curso.'
+            });
+        }
+
+        const resultado = await client.query(
+            `INSERT INTO submissions
+             (user_course_id, category_id, title, description,
+              institution_name, certificate_number, organizer_name,
+              requested_hours, activity_date, status)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'submitted')
+             RETURNING *`,
+            [
+                user_course_id,
+                category_id,
+                title,
+                description,
+                institution_name,
+                certificate_number,
+                organizer_name,
+                requested_hours,
+                activity_date
+            ]
+        );
+
+        const submissao = resultado.rows[0];
+
+        const arquivosInseridos = await Promise.all(
+            arquivos.map(file => processarEInserirArquivo(submissao.id, file))
+        );
+
+        const erroCriticoIA = arquivosInseridos.some(arq => arq.erro || !arq.dados_ia_extraidos);
+        if (erroCriticoIA) {
+            throw new Error('Falha crítica no processamento inteligente dos certificados. Envio cancelado.');
+        }
+
+        const coordenadores = await client.query(
+            `SELECT u.id, u.email, u.full_name
+             FROM course_coordinators cc
+             JOIN users u ON u.id = cc.user_id
+             WHERE cc.course_id = $1 AND cc.is_active = true`,
+            [course_id]
+        );
+
+        for (const coord of coordenadores.rows) {
+            await client.query(
+                `INSERT INTO notifications (user_id, submission_id, type, title, message)
+                 VALUES ($1, $2, 'submission_created', $3, $4)`,
+                [
+                    coord.id,
+                    submissao.id,
+                    `Nova submissão: ${title}`,
+                    `O aluno submeteu uma nova atividade para avaliação.`
+                ]
+            );
+        }
+        
+        await registrarLog(req.usuario.id, 'CRIAR_SUBMISSAO', 'submissions', submissao.id, {
+            title, course_id, category_id, total_arquivos: arquivosInseridos.length
+        });
+
+        await client.query('COMMIT');
+
+        for (const coord of coordenadores.rows) {
+            emailNovaSubmissao(coord.email, title).catch(err => 
+                console.error(`[Aviso] Falha ao enviar e-mail para ${coord.email}:`, err.message)
+            );
+        }
+
+        res.status(201).json({
+            mensagem: 'Atividade submetida com sucesso!',
+            submissao,
+            arquivos: arquivosInseridos
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error("Transação abortada devido ao erro:", err.message);
+        
+        res.status(500).json({ 
+            erro: 'Não foi possível processar a sua submissão.', 
+            detalhe: err.message 
+        });
+        
+    } finally {
+        client.release();
+    }
+};
+
+exports.putEditarSubmissao = async (req, res) => {
+    const { id } = req.params;
+    const { title, description, requested_hours, activity_date } = req.body;
+    const user_id = req.usuario.id;
+
+    try {
+        const submissao = await pool.query(
+            `SELECT s.*
+             FROM submissions s
+             JOIN user_courses uc ON uc.id = s.user_course_id
+             WHERE s.id = $1 AND uc.user_id = $2`,
+            [id, user_id]
+        );
+
+        if (submissao.rows.length === 0) {
+            return res.status(404).json({ erro: 'Submissão não encontrada.' });
+        }
+
+        const statusEditaveis = ['submitted', 'returned_for_adjustment'];
+        if (!statusEditaveis.includes(submissao.rows[0].status)) {
+            return res.status(400).json({
+                erro: 'Só é possível editar submissões pendentes ou devolvidas para ajuste.'
+            });
+        }
+
+        const resultado = await pool.query(
+            `UPDATE submissions
+             SET title = $1,
+                 description = $2,
+                 requested_hours = $3,
+                 activity_date = $4,
+                 updated_at = NOW()
+             WHERE id = $5
+             RETURNING *`,
+            [title, description, requested_hours, activity_date, id]
+        );
+
+        await registrarLog(req.usuario.id, 'EDITAR_SUBMISSAO', 'submissions', id, { title });
+        res.status(200).json({ mensagem: 'Submissão atualizada!', submissao: resultado.rows[0] });
+
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
+};
+
+exports.deleteSubmissao = async (req, res) => {
+    const { id } = req.params;
+    const user_id = req.usuario.id;
+
+    try {
+        const submissao = await pool.query(
+            `SELECT s.*
+             FROM submissions s
+             JOIN user_courses uc ON uc.id = s.user_course_id
+             WHERE s.id = $1 AND uc.user_id = $2`,
+            [id, user_id]
+        );
+
+        if (submissao.rows.length === 0) {
+            return res.status(404).json({ erro: 'Submissão não encontrada.' });
+        }
+
+        if (submissao.rows[0].status !== 'submitted') {
+            return res.status(400).json({
+                erro: 'Só é possível deletar submissões ainda não avaliadas.'
+            });
+        }
+
+        await pool.query(`DELETE FROM submissions WHERE id = $1`, [id]);
+
+        await registrarLog(req.usuario.id, 'DELETAR_SUBMISSAO', 'submissions', id, {});
+        res.status(200).json({ mensagem: 'Submissão deletada com sucesso!' });
+
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
+};
+
+exports.getMinhasSubmissoes = async (req, res) => {
+    const user_id = req.usuario.id;
+    const { status, course_id } = req.query;
+
+    try {
+        let params = [user_id];
+        let filtros = '';
+
+        if (status) {
+            filtros += ` AND s.status = $${params.length + 1}::submission_status_enum`;
+            params.push(status);
+        }
+
+        if (course_id) {
+            filtros += ` AND uc.course_id = $${params.length + 1}`;
+            params.push(course_id);
+        }
+
+        const resultado = await pool.query(
+            `SELECT *
+             FROM view_submissoes_alunos
+             WHERE user_id = $1
+             ${filtros}
+             ORDER BY submitted_at DESC`,
+            params
+        );
+
+        res.status(200).json(resultado.rows);
+
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
+};
+
+exports.getResumoHoras = async (req, res) => {
+    const user_id = req.usuario.id;
+    let { course_id } = req.params;
+
+    try {
+        if (!course_id || course_id === 'undefined') {
+            const defaultCourse = await pool.query(
+                `SELECT course_id FROM user_courses WHERE user_id = $1 AND is_active = true LIMIT 1`,
+                [user_id]
+            );
+            if (defaultCourse.rows.length === 0) {
+                return res.status(404).json({ erro: 'Aluno não matriculado em nenhum curso ativo.' });
+            }
+            course_id = defaultCourse.rows[0].course_id;
+        }
+
+        const userCourse = await pool.query(
+            `SELECT uc.course_id, c.name as course_name, c.minimum_required_hours
+             FROM user_courses uc
+             JOIN courses c ON c.id = uc.course_id
+             WHERE uc.user_id = $1 AND uc.course_id = $2 AND uc.is_active = true`,
+            [user_id, course_id]
+        );
+
+        if (userCourse.rows.length === 0) {
+            return res.status(404).json({ erro: 'Aluno não matriculado neste curso.' });
+        }
+
+        const { course_name, minimum_required_hours } = userCourse.rows[0];
+
+        const regras = await pool.query(
+            `SELECT car.*, cat.name as category_name
+             FROM course_activity_rules car
+             JOIN categories cat ON cat.id = car.category_id
+             WHERE car.course_id = $1`,
+            [course_id]
+        );
+
+        const aprovadas = await pool.query(
+            `SELECT s.category_id, SUM(s.approved_hours) as total_aprovado
+             FROM submissions s
+             JOIN user_courses uc ON uc.id = s.user_course_id
+             WHERE uc.user_id = $1 AND uc.course_id = $2 AND s.status = 'approved'
+             GROUP BY s.category_id`,
+            [user_id, course_id]
+        );
+
+        const emAnalise = await pool.query(
+            `SELECT SUM(s.requested_hours) as total_pendente
+             FROM submissions s
+             JOIN user_courses uc ON uc.id = s.user_course_id
+             WHERE uc.user_id = $1 AND uc.course_id = $2 AND s.status NOT IN ('approved', 'rejected')`,
+            [user_id, course_id]
+        );
+
+        const aprovadasMap = {};
+        aprovadas.rows.forEach(r => {
+            aprovadasMap[r.category_id] = parseFloat(r.total_aprovado) || 0;
+        });
+
+        const limites = regras.rows.map(regra => {
+            const horasAprovadas = aprovadasMap[regra.category_id] || 0;
+            return {
+                categoria: regra.category_name,
+                min_horas: regra.min_hours,
+                max_horas: regra.max_hours,
+                horas_aprovadas: horasAprovadas,
+                percentual: Math.min(100, (horasAprovadas / regra.max_hours) * 100)
+            };
+        });
+
+        const totalIntegralizado = Object.values(aprovadasMap).reduce((a, b) => a + b, 0);
+
+        res.status(200).json({
+            curso: course_name,
+            total_obrigatorio: minimum_required_hours,
+            total_integralizado: totalIntegralizado,
+            total_em_analise: emAnalise.rows[0].total_pendente || 0,
+            percentual_total: Math.min(100, (totalIntegralizado / minimum_required_hours) * 100),
+            limites
+        });
+
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
+};
+
+exports.getMeusDados = async (req, res) => {
+    const user_id = req.usuario.id;
+
+    try {
+        const aluno = await pool.query(
+            `SELECT u.full_name as nome, u.email, c.name as curso_nome
+             FROM users u
+             LEFT JOIN user_courses uc ON uc.user_id = u.id AND uc.is_active = true
+             LEFT JOIN courses c ON c.id = uc.course_id
+             WHERE u.id = $1
+             LIMIT 1`,
+            [user_id]
+        );
+
+        const cursos = await pool.query(
+            `SELECT * FROM view_cursos_por_usuario
+             WHERE user_id = $1`,
+            [user_id]
+        );
+
+        const stats = await pool.query(
+            `SELECT
+                COUNT(*) as total_submissoes,
+                COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) as pendentes,
+                SUM(approved_hours) as horas_aprovadas
+             FROM submissions s
+             JOIN user_courses uc ON uc.id = s.user_course_id
+             WHERE uc.user_id = $1`,
+            [user_id]
+        );
+
+        res.status(200).json({
+            aluno: aluno.rows[0],
+            cursos: cursos.rows,
+            total_submissoes: parseInt(stats.rows[0].total_submissoes) || 0,
+            pendentes: parseInt(stats.rows[0].pendentes) || 0,
+            horas_aprovadas: parseFloat(stats.rows[0].horas_aprovadas) || 0
+        });
+
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
+    }
+};

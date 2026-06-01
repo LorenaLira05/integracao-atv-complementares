@@ -1,0 +1,12 @@
+node_modules
+dist
+build
+.DS_Store
+package-lock.json
+package.json
+yarn.lock
+.idea
+.vscode
+node_modules/
+uploads/
+__pycache__/
