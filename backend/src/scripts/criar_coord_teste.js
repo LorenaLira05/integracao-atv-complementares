@@ -18,7 +18,7 @@ const COORD_TESTE = {
 };
 
 async function run() {
-    console.log('\n🔧 Iniciando configuração do coordenador de teste...\n');
+    console.log('\n Iniciando configuração do coordenador de teste...\n');
 
     try {
         const senhaHash = await bcrypt.hash(COORD_TESTE.senha, 10);
@@ -44,7 +44,7 @@ async function run() {
                 [senhaHash, userId]
             );
 
-            console.log(`✅ Usuário encontrado e RESETADO para primeiro acesso.`);
+            console.log(` Usuário encontrado e RESETADO para primeiro acesso.`);
             console.log(`   ID: ${userId}`);
         } else {
             // Usuário não existe → cria do zero
@@ -72,20 +72,20 @@ async function run() {
                 [userId, role.rows[0].id]
             );
 
-            console.log(`✅ Coordenador de teste CRIADO com sucesso!`);
+            console.log(` Coordenador de teste CRIADO com sucesso!`);
             console.log(`   ID: ${userId}`);
         }
 
-        console.log(`\n📋 Dados de acesso:`);
-        console.log(`   👤 Nome:  ${COORD_TESTE.nome}`);
-        console.log(`   📧 Email: ${COORD_TESTE.email}`);
-        console.log(`   🔑 Senha: ${COORD_TESTE.senha}`);
-        console.log(`   🔒 Vínculo com curso: Nenhum (apenas para teste de primeiro acesso)\n`);
-        console.log(`🚀 Acesse: http://localhost:3001/pages/index.html`);
+        console.log(`\n Dados de acesso:`);
+        console.log(`  Nome:  ${COORD_TESTE.nome}`);
+        console.log(` Email: ${COORD_TESTE.email}`);
+        console.log(` Senha: ${COORD_TESTE.senha}`);
+        console.log(` Vínculo com curso: Nenhum (apenas para teste de primeiro acesso)\n`);
+        console.log(` Acesse: http://localhost:3001/pages/index.html`);
         console.log(`   Selecione "COORDENADOR", faça login e a tela de primeiro acesso será exibida.\n`);
 
     } catch (err) {
-        console.error('❌ Erro:', err.message);
+        console.error('Erro:', err.message);
     } finally {
         await pool.end();
     }

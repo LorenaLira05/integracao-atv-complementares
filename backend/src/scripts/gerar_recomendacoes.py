@@ -39,7 +39,6 @@ def gerar_diretrizes_recomendacoes():
                     VALUES (%s::perfil_destino_enum, %s, %s, %s, %s, %s, %s::prioridade_enum);
                 """, (rec['perfil_destino'], rec['referencia_id'], rec['nome_regra'], rec['titulo'], rec['recomendacao'], rec['motivo'], rec['prioridade']))
             conexao.commit()
-            print(f"[Recomendações] Engine finalizada. {len(lista_recomendacoes)} diretrizes geradas.")
         except Exception as e:
             conexao.rollback()
             print(f"[Recomendações] Erro no script de recomendações: {e}")

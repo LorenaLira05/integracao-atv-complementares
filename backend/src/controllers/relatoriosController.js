@@ -115,30 +115,41 @@ exports.getRelatorios = async (req, res) => {
 
         //  NOVAS CONSULTAS DA PIPELINE PYTHON (Foco em Relatório Acadêmico)
         
-        // Puxa todos os insights gerados para auditoria da coordenação
-        const insightsPipeline = await pool.query(
-            `SELECT tipo_insight, titulo, descricao, nivel_alerta, valor_numerico 
-             FROM insights
-             WHERE (referencia_tipo = 'curso' AND referencia_id = ANY($1))
-                OR (referencia_tipo = 'aluno' AND referencia_id IN (
-                    SELECT user_id FROM user_courses WHERE course_id = ANY($1)
-                ))
-             ORDER BY nivel_alerta DESC, tipo_insight;`,
-            [course_ids]
-        );
+        // Depois
+            let insightsPipeline = { rows: [] };
+            let riscoPorCursoPipeline = { rows: [] };
 
-        const riscoPorCursoPipeline = await pool.query(
-            `SELECT 
-                c.name AS nome_curso,
-                cr.nivel_risco,
-                COUNT(*)::int AS total_alunos
-             FROM classificacao_risco cr
-             JOIN courses c ON c.id = cr.course_id
-             WHERE cr.course_id = ANY($1)
-             GROUP BY c.name, cr.nivel_risco
-             ORDER BY c.name, cr.nivel_risco;`,
-            [course_ids]
-        );
+            try {
+                insightsPipeline = await pool.query(
+                    `SELECT tipo_insight, titulo, descricao, nivel_alerta, valor_numerico 
+                    FROM insights
+                    WHERE (referencia_tipo = 'curso' AND referencia_id = ANY($1))
+                        OR (referencia_tipo = 'aluno' AND referencia_id IN (
+                            SELECT user_id FROM user_courses WHERE course_id = ANY($1)
+                        ))
+                    ORDER BY nivel_alerta DESC, tipo_insight`,
+                    [course_ids]
+                );
+            } catch (e) {
+                console.warn('[Relatórios] Tabela insights não encontrada:', e.message);
+            }
+
+            try {
+                riscoPorCursoPipeline = await pool.query(
+                    `SELECT 
+                        c.name AS nome_curso,
+                        cr.nivel_risco,
+                        COUNT(*)::int AS total_alunos
+                    FROM classificacao_risco cr
+                    JOIN courses c ON c.id = cr.course_id
+                    WHERE cr.course_id = ANY($1)
+                    GROUP BY c.name, cr.nivel_risco
+                    ORDER BY c.name, cr.nivel_risco`,
+                    [course_ids]
+                );
+        } catch (e) {
+             console.warn('[Relatórios] Tabela classificacao_risco não encontrada:', e.message);
+        }
 
         const totalAlunosRes = await pool.query(
             `SELECT COUNT(DISTINCT user_id) AS total_alunos 

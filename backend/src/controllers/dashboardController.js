@@ -74,9 +74,8 @@ exports.getDashboardCoordenador = async (req, res) => {
                         COUNT(*) FILTER (WHERE status = 'approved')  AS aprovadas,
                         COUNT(*) FILTER (WHERE status = 'rejected')  AS reprovadas,
                         COALESCE(ROUND(AVG(hours_claimed)::numeric, 1), 0) AS media_horas
-                     FROM submissions s
-                     JOIN user_courses uc ON uc.user_id = s.user_id
-                     WHERE uc.course_id = ANY($1)`,
+                     FROM view_submissoes_completo s
+                     WHERE s.course_id = ANY($1)`,
                     [course_ids]
                 );
                 const alunosFb = await pool.query(
@@ -222,7 +221,7 @@ exports.getDashboardCoordenador = async (req, res) => {
                 `SELECT id, perfil_destino, referencia_id, nome_regra, titulo, recomendacao, motivo, prioridade
                  FROM recomendacoes
                  WHERE (perfil_destino = 'aluno' AND referencia_id IN (
-                     SELECT user_id FROM user_courses WHERE course_id = ANY($1)
+                     SELECT user_id FROM user_courses WHERE curso_id = ANY($1)
                  ))
                  OR (perfil_destino = 'superadmin' AND $2 = true)`,
                 [course_ids, isSuperAdmin]
