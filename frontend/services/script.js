@@ -327,3 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+function abrirAnalise(id) {
+    window.location.href = `analise_certificado.html?id=${id}`;
+}

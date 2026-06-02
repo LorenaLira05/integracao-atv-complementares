@@ -87,9 +87,15 @@ exports.postSubmeterAtividade = async (req, res) => {
 
         const submissao = resultado.rows[0];
 
-        const arquivosInseridos = await Promise.all(
-            arquivos.map(file => processarEInserirArquivo(submissao.id, file))
-        );
+       const arquivosInseridos = await Promise.all(
+        arquivos.map(file =>
+            processarEInserirArquivo(
+                client,
+                submissao.id,
+                file
+            )
+        )
+    );
 
         const erroCriticoIA = arquivosInseridos.some(arq => arq.erro || !arq.dados_ia_extraidos);
         if (erroCriticoIA) {

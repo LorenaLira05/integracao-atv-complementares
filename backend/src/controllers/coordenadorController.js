@@ -683,9 +683,20 @@ exports.patchValidarSubmissao = async (req, res) => {
                 console.error('Erro ao enviar email:', err);
             });
 
-            console.timeEnd('envio_email');
-
             console.time('insert_notification');
+
+            const notificationTypeMap = {
+                approved: 'submission_approved',
+                rejected: 'submission_rejected',
+                returned_for_adjustment: 'submission_returned'
+            };
+
+            const notificationTitle =
+                status_final === 'approved'
+                    ? 'Sua submissão foi aprovada'
+                    : status_final === 'rejected'
+                        ? 'Sua submissão foi reprovada'
+                        : 'Sua submissão foi devolvida para ajuste';
 
             await pool.query(
                 `INSERT INTO notifications (
@@ -705,14 +716,8 @@ exports.patchValidarSubmissao = async (req, res) => {
                 [
                     aluno.rows[0].id,
                     submissao.rows[0].id,
-                    `submission_${status_final}`,
-                    `Sua submissão foi ${
-                        status_final === 'approved'
-                            ? 'aprovada'
-                            : status_final === 'rejected'
-                                ? 'reprovada'
-                                : 'devolvida para ajuste'
-                    }`,
+                    notificationTypeMap[status_final],
+                    notificationTitle,
                     comment || ''
                 ]
             );
@@ -830,10 +835,14 @@ exports.getResumoGeral = async (req, res) => {
 
                 COUNT(*) FILTER (
                     WHERE status = 'approved'
-                ) AS aprovadas
+                ) AS aprovadas,
 
-             FROM view_submissoes_completo
-             WHERE course_id = ANY($1)`,
+                COALESCE(SUM(CASE WHEN status = 'approved' THEN approved_hours ELSE 0 END), 0) AS horas_aprovadas,
+
+                COALESCE(SUM(CASE WHEN status NOT IN ('approved', 'rejected') THEN approved_hours ELSE 0 END), 0) AS horas_pendentes
+
+            FROM view_submissoes_completo
+            WHERE course_id = ANY($1)`,
             [course_ids]
         );
 
@@ -841,18 +850,24 @@ exports.getResumoGeral = async (req, res) => {
             alunos: alunos.rows,
             categorias: categorias.rows,
             contadores: {
-                total_alunos:
-                    contadores.rows[0].total_alunos,
+            total_alunos:
+                contadores.rows[0].total_alunos,
 
-                total_submissoes:
-                    contadores.rows[0].total_submissoes || 0,
+            total_submissoes:
+                contadores.rows[0].total_submissoes || 0,
 
-                pendentes:
-                    pendentesAprovadas.rows[0].pendentes || 0,
+            pendentes:
+                pendentesAprovadas.rows[0].pendentes || 0,
 
-                aprovadas:
-                    pendentesAprovadas.rows[0].aprovadas || 0
-            }
+            aprovadas:
+                pendentesAprovadas.rows[0].aprovadas || 0,
+
+            horas_aprovadas:
+                parseFloat(pendentesAprovadas.rows[0].horas_aprovadas) || 0,
+
+            horas_pendentes:
+                parseFloat(pendentesAprovadas.rows[0].horas_pendentes) || 0
+            },
         });
 
     } catch (err) {

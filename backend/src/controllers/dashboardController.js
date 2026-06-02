@@ -40,55 +40,24 @@ exports.getDashboardCoordenador = async (req, res) => {
             });
         }
 
-        // ── Métricas principais (com fallback caso a view não exista) ──
-        let metricasRow = { pendentes: 0, aprovadas: 0, reprovadas: 0, media_horas: 0 };
-        let totalAlunos = 0;
+        // ── Métricas principais ──
+       const metricas = await pool.query(
+        `SELECT
+            COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) AS pendentes,
+            COUNT(*) FILTER (WHERE status = 'approved')                   AS aprovadas,
+            COUNT(*) FILTER (WHERE status = 'rejected')                   AS reprovadas,
+            COUNT(DISTINCT uc.user_id)                                     AS total_alunos,
+            ROUND(
+                SUM(s.approved_hours) / NULLIF(COUNT(DISTINCT uc.user_id), 0)
+            , 1) AS media_horas_por_aluno
+        FROM submissions s
+        JOIN user_courses uc ON uc.id = s.user_course_id
+        WHERE uc.course_id = ANY($1)`,
+        [course_ids]
+    );
 
-        try {
-            const metricas = await pool.query(
-                `SELECT
-                    SUM(pendentes)    AS pendentes,
-                    SUM(aprovadas)    AS aprovadas,
-                    SUM(reprovadas)   AS reprovadas,
-                    ROUND(AVG(media_horas), 1) AS media_horas
-                 FROM view_dashboard_coordenador
-                 WHERE course_id = ANY($1)`,
-                [course_ids]
-            );
-            const alunos = await pool.query(
-                `SELECT SUM(total_alunos) AS total_alunos
-                 FROM view_dashboard_coordenador
-                 WHERE course_id = ANY($1)`,
-                [course_ids]
-            );
-            metricasRow = metricas.rows[0] || metricasRow;
-            totalAlunos = parseInt(alunos.rows[0]?.total_alunos || 0);
-        } catch (viewErr) {
-            console.warn('[Dashboard] view_dashboard_coordenador não encontrada. Calculando direto das tabelas...');
-
-            // Fallback: calcula direto da tabela de submissões
-            try {
-                const fallback = await pool.query(
-                    `SELECT
-                        COUNT(*) FILTER (WHERE status NOT IN ('approved','rejected')) AS pendentes,
-                        COUNT(*) FILTER (WHERE status = 'approved')  AS aprovadas,
-                        COUNT(*) FILTER (WHERE status = 'rejected')  AS reprovadas,
-                        COALESCE(ROUND(AVG(hours_claimed)::numeric, 1), 0) AS media_horas
-                     FROM view_submissoes_completo s
-                     WHERE s.course_id = ANY($1)`,
-                    [course_ids]
-                );
-                const alunosFb = await pool.query(
-                    `SELECT COUNT(DISTINCT user_id) AS total_alunos
-                     FROM user_courses WHERE course_id = ANY($1)`,
-                    [course_ids]
-                );
-                metricasRow = fallback.rows[0] || metricasRow;
-                totalAlunos = parseInt(alunosFb.rows[0]?.total_alunos || 0);
-            } catch (fbErr) {
-                console.error('[Dashboard] Fallback de métricas também falhou:', fbErr.message);
-            }
-        }
+        const metricasRow = metricas.rows[0] || {};
+        const totalAlunos = parseInt(metricasRow.total_alunos || 0);
 
         // ── Por categoria ──
         let porCategoria = [];
@@ -102,22 +71,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             );
             porCategoria = res1.rows;
         } catch (e) {
-            console.warn('[Dashboard] view_submissoes_completo não encontrada para categorias:', e.message);
-            // Fallback direto
-            try {
-                const res1b = await pool.query(
-                    `SELECT ac.name AS categoria, COUNT(*) AS total
-                     FROM submissions s
-                     JOIN user_courses uc ON uc.user_id = s.user_id
-                     JOIN activity_categories ac ON ac.id = s.activity_category_id
-                     WHERE uc.course_id = ANY($1)
-                     GROUP BY ac.name ORDER BY total DESC`,
-                    [course_ids]
-                );
-                porCategoria = res1b.rows;
-            } catch (e2) {
-                console.error('[Dashboard] Fallback categorias falhou:', e2.message);
-            }
+            console.warn('[Dashboard] Erro categorias:', e.message);
         }
 
         // ── Últimas atividades ──
@@ -133,23 +87,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             );
             ultimasAtividades = res2.rows;
         } catch (e) {
-            console.warn('[Dashboard] view_submissoes_completo não encontrada para atividades:', e.message);
-            try {
-                const res2b = await pool.query(
-                    `SELECT s.id AS submission_id, s.title, s.status, s.created_at AS submitted_at,
-                            u.name AS nome_aluno, ac.name AS categoria
-                     FROM submissions s
-                     JOIN users u ON u.id = s.user_id
-                     JOIN activity_categories ac ON ac.id = s.activity_category_id
-                     JOIN user_courses uc ON uc.user_id = s.user_id
-                     WHERE uc.course_id = ANY($1)
-                     ORDER BY s.created_at DESC LIMIT 5`,
-                    [course_ids]
-                );
-                ultimasAtividades = res2b.rows;
-            } catch (e2) {
-                console.error('[Dashboard] Fallback atividades falhou:', e2.message);
-            }
+            console.warn('[Dashboard] Erro atividades:', e.message);
         }
 
         // ── Cursos com mais envios ──
@@ -163,9 +101,9 @@ exports.getDashboardCoordenador = async (req, res) => {
                 [course_ids]
             );
             cursosMaisEnvios = res3.rows;
-        } catch (e) { /* não crítico */ }
+        } catch (e) {}
 
-        // ── Cursos com mais alunos em risco (alto + médio) ──
+        // ── Cursos em risco ──
         let cursosEmRisco = [];
         try {
             const resRisco = await pool.query(
@@ -189,10 +127,10 @@ exports.getDashboardCoordenador = async (req, res) => {
             );
             cursosEmRisco = resRisco.rows;
         } catch (e) {
-            console.warn('[Dashboard] Tabela classificacao_risco indisponível para cursos em risco:', e.message);
+            console.warn('[Dashboard] classificacao_risco indisponível:', e.message);
         }
 
-        // ── Tabelas do pipeline analítico (não críticas — nunca derrubam a resposta) ──
+        // ── Pipeline analítico ──
         let insightsPipeline = [], recomendacoesPipeline = [], resumoRiscoPipeline = [];
 
         try {
@@ -200,20 +138,18 @@ exports.getDashboardCoordenador = async (req, res) => {
                 `SELECT id, perfil_destino, referencia_tipo, referencia_id,
                         tipo_insight, titulo, descricao, nivel_alerta,
                         valor_numerico, data_geracao
-                FROM insights
-                WHERE (referencia_tipo = 'curso' AND referencia_id = ANY($1))
+                 FROM insights
+                 WHERE (referencia_tipo = 'curso' AND referencia_id = ANY($1))
                     OR (referencia_tipo = 'aluno' AND referencia_id IN (
-                        SELECT user_id
-                        FROM user_courses
-                        WHERE course_id = ANY($1)
+                        SELECT user_id FROM user_courses WHERE course_id = ANY($1)
                     ))
                     OR (perfil_destino = 'superadmin' AND $2 = true)
-                ORDER BY data_geracao DESC`,
+                 ORDER BY data_geracao DESC`,
                 [course_ids, isSuperAdmin]
             );
             insightsPipeline = r.rows;
         } catch (e) {
-            console.warn('[Dashboard] Tabela insights não encontrada (pipeline analítico não executado).');
+            console.warn('[Dashboard] Tabela insights não encontrada.');
         }
 
         try {
@@ -221,7 +157,7 @@ exports.getDashboardCoordenador = async (req, res) => {
                 `SELECT id, perfil_destino, referencia_id, nome_regra, titulo, recomendacao, motivo, prioridade
                  FROM recomendacoes
                  WHERE (perfil_destino = 'aluno' AND referencia_id IN (
-                     SELECT user_id FROM user_courses WHERE curso_id = ANY($1)
+                     SELECT user_id FROM user_courses WHERE course_id = ANY($1)
                  ))
                  OR (perfil_destino = 'superadmin' AND $2 = true)`,
                 [course_ids, isSuperAdmin]
@@ -240,13 +176,11 @@ exports.getDashboardCoordenador = async (req, res) => {
                 [course_ids]
             );
             resumoRiscoPipeline = r.rows;
-            console.log('INSIGHTS ENCONTRADOS:');
-            console.log(insightsPipeline);
         } catch (e) {
             console.warn('[Dashboard] Tabela classificacao_risco não encontrada.');
         }
 
-        // ── Nome do curso para exibição ──
+        // ── Nome do curso ──
         let cursoNome = null;
         try {
             const cursoInfo = await pool.query(
@@ -258,10 +192,10 @@ exports.getDashboardCoordenador = async (req, res) => {
 
         res.status(200).json({
             metricas: {
-                pendentes:    parseInt(metricasRow.pendentes   || 0),
-                aprovadas:    parseInt(metricasRow.aprovadas   || 0),
-                reprovadas:   parseInt(metricasRow.reprovadas  || 0),
-                media_horas:  parseFloat(metricasRow.media_horas || 0)
+                pendentes:   parseInt(metricasRow.pendentes  || 0),
+                aprovadas:   parseInt(metricasRow.aprovadas  || 0),
+                reprovadas:  parseInt(metricasRow.reprovadas || 0),
+                media_horas: parseFloat(metricasRow.media_horas_por_aluno || 0)
             },
             total_alunos:       totalAlunos,
             total_cursos:       course_ids.length,
@@ -282,7 +216,6 @@ exports.getDashboardCoordenador = async (req, res) => {
     }
 };
 
-// ── postAtualizarInsightSobDemanda (sem alterações) ──
 exports.postAtualizarInsightSobDemanda = async (req, res) => {
     console.log('=== BOTÃO DE INSIGHTS ACIONADO ===');
     console.log('Curso:', req.params.course_id);
@@ -329,7 +262,6 @@ exports.postAtualizarInsightSobDemanda = async (req, res) => {
         const resumoMetricasLimpo = resumoMetricas.replace(/"/g, '\\"');
         const stringConexaoPostgres = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
-        console.log('GROQ_API_KEY:', process.env.GROQ_API_KEY ? 'OK' : 'UNDEFINED');
         exec(`python "${scriptPath}" ${course_id} "${nomeCursoLimpo}" "${resumoMetricasLimpo}"`,
         {
             env: { ...process.env, DATABASE_URL: stringConexaoPostgres }

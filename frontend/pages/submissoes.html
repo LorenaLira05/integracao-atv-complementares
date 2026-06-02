@@ -152,7 +152,7 @@
                                 <span><i class='bx bx-time'></i> ${s.requested_hours}h</span>
                             </div>
                             <div class="cert-footer">
-                                <button class="btn-download" onclick="abrirAnalise(${s.submission_id || s.id})">
+                                <button class="btn-download" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'">
                                     <i class='bx bx-search-alt'></i> ANALISAR DOCUMENTO
                                 </button>
                                 <button class="btn-share"><i class='bx bx-share-alt'></i></button>
@@ -268,19 +268,7 @@
                     <h1>Repositório <span class="titulo-muted" style="font-weight: 400; font-size: 14px; color: #64748b;">| VALIDADOS</span></h1>
                 </div>
 
-                <div class="header-tools" style="display: flex; align-items: center; gap: 20px;">
-                    <div class="search-wrap" style="background: white; padding: 8px 16px; border-radius: 20px; display: flex; align-items: center; gap: 10px; width: 300px; border: 1px solid #e2e8f0;">
-                        <i class='bx bx-search'></i>
-                        <input type="text" id="input-busca" placeholder="Buscar certificado..." style="border: none; outline: none; width: 100%; font-size: 13px;">
-                    </div>
-                    <div class="header-profile" style="display: flex; align-items: center; gap: 12px; border-left: 1px solid #e2e8f0; padding-left: 15px;">
-                        <div class="profile-text" style="text-align: right;">
-                            <small id="header-role-global" style="display: block; font-size: 10px; color: #64748b; font-weight: 700;">ALUNO</small>
-                            <strong id="header-nome-global" style="font-size: 13px; color: #004587;">Usuário</strong>
-                        </div>
-                        <img id="header-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" class="avatar" style="width: 32px; height: 32px; border-radius: 50%;">
-                    </div>
-                </div>
+
             </section>
 
             <!-- KPIs -->

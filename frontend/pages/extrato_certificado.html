@@ -97,7 +97,7 @@
                 if (kpiTotal) kpiTotal.innerHTML = `${data.contadores.total_alunos || 0} <small>alunos</small>`;
                 if (kpiAnalise) kpiAnalise.textContent = `${data.contadores.pendentes || 0}`;
                 if (kpiAprovadas) kpiAprovadas.textContent = `${data.contadores.horas_aprovadas || 0}h`;
-                if (kpiSubtext) kpiSubtext.textContent = `Total de ${data.contadores.horas_pendentes || 0}h aguardando análise.`;
+                if (kpiSubtext) kpiSubtext.textContent = `${data.contadores.horas_aprovadas || 0}h integralizadas no total.`;
 
                 const tbody = document.querySelector('table tbody');
                 if (tbody) {
@@ -302,12 +302,12 @@
 
                 <div class="kpis-grid">
                     <div class="kpi-card kpi-destaque">
-                        <div class="kpi-label">TOTAL DE HORAS INTEGRALIZADAS</div>
-                        <div class="kpi-value">... <small>/ --h</small></div>
+                        <div class="kpi-label">TOTAL DE ALUNOS</div>
+                        <div class="kpi-value">...</div>
                         <div class="kpi-progress-bar">
                             <div class="kpi-progress-fill" style="width: 0%;"></div>
                         </div>
-                        <div class="kpi-subtext">Calculando progresso...</div>
+                        <div class="kpi-subtext">Calculando...</div>
                     </div>
                     <div class="kpi-card">
                         <div class="kpi-label"><i class='bx bx-time' style="color:var(--azul-senac);"></i> EM ANÁLISE</div>

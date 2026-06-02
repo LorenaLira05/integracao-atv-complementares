@@ -28,7 +28,6 @@ body {
 .topo-links {
     display: flex;
     gap: 30px;
-}
     background: #f1f5f9;
     padding: 8px 16px;
     border-radius: 12px;
