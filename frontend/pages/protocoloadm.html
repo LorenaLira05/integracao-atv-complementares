@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Protocolos de Atividade</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/protocoloadm.css">
+    <script src="/services/apiHelper.js?v=2.1"></script>
+    <script src="/services/script.js?v=2.1"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'COORDINATOR', 'SUPER_ADMIN', 'ADMIN']);
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const tabelaBody = document.getElementById('tabela-body');
+            const selectCurso = document.querySelector('.filter-select');
+            const tabs = document.querySelectorAll('.tab-link');
+
+            if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Sincronizando com o banco de dados...</td></tr>';
+
+            // ── Carregar Cursos ──
+            apiGet('/coordenador/meus-cursos').then(cursos => {
+                if (selectCurso && Array.isArray(cursos)) {
+                    selectCurso.innerHTML = '<option value="all">Todos os Cursos</option>';
+                    cursos.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.name;
+                        selectCurso.appendChild(opt);
+                    });
+                }
+            }).catch(err => console.error('Erro ao carregar cursos:', err));
+
+            // ── Carregar Dados ──
+            async function carregarDados() {
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Atualizando...</td></tr>';
+                
+                const cursoVal = selectCurso ? selectCurso.value : 'all';
+                const tabAtiva = document.querySelector('.tab-link.active');
+                const statusMap = {
+                    'Pendentes': 'PENDENTE',
+                    'Aprovadas': 'approved',
+                    'Reprovadas': 'rejected',
+                    'Todas': 'TODAS'
+                };
+                const textoTab = tabAtiva ? tabAtiva.textContent.split(' ')[0] : 'Todas';
+                const status = statusMap[textoTab] || 'TODAS';
+
+                try {
+                    let url = (cursoVal === 'all' || cursoVal === 'Todos os Cursos') 
+                        ? '/coordenador/submissoes' 
+                        : `/coordenador/submissoes/${cursoVal}`;
+                    
+                    url += `?status=${status}`;
+
+                    const resposta = await apiGet(url);
+                    let subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                    const contadores = resposta.contadores || null;
+
+                    const selectOrdem = document.getElementById('filtro-ordem-coord');
+                    const ordem = selectOrdem ? selectOrdem.value : 'desc';
+                    
+                    subs.sort((a, b) => {
+                        const da = new Date(a.updated_at || a.submitted_at || a.data_envio || a.created_at || 0);
+                        const db = new Date(b.updated_at || b.submitted_at || b.data_envio || b.created_at || 0);
+                        return ordem === 'desc' ? db - da : da - db;
+                    });
+
+                    renderTable(subs, contadores);
+
+                } catch (err) {
+                    console.error('Erro ao carregar dados:', err);
+                    fallbackTable();
+                }
+            }
+
+            // ── Event Listeners ──
+            selectCurso?.addEventListener('change', carregarDados);
+            const selectOrdem = document.getElementById('filtro-ordem-coord');
+            selectOrdem?.addEventListener('change', carregarDados);
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    carregarDados();
+                });
+            });
+
+            function renderTable(subs, contadores) {
+                const kpiPendentes = document.getElementById('val-pendentes');
+                const kpiAprovadas = document.getElementById('val-aprovadas');
+                const kpiReprovadas = document.getElementById('val-reprovadas');
+                const tabPendentes = document.getElementById('tab-pendentes');
+                const tabelaInfo = document.getElementById('tabela-info');
+                const rodapeTabela = document.querySelector('.rodape-tabela');
+
+                if (contadores) {
+                    if (kpiPendentes) kpiPendentes.textContent = contadores.pendentes || 0;
+                    if (kpiAprovadas) kpiAprovadas.textContent = contadores.aprovadas || 0;
+                    if (kpiReprovadas) kpiReprovadas.textContent = contadores.reprovadas || 0;
+                    if (tabPendentes) tabPendentes.textContent = `Pendentes (${contadores.pendentes || 0})`;
+                }
+
+                if (!tabelaBody) return;
+                tabelaBody.innerHTML = '';
+
+                if (subs.length === 0) {
+                    tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--texto-light);">Nenhum protocolo encontrado.</td></tr>';
+                    if (tabelaInfo) tabelaInfo.textContent = 'Mostrando 0 de 0 submissões';
+                    if (rodapeTabela) rodapeTabela.style.display = 'none';
+                    return;
+                }
+
+                if (rodapeTabela) rodapeTabela.style.display = 'flex';
+                if (tabelaInfo) tabelaInfo.textContent = `Mostrando 1-${Math.min(subs.length, 10)} de ${contadores ? contadores.total : subs.length} submissões`;
+
+                subs.slice(0, 10).forEach((s, idx) => {
+                    const statusStr = s.status ? s.status.toLowerCase() : 'submitted';
+                    let statusClass = 'status-pendente';
+                    let statusLabel = 'Pendente';
+                    if (statusStr === 'approved' || statusStr === 'approved') { statusClass = 'status-aprovado'; statusLabel = 'Aprovado'; }
+                    else if (statusStr === 'rejected') { statusClass = 'status-reprovado'; statusLabel = 'Reprovado'; }
+
+                    // Determinar categoria da atividade para badge
+                    let catClass = 'ativ-complementar';
+                    let catLabel = 'CURSO COMPLEMENTAR';
+                    const catId = s.category_id || (idx % 4 + 1);
+                    if (catId == 2) { catClass = 'ativ-evento'; catLabel = 'EVENTO'; }
+                    else if (catId == 3) { catClass = 'ativ-monitoria'; catLabel = 'MONITORIA'; }
+                    else if (catId == 4) { catClass = 'ativ-social'; catLabel = 'SOCIAL'; }
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>
+                            <div class="td-aluno">
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.student_name || 'A')}&background=random&color=fff" class="avatar-aluno" alt="Avatar">
+                                <div class="aluno-info">
+                                    <strong>${s.student_name || 'Aluno'}</strong>
+                                    <small>RA: ${s.student_ra || '20230011'} • ${s.course_name ? s.course_name.substring(0, 3).toUpperCase() : 'CUR'}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="td-atividade">
+                                <span class="ativ-nome">${s.title || 'Atividade Acadêmica'}</span>
+                                <span class="badge-ativ ${catClass}">${catLabel}</span>
+                            </div>
+                        </td>
+                        <td class="td-horas">${s.approved_hours || s.horas_solicitadas || '00'}h</td>
+                        <td class="td-data">${formatarData(s.submitted_at || s.data_envio)}</td>
+                        <td>
+                            <div class="status-row ${statusClass}">
+                                <div class="dot"></div> ${statusLabel}
+                            </div>
+                        </td>
+                        <td>
+                            <button class="btn-actions" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'">                                <i class='bx bx-dots-vertical-rounded'></i>
+                            </button>
+                        </td>
+                    `;
+                    tabelaBody.appendChild(tr);
+                });
+            }
+
+            function fallbackTable() {
+                const tabelaBody = document.getElementById('tabela-body');
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
+            }
+
+            // --- INICIALIZAÇÃO ---
+            carregarDados();
+        });
+    </script>
+
+    <div class="layout-geral">
+        <!-- Sidebar -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="protocoloadm.html" class="link-menu"><i class='bx bx-file'></i> Protocolos</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-user'></i> Alunos</a>
+                <a href="cursos.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+            </nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="logout();"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
+                </div>
+                <button class="btn-back" onclick="window.history.back()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                    <i class='bx bx-arrow-back'></i> VOLTAR
+                </button>
+            </header>
+            
+            <div class="page-container">
+
+            <div class="head-action-header">
+                <div class="head-title-wrap">
+                    <div class="breadcrumb">Portal<i class='bx bx-chevron-right'></i> <span>submissões</span></div>
+                    <h1>Listagem de Submissões</h1>
+                    <p>Gestão de horas complementares e atividades extracurriculares.</p>
+                </div>
+                <div class="head-btns">
+                    <button class="btn-csv"><i class='bx bx-download'></i> Exportar CSV</button>
+                    <button class="btn-nova-ativ" onclick="window.location.href='cadastrar_regra.html'"><i class='bx bx-plus'></i> Cadastrar Regra</button>
+                </div>
+            </div>
+
+            <!-- KPI Row -->
+            <section class="kpi-row-new">
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-file icon-blue'></i>
+                        <span>PENDENTES</span>
+                    </div>
+                    <div class="kpi-main-val">
+                        <h2 id="val-pendentes">...</h2>
+                        <span class="kpi-sub-label sub-plus">Aguardando...</span>
+                    </div>
+                </div>
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-check-circle icon-green'></i>
+                        <span>APROVADAS</span>
+                    </div>
+                    <div class="kpi-main-val">
+                        <h2 id="val-aprovadas">...</h2>
+                        <span class="kpi-sub-label sub-month">Total acumulado</span>
+                    </div>
+                </div>
+                <div class="kpi-card-new">
+                    <div class="kpi-card-header">
+                        <i class='bx bx-x-circle icon-red'></i>
+                        <span>REPROVADAS</span>
+                    </div>
+                    <div class="kpi-main-val">
+                        <h2 id="val-reprovadas">...</h2>
+                        <span class="kpi-sub-label sub-pct">Total acumulado</span>
+                    </div>
+                </div>
+                
+            </section>
+
+            <!-- Table Card -->
+            <section class="card-tabela-avancada" style="margin: 0 2px 30px;">
+                <div class="filters-row">
+                    <div class="filters-tabs">
+                        <button class="tab-link active">Todas</button>
+                        <button class="tab-link" id="tab-pendentes">Pendentes</button>
+                        <button class="tab-link">Aprovadas</button>
+                        <button class="tab-link">Reprovadas</button>
+                    </div>
+                    <div class="filters-selects">
+                        <select class="filter-select">
+                            <option>Todos os Cursos</option>
+                        </select>
+                        <select class="filter-select" id="filtro-ordem-coord">
+                            <option value="desc">Mais recentes</option>
+                            <option value="asc">Mais antigas</option>
+                        </select>
+                    </div>
+                </div>
+
+                <table class="tabela-protocolos">
+                    <thead>
+                        <tr>
+                            <th>ALUNO</th>
+                            <th>ATIVIDADE</th>
+                            <th>HORAS</th>
+                            <th>DATA DE ENVIO</th>
+                            <th>STATUS</th>
+                            <th>AÇÕES</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabela-body">
+                        <!-- JS Render -->
+                    </tbody>
+                </table>
+
+                <div class="rodape-tabela">
+                    <span class="info-paginacao" id="tabela-info">Carregando métricas...</span>
+                    <div class="paginacao">
+                        <button class="btn-pag-arrow"><i class='bx bx-chevron-left'></i></button>
+                        <button class="btn-pag numeric active">1</button>
+                        <button class="btn-pag numeric">2</button>
+                        <button class="btn-pag numeric">3</button>
+                        <button class="btn-pag-arrow">...</button>
+                        <button class="btn-pag numeric">19</button>
+                        <button class="btn-pag-arrow"><i class='bx bx-chevron-right'></i></button>
+                    </div>
+                </div>
+            </section>
+
+
+            <footer class="rodape-dashboard" style="text-align: center;">
+                        <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+            </footer>
+
+            </div><!-- /.page-container -->
+
+        </main>
+    </div>
+</body>
+</html>

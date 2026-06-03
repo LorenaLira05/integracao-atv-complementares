@@ -1,0 +1,15 @@
+node_modules
+dist
+build
+.env
+.DS_Store
+package-lock.json
+package.json
+yarn.lock
+.idea
+.vscode
+.env
+node_modules/
+uploads/
+__pycache__/
+*.pyc
