@@ -158,7 +158,7 @@ exports.deleteRegra = async (req, res) => {
 };
 
 exports.postCadastrarAluno = async (req, res) => {
-    const { full_name, email, cpf, phone, course_id, ra, status_matricula } = req.body;
+    const { full_name, email, cpf, phone, course_id, ra, status_matricula, semestre } = req.body;
     const isSuperAdmin = req.usuario.perfis && req.usuario.perfis.includes('super_admin');
 
     if (!isSuperAdmin) {
@@ -192,8 +192,9 @@ exports.postCadastrarAluno = async (req, res) => {
         );
 
         await client.query(
-            `INSERT INTO student_profiles (user_id, ra) VALUES ($1, $2)`,
-            [userId, ra]
+            `INSERT INTO student_profiles (user_id, ra, semestre) VALUES ($1, $2, $3)
+             ON CONFLICT (user_id) DO UPDATE SET ra = EXCLUDED.ra, semestre = EXCLUDED.semestre`,
+            [userId, ra, semestre || 1]
         );
 
         await client.query(
@@ -232,13 +233,15 @@ exports.getAlunosDoCurso = async (req, res) => {
         const resultado = await pool.query(
             `SELECT
                 u.id, u.full_name, u.email, u.phone, u.status,
-                sp.ra,
-                uc.enrollment_date, uc.status_matricula
+                sp.ra, sp.semestre,
+                uc.enrollment_date, uc.status_matricula,
+                cr.nivel_risco
              FROM users u
              JOIN user_courses uc ON uc.user_id = u.id
              JOIN user_roles ur ON ur.user_id = u.id
              JOIN roles r ON r.id = ur.role_id
              LEFT JOIN student_profiles sp ON sp.user_id = u.id
+             LEFT JOIN vw_risco_atual cr ON cr.aluno_id = u.id AND cr.curso_id = uc.course_id
              WHERE uc.course_id = $1 AND r.name = 'student' AND uc.is_active = true`,
             [course_id]
         );
@@ -251,7 +254,7 @@ exports.getAlunosDoCurso = async (req, res) => {
 exports.putAtualizarAluno = async (req, res) => {
     const { id } = req.params;
     const { 
-        full_name, email, phone, ra, status_matricula, course_id, cpf 
+        full_name, email, phone, ra, status_matricula, course_id, cpf, semestre
     } = req.body;
 
     const client = await pool.connect();
@@ -271,22 +274,22 @@ exports.putAtualizarAluno = async (req, res) => {
             [full_name, email, phone, cpf, id]
         );
 
-        // 2. Atualizar Perfil (RA)
+        // 2. Atualizar Perfil (RA e Semestre)
         await client.query(
-            `INSERT INTO student_profiles (user_id, ra, updated_at)
-             VALUES ($1, $2, NOW())
+            `INSERT INTO student_profiles (user_id, ra, semestre, updated_at)
+             VALUES ($1, $2, $3, NOW())
              ON CONFLICT (user_id) DO UPDATE SET 
                 ra = EXCLUDED.ra, 
+                semestre = EXCLUDED.semestre,
                 updated_at = NOW()`,
-            [id, ra]
+            [id, ra, semestre || 1]
         );
 
         // 3. Atualizar Vínculo com Curso (Status)
         if (course_id) {
             await client.query(
                 `UPDATE user_courses SET 
-                    status_matricula = COALESCE($1, status_matricula),
-                    updated_at = NOW()
+                    status_matricula = COALESCE($1, status_matricula)
                  WHERE user_id = $2 AND course_id = $3`,
                 [status_matricula, id, course_id]
             );
@@ -369,7 +372,7 @@ exports.patchStatusAluno = async (req, res) => {
     const { status_matricula } = req.body;
     try {
         await pool.query(
-            `UPDATE user_courses SET status_matricula = $1, updated_at = NOW() WHERE user_id = $2`,
+            `UPDATE user_courses SET status_matricula = $1 WHERE user_id = $2`,
             [status_matricula, id]
         );
         await registrarLog(req.usuario.id, 'ALTERAR_STATUS_ALUNO', 'user_courses', id, { status_matricula });
@@ -521,6 +524,49 @@ exports.getSubmissoes = async (req, res) => {
         res.status(500).json({
             erro: err.message
         });
+    }
+};
+
+exports.getNavegacaoSubmissao = async (req, res) => {
+    const { id } = req.params;
+    const idNum = parseInt(id);
+
+    if (isNaN(idNum)) {
+        return res.status(400).json({ erro: 'ID inválido.' });
+    }
+
+    try {
+        const subAtual = await pool.query(
+            `SELECT course_id FROM view_submissoes_completo WHERE submission_id = $1`,
+            [idNum]
+        );
+        if (subAtual.rows.length === 0) {
+            return res.status(404).json({ erro: 'Submissão não encontrada.' });
+        }
+
+        const courseId = subAtual.rows[0].course_id;
+
+        const fila = await pool.query(`
+            SELECT submission_id 
+            FROM view_submissoes_completo 
+            WHERE course_id = $1 AND status NOT IN ('approved', 'rejected')
+            ORDER BY submitted_at DESC
+        `, [courseId]);
+
+        const ids = fila.rows.map(r => parseInt(r.submission_id));
+        const index = ids.indexOf(idNum);
+
+        let prev_id = null;
+        let next_id = null;
+
+        if (index !== -1) {
+            if (index > 0) prev_id = ids[index - 1];
+            if (index < ids.length - 1) next_id = ids[index + 1];
+        }
+
+        res.status(200).json({ prev_id, next_id });
+    } catch (err) {
+        res.status(500).json({ erro: err.message });
     }
 };
 
@@ -894,5 +940,127 @@ exports.getResumoGeral = async (req, res) => {
         return res.status(500).json({
             erro: err.message
         });
+    }
+};
+
+exports.patchValidarLote = async (req, res) => {
+    const { ids, status_final, comment } = req.body;
+    const validator_user_id = req.usuario.id;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+        return res.status(400).json({ erro: 'Nenhum ID fornecido para validação em lote.' });
+    }
+
+    const statusValidos = ['approved', 'rejected', 'returned_for_adjustment'];
+
+    if (!statusValidos.includes(status_final)) {
+        return res.status(400).json({
+            erro: `Status deve ser: ${statusValidos.join(', ')}.`
+        });
+    }
+
+    const client = await pool.connect();
+
+    try {
+        await client.query('BEGIN');
+
+        for (const id of ids) {
+            const submissaoAtual = await client.query(
+                `SELECT status, requested_hours FROM submissions WHERE id = $1`, [id]
+            );
+
+            if (submissaoAtual.rows.length === 0) continue;
+
+            const previousStatus = submissaoAtual.rows[0].status;
+            // For batch approval, approved_hours is usually the requested_hours. If rejected, it is 0.
+            const approved_hours = status_final === 'approved' ? submissaoAtual.rows[0].requested_hours : 0;
+
+            await client.query(
+                `UPDATE submissions
+                 SET status = $1::submission_status_enum,
+                     approved_hours = $2,
+                     updated_at = NOW()
+                 WHERE id = $3`,
+                [status_final, approved_hours, id]
+            );
+
+            await client.query(
+                `INSERT INTO validations (
+                    submission_id, validator_user_id, validation_status, previous_status, comment, approved_hours
+                ) VALUES ($1, $2, $3::validation_status_enum, $4::submission_status_enum, $5, $6)`,
+                [id, validator_user_id, status_final, previousStatus, comment || '', approved_hours]
+            );
+        }
+
+        await client.query('COMMIT');
+        res.status(200).json({ mensagem: 'Ação em lote realizada com sucesso!' });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Erro na validacao em lote:', err);
+        res.status(500).json({ erro: err.message });
+    } finally {
+        client.release();
+    }
+};
+
+exports.getExportarRelatorioCoord = async (req, res) => {
+    const user_id = parseInt(req.usuario.id);
+    try {
+        // Buscar cursos do coordenador
+        const cursos = await pool.query(
+            `SELECT course_id FROM course_coordinators WHERE user_id = $1 AND is_active = true`,
+            [user_id]
+        );
+        const course_ids = cursos.rows.map(r => r.course_id);
+
+        if (course_ids.length === 0) {
+            return res.status(404).json({ erro: "Nenhum curso vinculado." });
+        }
+
+        const resultado = await pool.query(`
+            SELECT 
+                s.id AS protocolo,
+                u.full_name AS aluno,
+                sp.ra,
+                c.name AS curso,
+                cat.name AS categoria,
+                s.title AS titulo_atividade,
+                s.status,
+                s.requested_hours AS horas_solicitadas,
+                s.approved_hours AS horas_aprovadas,
+                s.submitted_at AS data_submissao
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            JOIN users u ON u.id = uc.user_id
+            LEFT JOIN student_profiles sp ON sp.user_id = u.id
+            JOIN courses c ON c.id = uc.course_id
+            JOIN categories cat ON cat.id = s.category_id
+            WHERE uc.course_id = ANY($1)
+            ORDER BY s.submitted_at DESC
+        `, [course_ids]);
+
+        if (resultado.rows.length === 0) {
+            return res.status(404).json({ erro: "Nenhum dado encontrado para exportar." });
+        }
+
+        const headers = ["Protocolo", "Aluno", "RA", "Curso", "Categoria", "Título", "Status", "Horas Solicitadas", "Horas Aprovadas", "Data Submissão"];
+        const rows = resultado.rows.map(row => [
+            row.protocolo,
+            row.aluno,
+            row.ra,
+            row.curso,
+            row.categoria,
+            row.titulo_atividade,
+            row.status,
+            row.horas_solicitadas,
+            row.horas_aprovadas,
+            row.data_submissao ? new Date(row.data_submissao).toLocaleDateString('pt-BR') : ''
+        ]);
+
+        res.status(200).json({ headers, rows });
+    } catch (err) {
+        console.error('Erro ao exportar relatório do coordenador:', err);
+        res.status(500).json({ erro: "Erro ao gerar relatório: " + err.message });
     }
 };

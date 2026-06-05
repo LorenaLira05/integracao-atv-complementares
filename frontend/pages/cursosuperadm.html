@@ -13,6 +13,16 @@
     <link rel="stylesheet" href="/styles/cursosuperadm.css">
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
+    <style>
+        @keyframes spin-refresh {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spin-animation-infinite {
+            animation: spin-refresh 1s linear infinite;
+            display: inline-block;
+        }
+    </style>
 </head>
 
 <body>
@@ -118,6 +128,7 @@
                                 <input type="text" id="input-busca" placeholder="Buscar curso..." style="padding: 10px 10px 10px 35px; border: 1px solid var(--borda, #e2e8f0); border-radius: 8px; font-size: 13px; outline: none; width: 250px; color: var(--texto-base, #1e293b);">
                             </div>
                             <button class="btn-outline"><i class='bx bx-filter'></i> Filtrar</button>
+                            <button class="btn-outline" onclick="exportarGeralPDF()"><i class='bx bx-file'></i> Exportar PDF</button>
                             <button class="btn-outline" onclick="exportarGeralCSV()"><i class='bx bx-download'></i> Exportar CSV</button>
                         </div>
                     </div>
@@ -271,7 +282,7 @@
                     <div class="module-relatorios">
                         <h3>Relatórios Rápidos</h3>
                         <p>Acesse métricas avançadas de desempenho por curso e taxa de evasão semestral.</p>
-                        <button class="btn-white">GERAR AGORA</button>
+                        <button class="btn-white" onclick="gerarRelatorioRapido(event)">GERAR AGORA</button>
                     </div>
 
                     <!-- Suporte Administrativo -->
@@ -546,7 +557,7 @@
             if (!curso) return;
 
             const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
-            const linha = [
+            const linhaArr = [
                 curso.id,
                 curso.name,
                 curso.code || '',
@@ -555,40 +566,90 @@
                 curso.modalidade || '',
                 curso.turno || '',
                 curso.is_active ? 'Ativo' : 'Inativo'
-            ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+            ];
 
-            const csv = [cabecalho.join(','), linha].join('\n');
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `curso_${curso.name.replace(/\s+/g, '_')}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+            exportarDadosParaCSV(`curso_${curso.name.replace(/\\s+/g, '_')}`, cabecalho, [linhaArr]);
+        }
+
+        function getDadosExportacaoCursos() {
+            if (typeof cursos === 'undefined' || cursos.length === 0) return null;
+            const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
+            const linhas = cursos.map(curso => [
+                curso.id,
+                curso.name,
+                curso.code || '',
+                curso.minimum_required_hours || 0,
+                curso.semestres || '',
+                curso.modalidade || '',
+                curso.turno || '',
+                curso.is_active ? 'Ativo' : 'Inativo'
+            ]);
+            return { cabecalho, linhas };
         }
 
         function exportarGeralCSV() {
-            if (typeof cursos !== 'undefined' && cursos.length > 0) {
-                const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
-                const linhas = cursos.map(curso => [
-                    curso.id,
-                    curso.name,
-                    curso.code || '',
-                    curso.minimum_required_hours || 0,
-                    curso.semestres || '',
-                    curso.modalidade || '',
-                    curso.turno || '',
-                    curso.is_active ? 'Ativo' : 'Inativo'
-                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(','));
+            const dados = getDadosExportacaoCursos();
+            if (dados) {
+                exportarDadosParaCSV(`lista_cursos_${new Date().toISOString().slice(0, 10)}`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhum curso para exportar.");
+            }
+        }
 
-                const csv = [cabecalho.join(','), ...linhas].join('\n');
-                const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `lista_cursos_${new Date().toISOString().slice(0, 10)}.csv`;
-                link.click();
-                URL.revokeObjectURL(url);
+        async function exportarGeralPDF() {
+            const dados = getDadosExportacaoCursos();
+            if (dados) {
+                await exportarDadosParaPDF(`lista_cursos_${new Date().toISOString().slice(0, 10)}`, 'Listagem de Cursos', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhum curso para exportar.");
+            }
+        }
+
+        async function gerarRelatorioRapido(event) {
+            if (event) event.preventDefault();
+            const btn = event.currentTarget || document.querySelector('.module-relatorios button');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = `<i class='bx bx-loader-alt spin-animation-infinite'></i> GERANDO...`;
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${window.API}/admin/exportar-cursos-resumo`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    if (typeof logout === 'function') logout();
+                    else window.location.href = 'index.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Falha ao baixar o relatório.');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'resumo-cursos.csv';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao exportar o relatório rápido: ' + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
             }
         }
     </script>

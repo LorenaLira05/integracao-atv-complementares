@@ -21,7 +21,10 @@ router.patch('/aluno/:id/inativar', authMiddleware(['coordinator', 'super_admin'
 router.patch('/aluno/:id/status', authMiddleware(['coordinator', 'super_admin']), coordenadorController.patchStatusAluno);
 router.delete('/aluno/:id', authMiddleware(['coordinator']), coordenadorController.deleteAluno);
 router.get('/submissoes{/:course_id}', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissoes);
-router.get('/submissao/:id', authMiddleware(['coordinator']), coordenadorController.getSubmissaoPorId);
-router.patch('/validar/:id', authMiddleware(['coordinator']), coordenadorController.patchValidarSubmissao);
+router.get('/submissao/:id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getSubmissaoPorId);
+router.get('/submissao/:id/navegacao', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getNavegacaoSubmissao);
+router.patch('/validar/:id', authMiddleware(['coordinator', 'super_admin']), coordenadorController.patchValidarSubmissao);
+router.patch('/validar-lote', authMiddleware(['coordinator', 'super_admin']), coordenadorController.patchValidarLote);
 router.get('/resumo-geral', authMiddleware(['coordinator', 'super_admin']), coordenadorController.getResumoGeral);
+router.get('/exportar-relatorio', authMiddleware(['coordinator']), coordenadorController.getExportarRelatorioCoord);
 module.exports = router;

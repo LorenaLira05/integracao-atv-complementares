@@ -16,5 +16,6 @@ router.delete('/coordenador/:id', authMiddleware(['super_admin']), adminControll
 router.get('/alunos', authMiddleware(['super_admin', 'coordinator']), adminController.getListaAlunos);
 router.get('/limites-cursos', authMiddleware(['super_admin']), adminController.getLimitesCursos);
 router.get('/logs', authMiddleware(['super_admin']), adminController.getLogs);
+router.get('/exportar-relatorio', authMiddleware(['super_admin', 'coordinator']), adminController.getExportarRelatorio);
 
 module.exports = router;

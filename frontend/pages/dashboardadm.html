@@ -45,21 +45,31 @@
                 </div>
             </header>
 
-            <div class="page-container">
+            <div class="page-container" id="dashboard-content-area">
                 <div class="header-action-row">
                     <div class="page-title">
                         <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>DASHBOARD</span></div>
                         <h1>Dashboard</h1>
                         <p>Visão geral das atividades e submissões do seu curso.</p>
                     </div>
-                    <div class="header-info-badges">
-                        <strong id="label-semestre">Semestre Letivo 2026.1</strong>
-                        <span id="label-atualizacao">Atualizado agora</span>
+                    <div class="header-info-badges" style="text-align: right; display: flex; align-items: flex-end; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <strong id="label-semestre">Semestre Letivo 2026.1</strong>
+                            <span id="label-atualizacao">Atualizado agora</span>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="exportarRelatorio('pdf', event)" style="background: white; border: 1px solid #e2e8f0; color: #1e3a8a; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                <i class='bx bx-file'></i> PDF
+                            </button>
+                            <button onclick="exportarRelatorio('csv', event)" style="background: #004d99; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                <i class='bx bx-export'></i> CSV
+                            </button>
+                        </div>
                     </div>
                 </div>
 
                 <div class="kpis-grid-dash">
-                    <div class="card-kpi">
+                    <div class="card-kpi" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='protocoloadm.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.03)';">
                         <div class="card-kpi-titulo">PROTOCOLOS PENDENTES</div>
                         <div class="card-kpi-valor">
                             <span class="valor-azul kpi-dash-valor" id="kpi-pendentes">--</span>
@@ -68,7 +78,7 @@
                         <i class='bx bx-clipboard card-kpi-bg-icon'></i>
                     </div>
 
-                    <div class="card-kpi">
+                    <div class="card-kpi" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='alunos.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.03)';">
                         <div class="card-kpi-titulo">TOTAL DE ALUNOS</div>
                         <div class="card-kpi-valor">
                             <span class="valor-escuro kpi-dash-valor" id="kpi-alunos">--</span>
@@ -79,7 +89,7 @@
                         </div>
                     </div>
 
-                    <div class="card-kpi">
+                    <div class="card-kpi" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='extrato_certificado.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='0 4px 15px rgba(0,0,0,0.03)';">
                         <div class="card-kpi-titulo">MÉDIA DE HORAS</div>
                         <div class="card-kpi-valor">
                             <span class="valor-laranja kpi-dash-valor" id="kpi-media-horas">--</span>
@@ -109,15 +119,15 @@
                             </div>
                             
                             <div class="mural-insights-grid">
-                                <div class="card-insight-item">
+                                <div class="card-insight-item" style="cursor:pointer; transition: transform 0.2s;" onclick="window.location.href='relatorios.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                                     <span class="card-insight-label">Taxa de Aprovação</span>
                                     <span class="card-insight-valor valor-aprovacao" id="insight-taxa-aprovacao">--</span>
                                 </div>
-                                <div class="card-insight-item">
+                                <div class="card-insight-item" style="cursor:pointer; transition: transform 0.2s;" onclick="window.location.href='relatorios.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                                     <span class="card-insight-label">Taxa de Rejeição</span>
                                     <span class="card-insight-valor valor-rejeicao" id="insight-taxa-rejeicao">--</span>
                                 </div>
-                                <div class="card-insight-item">
+                                <div class="card-insight-item" style="cursor:pointer; transition: transform 0.2s;" onclick="window.location.href='relatorios.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
                                     <span class="card-insight-label">Tempo Médio</span>
                                     <span class="card-insight-valor valor-tempo" id="insight-tempo-medio">--</span>
                                 </div>
@@ -137,6 +147,10 @@
                         <div class="card-content">
                             <div class="card-header">
                                 <h2>Envios por Categoria</h2>
+                                <div class="toggle-periodo">
+                                    <button class="active" id="btn-mensal" onclick="setPeriodo('mensal')">MENSAL</button>
+                                    <button id="btn-anual" onclick="setPeriodo('anual')">ANUAL</button>
+                                </div>
                             </div>
                             <div class="barras-container" id="barras-container">
                                 <div class="skeleton-line" style="height:32px; margin-bottom:12px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;"></div>
@@ -191,9 +205,18 @@
     </style>
 
     <script>
+        let periodoAtual = 'mensal';
+
+        function setPeriodo(periodo) {
+            periodoAtual = periodo;
+            document.getElementById('btn-mensal').classList.toggle('active', periodo === 'mensal');
+            document.getElementById('btn-anual').classList.toggle('active', periodo === 'anual');
+            carregarDashboard();
+        }
+
         async function carregarDashboard() {
             try {
-                const data = await apiGet('/dashboard/coordenador');
+                const data = await apiGet(`/dashboard/coordenador?periodo=${periodoAtual}`);
 
                 if (!data || data.erro) {
                     mostrarErro(data?.erro || 'Erro ao carregar dados');
@@ -350,6 +373,37 @@
         }
 
         document.addEventListener('DOMContentLoaded', carregarDashboard);
+
+        async function exportarRelatorio(tipo, event) {
+            if (event) event.preventDefault();
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> GERANDO...`;
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+
+            try {
+                const dataStr = new Date().toISOString().split('T')[0];
+                if (tipo === 'pdf') {
+                    await exportarTelaParaPDF('dashboard-content-area', `dashboard_coord_${dataStr}`);
+                } else {
+                    const data = await apiGet('/coordenador/exportar-relatorio');
+                    if (!data || data.erro) {
+                        alert(data?.erro || 'Erro ao buscar dados para exportação.');
+                        return;
+                    }
+                    exportarDadosParaCSV(`relatorio_coord_${dataStr}`, data.headers, data.rows);
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao exportar: ' + err.message);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            }
+        }
     </script>
 </body>
 </html>

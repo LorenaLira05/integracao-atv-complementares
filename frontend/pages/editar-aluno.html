@@ -56,7 +56,25 @@
                         const opt = document.createElement('option');
                         opt.value = c.id;
                         opt.textContent = c.name || c.nome;
+                        opt.dataset.semestres = c.semestres || 6;
                         select.appendChild(opt);
+                    });
+
+                    // Atualiza limite de semestre quando curso muda
+                    select.addEventListener('change', function() {
+                        const selectedOpt = this.options[this.selectedIndex];
+                        const maxSemestres = parseInt(selectedOpt.dataset.semestres) || 6;
+                        const inputSemestre = document.getElementById('semestreAtual');
+                        if (inputSemestre) {
+                            inputSemestre.type = 'number';
+                            inputSemestre.min = 1;
+                            inputSemestre.max = maxSemestres;
+                            // Se o valor atual excede o máximo, corrige
+                            if (parseInt(inputSemestre.value) > maxSemestres) {
+                                inputSemestre.value = maxSemestres;
+                            }
+                            inputSemestre.placeholder = `1 a ${maxSemestres}`;
+                        }
                     });
                 }
             } catch (e) { console.error('Erro ao carregar cursos:', e); }
@@ -107,6 +125,22 @@
                     document.getElementById('input-ingresso').value = d.toLocaleDateString('pt-BR');
                 }
 
+                // Semestre
+                const inputSemestre = document.getElementById('semestreAtual');
+                if (inputSemestre) {
+                    inputSemestre.value = aluno.semestre || '1';
+                    inputSemestre.type = 'number';
+                    inputSemestre.min = 1;
+                    // Tenta pegar o máximo de semestres do curso selecionado
+                    const selectCurso = document.getElementById('cursoVinculado');
+                    if (selectCurso) {
+                        const selectedOpt = selectCurso.options[selectCurso.selectedIndex];
+                        const maxSemestres = parseInt(selectedOpt?.dataset?.semestres) || 6;
+                        inputSemestre.max = maxSemestres;
+                        inputSemestre.placeholder = `1 a ${maxSemestres}`;
+                    }
+                }
+
             } catch (e) {
                 console.error('Erro ao carregar aluno:', e);
                 alert('Erro ao carregar dados do aluno.');
@@ -119,7 +153,8 @@
                 email: document.getElementById('emailInstitucional').value,
                 phone: document.getElementById('telefoneAluno').value,
                 cpf: document.getElementById('cpfAluno').value,
-                course_id: document.getElementById('cursoVinculado').value
+                course_id: document.getElementById('cursoVinculado').value,
+                semestre: parseInt(document.getElementById('semestreAtual').value) || 1
             };
 
             try {

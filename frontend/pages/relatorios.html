@@ -151,7 +151,7 @@
     </style>
 
     <script>
-        protegerPagina(['COORDINATOR', 'SUPER_ADMIN', 'COORDENADOR']);
+        protegerPagina(['COORDINATOR', 'COORDENADOR']);
 
         // ── Estado global da tabela ───────────────────────────────
         let paginaAtual = 1;
@@ -412,6 +412,50 @@
                 if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:40px;color:#ef4444;">Erro na conexão com o banco de dados.</td></tr>';
             }
         });
+
+        async function fetchTodosRelatorios() {
+            try {
+                const url = `/dashboard/relatorios?dias=${periodoAtual}&page=1&limit=10000`;
+                const dados = await apiGet(url);
+                return dados.log_atividades || [];
+            } catch (err) {
+                console.error('Erro ao buscar relatórios completos:', err);
+                return [];
+            }
+        }
+
+        function getDadosRelatorioExport(atividades) {
+            if (!atividades || atividades.length === 0) return null;
+            const cabecalho = ['Categoria', 'Aluno', 'Horas', 'Data', 'Status'];
+            const linhas = atividades.map(a => [
+                a.category_name || 'Geral',
+                a.nome_aluno || '—',
+                a.approved_hours || a.requested_hours || '0',
+                formatarDataLocal(a.data_validacao || a.submitted_at),
+                (a.status || 'Pendente').toUpperCase()
+            ]);
+            return { cabecalho, linhas };
+        }
+
+        window.exportarRelatoriosCSV = async function() {
+            const atividades = await fetchTodosRelatorios();
+            const dados = getDadosRelatorioExport(atividades);
+            if (dados) {
+                exportarDadosParaCSV(`relatorios_${periodoAtual}dias`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhum relatório encontrado para exportar.");
+            }
+        };
+
+        window.exportarRelatoriosPDF = async function() {
+            const atividades = await fetchTodosRelatorios();
+            const dados = getDadosRelatorioExport(atividades);
+            if (dados) {
+                await exportarDadosParaPDF(`relatorios_${periodoAtual}dias`, 'Relatórios Acadêmicos', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhum relatório encontrado para exportar.");
+            }
+        };
     </script>
 </head>
 
@@ -483,8 +527,8 @@
                     <h1>Relatórios Acadêmicos</h1>
                 </div>
                 <div class="botoes-exportar">
-                    <button class="btn-outline"><i class='bx bx-file'></i> EXPORTAR PARA PDF</button>
-                    <button class="btn-solid"><i class='bx bx-table'></i> EXPORTAR PARA CSV</button>
+                    <button class="btn-outline" onclick="exportarRelatoriosPDF()"><i class='bx bx-file'></i> EXPORTAR PARA PDF</button>
+                    <button class="btn-solid" onclick="exportarRelatoriosCSV()"><i class='bx bx-table'></i> EXPORTAR PARA CSV</button>
                 </div>
             </section>
 
@@ -581,7 +625,7 @@
                 <!-- Paginação -->
                 <div class="paginacao" id="paginacao"></div>
             </section>
-            <footer class="rodape-dashboard" style="text-align: center;">
+            <footer class="rodape-dashboard" style="text-align: center; margin-top: 40px; padding-bottom: 20px; color: #94a3b8; font-size: 13px;">
                 <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
             </footer>
         </main>

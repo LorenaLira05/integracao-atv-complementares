@@ -47,113 +47,134 @@
                 </div>
             </header>
 
-            <div class="page-container">
-                <div class="header-action-row">
+            <div class="page-container" id="dashboard-content-area">
+                <div class="header-action-row" style="margin-bottom: 25px; align-items: flex-start; background: transparent; padding: 0;">
                     <div class="page-title">
-                        <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>dashboard</span></div>
-                        <h1>Dashboard Geral</h1>
-                        <p>Visão consolidada de todos os cursos e submissões do sistema.</p>
-                    </div>
-                    <div class="header-info-badges">
-                        <strong id="label-semestre">Semestre Letivo 2026.1</strong>
-                        <span id="label-atualizacao">Atualizado agora</span>
-                    </div>
-                </div>
-
-                <div class="kpis-grid-dash">
-                    <div class="card-kpi">
-                        <div class="card-kpi-titulo">PROTOCOLOS PENDENTES</div>
-                        <div class="card-kpi-valor">
-                            <span class="valor-azul kpi-dash-valor" id="kpi-pendentes">--</span>
-                            <span class="variacao variacao-positiva">aguardando análise</span>
+                        <div class="breadcrumb" style="color: #f6821f; font-weight: 700; font-size: 11px; letter-spacing: 1px; text-transform: uppercase;">
+                            VISÃO GERAL ACADÊMICA
                         </div>
-                        <i class='bx bx-clipboard card-kpi-bg-icon'></i>
+                        <h1 style="color: #002b5e; font-size: 28px; font-weight: 800; margin-top: 5px;">Dashboard</h1>
                     </div>
-
-                    <div class="card-kpi">
-                        <div class="card-kpi-titulo">TOTAL DE ALUNOS (GERAL)</div>
-                        <div class="card-kpi-valor">
-                            <span class="valor-escuro kpi-dash-valor" id="kpi-alunos">--</span>
-                            <span class="variacao variacao-neutra">em todos os cursos</span>
+                    <div class="header-info-badges" style="text-align: right; display: flex; align-items: flex-end; gap: 10px;">
+                        <div style="display: flex; flex-direction: column; gap: 3px;">
+                            <strong id="label-semestre" style="font-size: 13px; color: #64748b; font-weight: 600;">Semestre Letivo 2026.1</strong>
+                            <span id="label-atualizacao" style="font-size: 11px; color: #94a3b8;">Atualizado agora</span>
                         </div>
-                        <div class="card-kpi-footer">
-                            <i class='bx bx-group'></i> <span id="kpi-alunos-footer">Carregando dados...</span>
-                        </div>
-                    </div>
-
-                    <div class="card-kpi">
-                        <div class="card-kpi-titulo">MÉDIA DE HORAS / CURSO</div>
-                        <div class="card-kpi-valor">
-                            <span class="valor-laranja kpi-dash-valor" id="kpi-media-horas">--</span>
-                            <span class="variacao-texto">h/semestre</span>
-                        </div>
-                        <div class="card-kpi-chart">
-                            <div class="bar bar-laranja" style="width: 45%"></div>
-                            <div class="bar bar-laranja" style="width: 30%"></div>
-                            <div class="bar bar-laranja" style="width: 55%"></div>
-                            <div class="bar bar-cinza" style="width: 20%"></div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="exportarRelatorio('pdf', event)" style="background: white; border: 1px solid #e2e8f0; color: #1e3a8a; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                <i class='bx bx-file'></i> PDF
+                            </button>
+                            <button onclick="exportarRelatorio('csv', event)" style="background: #004d99; border: none; color: white; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.2s;">
+                                <i class='bx bx-export'></i> CSV
+                            </button>
                         </div>
                     </div>
                 </div>
 
-                <!-- VISÃO MACRO DE RISCO — full width -->
-                <div class="card-content card-risco-macro" style="margin-bottom: 25px;">
-                    <div class="card-header">
-                        <h2>Visão Macro de Risco &mdash; Cursos Críticos</h2>
-                    </div>
-                    <table class="tabela-risco" id="tabela-risco">
-                        <thead>
-                            <tr>
-                                <th>RANKING</th>
-                                <th>NOME DO CURSO</th>
-                                <th>TOTAL DE ALUNOS EM RISCO</th>
-                                <th>RISCO %</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody id="tbody-risco">
-                            <tr>
-                                <td colspan="3" style="text-align:center; padding:30px; color:#94a3b8;">
-                                    <div class="skeleton-line"
-                                        style="height:24px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;">
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- GRID: Envios por Categoria + Últimas Atividades -->
-                <div class="grid-middle">
-                    <div class="card-content">
-                        <div class="card-header">
-                            <h2>Envios por Categoria</h2>
-                        </div>
-                        <div class="barras-container" id="barras-container">
-                            <div class="skeleton-line"
-                                style="height:32px; margin-bottom:12px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;">
-                            </div>
+                <div class="kpis-grid-dash" style="gap: 20px;">
+                    <div class="card-kpi" style="border: 1px solid #f1f5f9; padding: 25px; box-shadow: none; border-radius: 12px; background: white; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='submissoes_superadmin.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                        <div class="card-kpi-titulo" style="text-align: center; color: #64748b; font-weight: 700; font-size: 11px; margin-bottom: 25px;">PROTOCOLOS PENDENTES</div>
+                        <div class="card-kpi-valor" style="justify-content: center;">
+                            <span class="valor-azul kpi-dash-valor" id="kpi-pendentes" style="font-size: 42px; color: #004d99; font-weight: 800;">--</span>
+                            <span class="variacao variacao-positiva" style="color: #ef4444; margin-left: 8px; font-weight: 600; font-size: 12px;">aguardando análise</span>
                         </div>
                     </div>
 
-                    <div class="card-content card-atividades">
-                        <div class="card-header">
-                            <h2>Últimas Atividades</h2>
+                    <div class="card-kpi" style="border: 1px solid #f1f5f9; padding: 25px; box-shadow: none; border-radius: 12px; background: white; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='alunos.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                        <div class="card-kpi-titulo" style="text-align: center; color: #64748b; font-weight: 700; font-size: 11px; margin-bottom: 10px;">TOTAL DE ALUNOS GERAL</div>
+                        <div class="card-kpi-valor" style="justify-content: center;">
+                            <span class="valor-escuro kpi-dash-valor" id="kpi-alunos" style="font-size: 42px; color: #1e293b; font-weight: 800;">--</span>
+                            <span class="variacao variacao-neutra" style="color: #94a3b8; margin-left: 8px; font-weight: 600; font-size: 12px;">em todos os cursos</span>
                         </div>
-                        <div class="lista-atividades" id="lista-atividades">
-                            <div class="skeleton-line"
-                                style="height:60px; margin-bottom:12px; border-radius:8px; background:#e2e8f0; animation: pulse 1.5s infinite;">
-                            </div>
+                        <div class="card-kpi-footer" style="justify-content: center; margin-top: 20px;">
+                            <i class='bx bx-group' style="color: #3b82f6; font-size: 16px;"></i> <span id="kpi-alunos-footer" style="color: #3b82f6; font-weight: 600; font-size: 12px;">--</span>
                         </div>
-                        <div class="footer-atividades">
-                            <a href="submissoes_superadmin.html">VER TODAS AS SUBMISSÕES</a>
+                    </div>
+
+                    <div class="card-kpi" style="border: 1px solid #f1f5f9; padding: 25px; box-shadow: none; border-radius: 12px; background: white; cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='cursosuperadm.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                        <div class="card-kpi-titulo" style="text-align: center; color: #64748b; font-weight: 700; font-size: 11px; margin-bottom: 25px;">MÉDIA DE HORAS / CURSO</div>
+                        <div class="card-kpi-valor" style="justify-content: center;">
+                            <span class="valor-laranja kpi-dash-valor" id="kpi-media-horas" style="font-size: 42px; color: #f97316; font-weight: 800;">--</span>
+                            <span class="variacao-texto" style="color: #64748b; margin-left: 8px; font-size: 12px; font-weight: 600;">h/semestre</span>
+                        </div>
+                        <div class="card-kpi-chart" style="justify-content: center; margin-top: 25px;">
+                            <div class="bar bar-laranja" style="width: 25%; height: 6px; border-radius: 4px; background: #f97316;"></div>
+                            <div class="bar bar-laranja" style="width: 25%; height: 6px; border-radius: 4px; background: #f97316;"></div>
+                            <div class="bar bar-laranja" style="width: 25%; height: 6px; border-radius: 4px; background: #f97316;"></div>
+                            <div class="bar bar-cinza" style="width: 25%; height: 6px; border-radius: 4px; background: #f1f5f9;"></div>
                         </div>
                     </div>
                 </div>
 
-                <footer class="rodape-dashboard">
-                    <h4>Senac</h4>
-                    <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+                <!-- GRID: Tabelas lado a lado -->
+                <div class="grid-middle" style="margin-bottom: 25px;">
+                    <!-- Cursos Maior Risco -->
+                    <div class="card-content" style="border: 1px solid #f1f5f9; box-shadow: none; padding: 25px; background: white; border-radius: 12px;">
+                        <div class="card-header" style="margin-bottom: 20px; border-bottom: none;">
+                            <h2 style="color: #1e3a8a; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;">CURSOS COM MAIOR RISCO</h2>
+                        </div>
+                        <table class="tabela-risco" id="tabela-risco">
+                            <thead>
+                                <tr>
+                                    <th style="font-size: 9px; text-align: center;">RANKING</th>
+                                    <th style="font-size: 9px; text-align: left;">CURSO</th>
+                                    <th style="font-size: 9px; text-align: left;">ALUNOS EM RISCO</th>
+                                    <th style="font-size: 9px; text-align: right; padding-right: 10px;">RISCO %</th>
+                                    <th style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-risco">
+                                <tr><td colspan="5" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+                            </tbody>
+                        </table>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <a href="cursosuperadm.html" style="color: #1e3a8a; font-size: 10px; font-weight: 700; text-decoration: none; letter-spacing: 0.5px;">VER TODOS OS CURSOS</a>
+                        </div>
+                    </div>
+
+                    <!-- Top 5 Pendências -->
+                    <div class="card-content" style="border: 1px solid #f1f5f9; box-shadow: none; padding: 25px; background: white; border-radius: 12px;">
+                        <div class="card-header" style="margin-bottom: 20px; border-bottom: none;">
+                            <h2 style="color: #1e3a8a; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;">TOP 5 CURSOS COM MAIS PENDÊNCIAS</h2>
+                        </div>
+                        <table class="tabela-risco" id="tabela-pendencias">
+                            <thead>
+                                <tr>
+                                    <th style="font-size: 9px; text-align: left;">CURSO</th>
+                                    <th style="font-size: 9px; text-align: center;">PENDÊNCIAS</th>
+                                    <th style="font-size: 9px; text-align: right; padding-right: 10px;">% DO TOTAL</th>
+                                    <th style="width: 60px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbody-pendencias">
+                                <tr><td colspan="4" style="text-align:center; padding:30px;"><div class="spinner"></div></td></tr>
+                            </tbody>
+                        </table>
+                        <div style="text-align: center; margin-top: 15px;">
+                            <a href="cursosuperadm.html" style="color: #1e3a8a; font-size: 10px; font-weight: 700; text-decoration: none; letter-spacing: 0.5px;">VER TODOS OS CURSOS</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Insights Block -->
+                <div class="card-content" style="border: 1px solid #f1f5f9; box-shadow: none; margin-bottom: 40px; padding: 25px; background: white; border-radius: 12px;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+                        <i class='bx bxs-bulb' style="color: #b45309; font-size: 18px;"></i>
+                        <h2 style="color: #1e3a8a; font-size: 12px; font-weight: 800; letter-spacing: 0.5px;">INSIGHT AUTOMATICO</h2>
+                    </div>
+                    <div id="insights-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+                        <div style="text-align: center; padding: 20px; color: #94a3b8; grid-column: span 4;">Carregando insights...</div>
+                    </div>
+                </div>
+
+                <footer class="rodape-dashboard" style="margin-top: 0; padding-bottom: 30px; border: none; text-align: center;">
+                    <h4 style="color: #1e3a8a; font-size: 16px; margin-bottom: 10px;">Senac</h4>
+                    <div class="rodape-links" style="display: flex; gap: 15px; justify-content: center; margin-bottom: 10px;">
+                        <a href="#" style="color: #94a3b8; font-size: 11px; text-decoration: none;">Privacidade</a>
+                        <a href="#" style="color: #94a3b8; font-size: 11px; text-decoration: none;">Termos de Uso</a>
+                        <a href="#" style="color: #94a3b8; font-size: 11px; text-decoration: none;">Suporte Técnico</a>
+                    </div>
+                    <p style="color: #cbd5e1; font-size: 10px; margin-top: 5px;">&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
                 </footer>
             </div>
         </main>
@@ -222,6 +243,7 @@
             text-transform: uppercase;
             padding: 0 10px 12px 10px;
             text-align: left;
+            white-space: nowrap;
         }
 
         .tabela-risco td {
@@ -297,118 +319,189 @@
             background: linear-gradient(90deg, #f97316, #fb923c);
             transition: width 0.6s ease;
         }
+
+        .spin-animation-infinite {
+            animation: spin-refresh 1s linear infinite;
+            display: inline-block;
+        }
     </style>
 
     <script>
         async function carregarDashboard() {
             try {
-                const data = await apiGet('/dashboard/coordenador');
+                // Endpoint para super admin
+                const data = await apiGet('/dashboard/geral');
 
                 if (!data || data.erro) {
                     mostrarErro(data?.erro || 'Erro ao carregar dados');
                     return;
                 }
 
-                document.getElementById('kpi-pendentes').textContent = data.metricas?.pendentes ?? 0;
-                document.getElementById('kpi-alunos').textContent = data.total_alunos ?? 0;
+                // 1. KPIs Topo
+                document.getElementById('kpi-pendentes').textContent = data.metricas?.submissoes_pendentes ?? 0;
+                document.getElementById('kpi-alunos').textContent = data.metricas?.total_alunos ?? 0;
                 document.getElementById('kpi-media-horas').textContent = data.metricas?.media_horas ?? '0.0';
-                document.getElementById('kpi-alunos-footer').textContent = `${data.total_cursos ?? 0} curso(s) ativos no sistema`;
+                document.getElementById('kpi-alunos-footer').textContent = `${data.metricas?.cursos_ativos ?? 0} curso(s) ativos no sistema`;
 
-                // --- TABELA VISÃO MACRO DE RISCO ---
-                const tbody = document.getElementById('tbody-risco');
-                const totalAlunos = parseInt(data.total_alunos) || 1;
                 const rankingClasses = ['top1', 'top2', 'top3'];
 
-                // Usa cursos_em_risco (dados reais do pipeline Python)
-                const cursosRisco = (data.cursos_em_risco && data.cursos_em_risco.length > 0)
-                    ? data.cursos_em_risco
-                    : null;
-
-                if (cursosRisco) {
-                    const itens = cursosRisco.map((curso, i) => {
+                // 2. Cursos Maior Risco
+                const tbodyRisco = document.getElementById('tbody-risco');
+                const cursosRisco = data.cursos_maior_risco || [];
+                if (cursosRisco.length > 0) {
+                    const itensRisco = cursosRisco.map((curso, i) => {
                         const qtd = parseInt(curso.alunos_em_risco);
-                        const perc = parseFloat(curso.percentual_risco) || 0;
+                        const perc = parseFloat(curso.risco_percentual) || 0;
                         const badgeClass = rankingClasses[i] || '';
-                        const nomeCurso = (curso.nome_curso || 'Curso').toUpperCase();
+                        
+                        // Cores das barras do Ranking de Risco
+                        let corBarra = '#fb923c'; // laranja (default 3, 4, 5)
+                        if (i === 0 || i === 1) corBarra = '#ef4444'; // vermelho para 1 e 2
+                        else if (i === 4) corBarra = '#eab308'; // amarelo para 5
+
                         return `
-                            <tr>
-                                <td><span class="ranking-badge ${badgeClass}">${i + 1}</span></td>
-                                <td><span class="curso-nome-risco">${nomeCurso}</span></td>
-                                <td><span class="risco-valor">${qtd} alunos</span></td>
-                                <td><span class="risco-perc">${perc}%</span></td>
-                                <td>
-                                    <div class="barra-risco-wrap">
-                                        <div class="barra-risco-fill" style="width:${Math.min(perc, 100)}%"></div>
+                            <tr style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='cursosuperadm.html'" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <td style="text-align: center;"><span class="ranking-badge ${badgeClass}" style="width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 11px; font-weight: 800; background: ${i===0 ? '#fee2e2': (i===1 ? '#e0e7ff' : (i===2 ? '#dcfce7' : '#f1f5f9'))}; color: ${i===0 ? '#ef4444' : (i===1 ? '#3b82f6' : (i===2 ? '#22c55e' : '#94a3b8'))};">${i + 1}</span></td>
+                                <td><span style="font-size: 11px; font-weight: 700; color: #1e293b;">${curso.curso.toUpperCase()}</span></td>
+                                <td style="text-align: left;"><span style="font-size: 11px; font-weight: 600; color: #475569;">${qtd} ALUNOS</span></td>
+                                <td style="text-align: right;"><span style="font-size: 11px; font-weight: 700; color: #475569; margin-right: 10px;">${perc}%</span></td>
+                                <td style="width: 60px;">
+                                    <div style="background: #f1f5f9; height: 6px; border-radius: 3px; width: 100%; overflow: hidden;">
+                                        <div style="background: ${corBarra}; height: 100%; width: ${Math.min(perc, 100)}%;"></div>
                                     </div>
                                 </td>
                             </tr>`;
                     });
-                    tbody.innerHTML = itens.join('');
+                    tbodyRisco.innerHTML = itensRisco.join('');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8;">Nenhum dado de risco disponível. Execute o pipeline analítico.</td></tr>';
+                    tbodyRisco.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:30px;color:#94a3b8;font-size: 11px;">Nenhum dado de risco disponível.</td></tr>';
                 }
-                // -----------------------------------
 
-                // Usa insight real da IA se existir
-                let insightTextoSA = '';
-                if (data.insights && data.insights.length > 0) {
-                    const insightReal = data.insights.find(i => i.perfil_destino === 'superadmin') 
-                                     || data.insights.find(i => i.perfil_destino === 'coordenador')
-                                     || data.insights[0];
-                    if (insightReal && insightReal.descricao) insightTextoSA = insightReal.descricao;
-                }
-                const elInsight = document.getElementById('insight-texto-dinamico');
-                if (elInsight && insightTextoSA) elInsight.innerHTML = insightTextoSA;
+                // 3. Top 5 Pendências
+                const tbodyPendencias = document.getElementById('tbody-pendencias');
+                const topPendencias = data.top_pendencias || [];
+                if (topPendencias.length > 0) {
+                    const itensPendencias = topPendencias.map((curso, i) => {
+                        const pendencias = parseInt(curso.pendencias);
+                        const percTotal = parseFloat(curso.percentual_total) || 0;
+                        
+                        let corBarraPend = '#fb923c';
+                        if (i === 0 || i === 1) corBarraPend = '#ef4444';
+                        else if (i === 3 || i === 4) corBarraPend = '#eab308';
 
-                const containerBarras = document.getElementById('barras-container');
-                if (data.por_categoria?.length > 0) {
-                    const max = Math.max(...data.por_categoria.map(c => parseInt(c.total)));
-                    const cores = ['bg-azul-escuro', 'bg-azul-claro', 'bg-laranja', 'bg-azul-acinzentado'];
-                    containerBarras.innerHTML = data.por_categoria.map((cat, i) => {
-                        const total = parseInt(cat.total);
-                        const perc = max > 0 ? (total / max) * 100 : 0;
                         return `
-                            <div class="linha-barra">
-                                <span class="rotulo-barra">${cat.categoria.toUpperCase()}</span>
-                                <div class="barra-fundo"><div class="barra-preenchimento ${cores[i % 4]}" style="width:${perc}%"></div></div>
-                                <span class="valor-barra">${total}</span>
-                            </div>`;
-                    }).join('');
-                } else {
-                    containerBarras.innerHTML = '<p style="padding:20px; text-align:center; color:#64748b;">Nenhum dado disponível.</p>';
-                }
-
-                const containerAtiv = document.getElementById('lista-atividades');
-                if (data.ultimas_atividades?.length > 0) {
-                    containerAtiv.innerHTML = data.ultimas_atividades.map(ativ => {
-                        const icone = ativ.status === 'approved' ? 'bx-check-circle' : (ativ.status === 'rejected' ? 'bx-error' : 'bx-file-blank');
-                        const cor = ativ.status === 'approved' ? 'icone-verde' : (ativ.status === 'rejected' ? 'icone-laranja' : 'icone-azul');
-                        return `
-                            <div class="item-atividade">
-                                <div class="icone-atividade ${cor}"><i class='bx ${icone}'></i></div>
-                                <div class="info-atividade">
-                                    <div class="atividade-titulo">
-                                        <span><strong>${ativ.nome_aluno}</strong> enviou certificado</span>
+                            <tr style="cursor: pointer; transition: background 0.2s;" onclick="window.location.href='cursosuperadm.html'" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                                <td style="text-align: left;"><span style="font-size: 11px; font-weight: 700; color: #1e293b;">${curso.curso.toUpperCase()}</span></td>
+                                <td style="text-align: center;"><span style="font-size: 11px; font-weight: 600; color: #475569;">${pendencias}</span></td>
+                                <td style="text-align: right;"><span style="font-size: 11px; font-weight: 700; color: #475569; margin-right: 10px;">${percTotal}%</span></td>
+                                <td style="width: 60px;">
+                                    <div style="background: #f1f5f9; height: 6px; border-radius: 3px; width: 100%; overflow: hidden;">
+                                        <div style="background: ${corBarraPend}; height: 100%; width: ${Math.min(percTotal, 100)}%;"></div>
                                     </div>
-                                    <div class="atividade-desc">Categoria: ${ativ.categoria}</div>
-                                </div>
-                            </div>`;
-                    }).join('');
+                                </td>
+                            </tr>`;
+                    });
+                    tbodyPendencias.innerHTML = itensPendencias.join('');
                 } else {
-                    containerAtiv.innerHTML = '<p style="padding:20px; text-align:center; color:#64748b;">Nenhuma atividade recente.</p>';
+                    tbodyPendencias.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:30px;color:#94a3b8;font-size:11px;">Nenhum dado de pendência disponível.</td></tr>';
+                }
+
+                // 4. Insights Automáticos
+                const gridInsights = document.getElementById('insights-grid');
+                const insights = data.insights || [];
+                
+                // Mapeia ícones baseados no tipo ou nível
+                const getIconeInsight = (insight, i) => {
+                    if (i === 0) return { icon: 'bx-error-alt', color: '#ef4444', bg: '#fef2f2' };
+                    if (i === 1) return { icon: 'bx-file', color: '#3b82f6', bg: '#eff6ff' };
+                    if (i === 2) return { icon: 'bx-time', color: '#64748b', bg: '#f8fafc' };
+                    return { icon: 'bx-check-square', color: '#22c55e', bg: '#f0fdf4' };
+                };
+
+                if (insights.length > 0) {
+                    const htmlInsights = insights.slice(0, 4).map((insight, i) => {
+                        const style = getIconeInsight(insight, i);
+                        return `
+                            <div style="display: flex; gap: 15px; padding-right: 10px; border-right: ${i < 3 ? '1px solid #f1f5f9' : 'none'}">
+                                <div style="background: ${style.bg}; width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                    <i class='bx ${style.icon}' style="color: ${style.color}; font-size: 18px;"></i>
+                                </div>
+                                <div style="font-size: 11px; color: #475569; line-height: 1.5; font-weight: 500;">
+                                    ${insight.descricao}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    // Preenche colunas vazias se houver menos de 4 insights
+                    while (htmlInsights.length < 4) {
+                        htmlInsights.push(`<div style="padding-right: 10px;"></div>`);
+                    }
+                    
+                    gridInsights.innerHTML = htmlInsights.join('');
+                } else {
+                    gridInsights.innerHTML = '<div style="grid-column: span 4; text-align: center; color: #94a3b8; font-size: 11px;">Nenhum insight gerado recentemente.</div>';
                 }
 
             } catch (err) {
                 console.error(err);
-                mostrarErro('Erro de conexão.');
+                mostrarErro('Erro de conexão com o servidor.');
             }
         }
 
         function mostrarErro(msg) {
-            ['barras-container', 'lista-atividades', 'tbody-risco'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.innerHTML = `<tr><td colspan="5" style="padding:20px; color:#ef4444;">${msg}</td></tr>`;
-            });
+            const tr = `<tr><td colspan="5" style="text-align:center;padding:20px;color:#ef4444;font-size:11px;">${msg}</td></tr>`;
+            const tRisk = document.getElementById('tbody-risco');
+            const tPend = document.getElementById('tbody-pendencias');
+            if(tRisk) tRisk.innerHTML = tr;
+            if(tPend) tPend.innerHTML = tr;
+            const gridInsights = document.getElementById('insights-grid');
+            if (gridInsights) gridInsights.innerHTML = `<div style="grid-column: span 4; text-align: center; color: #ef4444; font-size: 11px;">${msg}</div>`;
+        }
+
+        async function exportarRelatorio(tipo, event) {
+            event.preventDefault();
+            const btn = event.currentTarget;
+            const originalHTML = btn.innerHTML;
+            
+            btn.innerHTML = `<i class='bx bx-loader-alt bx-spin'></i> GERANDO...`;
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+
+            try {
+                const token = localStorage.getItem('token');
+                const dataStr = new Date().toISOString().split('T')[0];
+                if (tipo === 'pdf') {
+                    // O usuário quer exportar a TELA no dashboard.
+                    await exportarTelaParaPDF('dashboard-content-area', `dashboard_superadmin_${dataStr}`);
+                } else {
+                    const response = await fetch(`${window.API || ''}/admin/exportar-relatorio`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (response.status === 401) {
+                        if (typeof logout === 'function') logout();
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        throw new Error('Falha ao buscar dados do relatório.');
+                    }
+                    const data = await response.json();
+                    exportarDadosParaCSV(`relatorio_geral_${dataStr}`, data.headers, data.rows);
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao exportar o relatório: ' + err.message);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.style.pointerEvents = 'auto';
+                btn.style.opacity = '1';
+            }
         }
 
         document.addEventListener('DOMContentLoaded', carregarDashboard);

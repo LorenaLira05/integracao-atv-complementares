@@ -158,8 +158,12 @@
                             <div class="card-section-label">Coordenador Responsável</div>
                             <div class="coord-box">
                                 <div class="coord-box-label">COORDENADOR VINCULADO</div>
-                                <div class="coord-box-nome" id="coord-nome">Sem coordenador</div>
-                                <button class="btn-mudar-coord" type="button" id="btn-mudar-coord">MUDAR COORDENADOR</button>
+                                <div class="select-wrap" style="margin-top: 10px;">
+                                    <select class="form-select" id="input-coordenador">
+                                        <option value="">Sem coordenador</option>
+                                    </select>
+                                    <i class='bx bx-chevron-down'></i>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -255,11 +259,24 @@
                 isAtivo = cursoAtual.is_active !== false;
                 renderizarStatus();
 
-                // Coordenador
+                // Coordenadores dropdown
+                const selectCoord = document.getElementById('input-coordenador');
+                if (Array.isArray(coordenadores)) {
+                    coordenadores.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.full_name;
+                        selectCoord.appendChild(opt);
+                    });
+                }
+
+                // Coordenador atual
                 const coord = Array.isArray(coordenadores)
                     ? coordenadores.find(c => Array.isArray(c.course_ids) && c.course_ids.includes(cursoAtual.id))
                     : null;
-                document.getElementById('coord-nome').textContent = coord ? coord.full_name : 'Sem coordenador';
+                if (coord) {
+                    selectCoord.value = coord.id;
+                }
 
             } catch (err) {
                 console.error(err);
@@ -302,6 +319,8 @@
 
             try {
                 const token = localStorage.getItem('token');
+                const coordVal = document.getElementById('input-coordenador').value;
+
                 const body = {
                     name: nome,
                     code: document.getElementById('input-code').value.trim(),
@@ -310,7 +329,8 @@
                     semestres: parseInt(document.getElementById('input-semestres').value) || null,
                     modalidade: document.getElementById('input-modalidade').value || null,
                     turno: document.getElementById('input-turno').value || null,
-                    is_active: isAtivo
+                    is_active: isAtivo,
+                    coordinator_id: coordVal ? parseInt(coordVal) : null
                 };
 
                 const resp = await fetch(`/admin/curso/${cursoId}`, {

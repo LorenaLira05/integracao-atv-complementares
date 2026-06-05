@@ -416,6 +416,17 @@
             try {
                 const data = await apiGet('/admin/cursos');
                 todosCursos = Array.isArray(data) ? data : [];
+                
+                const params = new URLSearchParams(window.location.search);
+                const cursoId = params.get('curso');
+                if (cursoId) {
+                    const curso = todosCursos.find(c => String(c.id) === String(cursoId));
+                    if (curso) {
+                        cursosSelecionados.push({ id: curso.id, name: curso.name });
+                        renderizarCursosSelecionados();
+                    }
+                }
+                
                 renderizarDropdown();
             } catch (e) {
                 console.warn('Erro ao carregar cursos:', e);

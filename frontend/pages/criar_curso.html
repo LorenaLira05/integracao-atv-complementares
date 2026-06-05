@@ -154,9 +154,12 @@
                         <div class="card">
                             <div class="card-section-label">Coordenador Responsável</div>
                             <div class="coord-box">
-                                <div class="coord-box-label">VINCULAÇÃO</div>
-                                <div class="coord-box-nome" style="font-size:13px; color: #DBEAFE; font-weight:500;">
-                                    O coordenador poderá ser vinculado após a criação do curso na tela de Gestão de Coordenadores.
+                                <div class="coord-box-label">COORDENADOR RESPONSÁVEL</div>
+                                <div class="select-wrap" style="margin-top: 10px;">
+                                    <select class="form-select" id="input-coordenador">
+                                        <option value="">Sem coordenador</option>
+                                    </select>
+                                    <i class='bx bx-chevron-down'></i>
                                 </div>
                             </div>
                         </div>
@@ -195,7 +198,26 @@
 
             document.getElementById('btn-salvar').addEventListener('click', criar);
             document.getElementById('btn-toggle-status').addEventListener('click', toggleStatus);
+
+            carregarCoordenadores();
         });
+
+        async function carregarCoordenadores() {
+            try {
+                const data = await apiGet('/admin/coordenadores');
+                const selectCoord = document.getElementById('input-coordenador');
+                if (Array.isArray(data)) {
+                    data.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c.id;
+                        opt.textContent = c.full_name;
+                        selectCoord.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.warn('Erro ao carregar coordenadores', err);
+            }
+        }
 
         function toggleStatus() {
             isAtivo = !isAtivo;
@@ -229,6 +251,7 @@
 
             try {
                 const token = localStorage.getItem('token');
+                const coordVal = document.getElementById('input-coordenador').value;
                 const body = {
                     name: nome,
                     code: document.getElementById('input-code').value.trim(),
@@ -236,7 +259,8 @@
                     minimum_required_hours: parseInt(horas) || 0,
                     semestres: parseInt(document.getElementById('input-semestres').value) || null,
                     modalidade: document.getElementById('input-modalidade').value || null,
-                    turno: document.getElementById('input-turno').value || null
+                    turno: document.getElementById('input-turno').value || null,
+                    coordinator_id: coordVal ? parseInt(coordVal) : null
                 };
 
                 const resp = await fetch('/admin/curso', {

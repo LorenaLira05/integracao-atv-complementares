@@ -59,7 +59,11 @@
                 btn.addEventListener('click', () => {
                     btnToggles.forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
-                    statusAtual = btn.textContent.includes('APROVADOS') ? 'approved' : 'PENDENTE';
+                    const txt = btn.textContent.trim().toUpperCase();
+                    if (txt.includes('APROVADAS')) statusAtual = 'approved';
+                    else if (txt.includes('REJEITADAS')) statusAtual = 'rejected';
+                    else if (txt.includes('TODAS')) statusAtual = 'all';
+                    else statusAtual = 'PENDENTE';
                     carregarDados();
                 });
             });
@@ -87,6 +91,7 @@
                         return;
                     }
                     const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
+                    window.currentSubs = subs; // For export
                     const contadores = resposta.contadores || null;
                     
                     renderGrid(subs);
@@ -199,6 +204,39 @@
             // Carga inicial
             carregarDados();
         });
+
+        function getDadosExportacaoSubmissoes() {
+            if (!window.currentSubs || window.currentSubs.length === 0) return null;
+            const cabecalho = ['ID', 'Estudante', 'RA', 'Categoria', 'Horas', 'Status', 'Data'];
+            const linhas = window.currentSubs.map(s => [
+                s.submission_id || s.id,
+                s.student_name || s.nome_aluno || 'Aluno',
+                s.ra || 'N/A',
+                s.category_name || 'GERAL',
+                s.requested_hours || 0,
+                s.status || 'Pendente',
+                s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('pt-BR') : ''
+            ]);
+            return { cabecalho, linhas };
+        }
+
+        function exportarListaCSV() {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0,10)}`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        }
+
+        async function exportarListaPDF() {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0,10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        }
     </script>
 
     <div class="layout-geral">
@@ -343,15 +381,18 @@
                             <div class="field-box">
                                 <label>STATUS DE VALIDAÇÃO</label>
                                 <div class="toggle-status">
-                                    <button class="btn-toggle" id="btn-approved">APROVADOS</button>
                                     <button class="btn-toggle active" id="btn-pending">PENDENTES</button>
+                                    <button class="btn-toggle" id="btn-approved">APROVADAS</button>
+                                    <button class="btn-toggle" id="btn-rejected">REJEITADAS</button>
+                                    <button class="btn-toggle" id="btn-all">TODAS</button>
                                 </div>
                             </div>
                         </div>
 
                         <div class="filters-buttons">
                             <button class="btn-adv-filters"><i class='bx bx-filter'></i> FILTROS AVANÇADOS</button>
-                            <button class="btn-export" onclick="exportarLista()"><i class='bx bx-download'></i> EXPORTAR LISTA</button>
+                            <button class="btn-export" onclick="exportarListaPDF()"><i class='bx bx-file'></i> PDF</button>
+                            <button class="btn-export" onclick="exportarListaCSV()"><i class='bx bx-download'></i> CSV</button>
                         </div>
                     </div>
 

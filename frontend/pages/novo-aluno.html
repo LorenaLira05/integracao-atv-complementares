@@ -25,13 +25,17 @@
                 ? '/coordenador/meus-cursos' 
                 : '/admin/cursos';
 
+            let cursosList = [];
+
             apiGet(endpoint).then(cursos => {
                 const selectCurso = document.getElementById('cursoAluno');
                 if (selectCurso && cursos && Array.isArray(cursos)) {
+                    cursosList = cursos;
                     selectCurso.innerHTML = '<option value="">Selecione o curso</option>';
                     cursos.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.id;
+                        opt.dataset.semestres = c.semestres || 6;
                         // O backend retorna 'name' no endpoint /coordenador/meus-cursos
                         opt.textContent = c.name || c.nome_curso || c.nome;
                         selectCurso.appendChild(opt);
@@ -44,6 +48,25 @@
                 const selectCurso = document.getElementById('cursoAluno');
                 if (selectCurso) selectCurso.innerHTML = '<option value="">Erro ao carregar cursos</option>';
             });
+
+            // Atualizar semestres quando o curso mudar
+            document.getElementById('cursoAluno').addEventListener('change', function() {
+                const selectedOpt = this.options[this.selectedIndex];
+                const maxSemestres = parseInt(selectedOpt.dataset.semestres) || 6;
+                gerarOpcoesSemestre(maxSemestres);
+            });
+
+            function gerarOpcoesSemestre(max) {
+                const selectSemestre = document.getElementById('semestreAluno');
+                if (!selectSemestre) return;
+                selectSemestre.innerHTML = '';
+                for (let i = 1; i <= max; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i + 'º Semestre';
+                    selectSemestre.appendChild(opt);
+                }
+            }
 
             // Gerar RA automático de exemplo
             const inputRa = document.getElementById('raAluno');
@@ -61,7 +84,8 @@
                     phone: document.getElementById('telefoneAluno').value,
                     course_id: document.getElementById('cursoAluno').value,
                     ra: document.getElementById('raAluno').value,
-                    status_matricula: 'ATIVO' // Ou ativo
+                    status_matricula: 'ATIVO',
+                    semestre: parseInt(document.getElementById('semestreAluno').value) || 1
                 };
 
                 // Validação básica front-end
@@ -235,13 +259,14 @@
                             <div class="grupo-input">
                                 <label>SEMESTRE</label>
                                 <select id="semestreAluno">
-                                    <option>1º Semestre</option>
-                                    <option>2º Semestre</option>
-                                    <option>3º Semestre</option>
-                                    <option>4º Semestre</option>
-                                    <option>5º Semestre</option>
-                                    <option>6º Semestre</option>
+                                    <option value="1">1º Semestre</option>
+                                    <option value="2">2º Semestre</option>
+                                    <option value="3">3º Semestre</option>
+                                    <option value="4">4º Semestre</option>
+                                    <option value="5">5º Semestre</option>
+                                    <option value="6">6º Semestre</option>
                                 </select>
+                                <small style="color:#94a3b8;font-size:11px;margin-top:4px;display:block;">Limitado ao número de semestres do curso selecionado</small>
                             </div>
                         </div>
                     </div>

@@ -46,14 +46,16 @@
 
             // Dropdown cursos logic
             document.getElementById('btn-toggle-dropdown').addEventListener('click', () => {
-                document.getElementById('cursos-dropdown').classList.toggle('open');
+                const dropdown = document.getElementById('cursos-dropdown');
+                const isVisible = dropdown.style.display === 'flex' || dropdown.style.display === 'block';
+                dropdown.style.display = isVisible ? 'none' : 'flex';
             });
 
             document.addEventListener('click', e => {
                 const dropdown = document.getElementById('cursos-dropdown');
                 const btn = document.getElementById('btn-toggle-dropdown');
                 if (dropdown && !dropdown.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
-                    dropdown.classList.remove('open');
+                    dropdown.style.display = 'none';
                 }
             });
 
@@ -148,7 +150,7 @@
                     cursosSelecionados.push({ id: c.id, name: c.name });
                     renderizarCursosSelecionados();
                     renderizarDropdown();
-                    dropdown.classList.remove('open');
+                    dropdown.style.display = 'none';
                 });
                 dropdown.appendChild(item);
             });

@@ -126,9 +126,9 @@ body {
 .select-filtro-compact {
     appearance: none;
     -webkit-appearance: none;
-    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23002b5e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+    background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23002b5e' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center;
     border: 1px solid var(--borda);
-    padding: 8px 30px 8px 35px;
+    padding: 6px 25px 6px 30px;
     border-radius: 10px;
     font-size: 11px;
     font-weight: 700;
@@ -162,14 +162,14 @@ body {
 /* ========== KPI ROW ========== */
 .kpi-row {
     display: grid;
-    grid-template-columns: repeat(2, 220px) 1fr;
-    gap: 20px;
-    margin-bottom: 30px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
 }
 
 .kpi-card-kpi {
     background: white;
-    padding: 20px;
+    padding: 15px;
     border-radius: 16px;
     border: 1px solid var(--borda);
     position: relative;
@@ -187,10 +187,10 @@ body {
 }
 
 .kpi-kpi-valor-row h2 {
-    font-size: 48px;
+    font-size: 32px;
     font-weight: 800;
     color: var(--azul-main);
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     line-height: 1;
 }
 
@@ -222,18 +222,18 @@ body {
 .card-analise-performance {
     background: var(--azul-main);
     border-radius: 16px;
-    padding: 25px;
+    padding: 15px 20px;
     color: white;
     display: grid;
     grid-template-columns: 1fr auto;
-    gap: 20px;
+    gap: 15px;
 }
 
 .perf-left h3 { font-size: 16px; font-weight: 700; margin-bottom: 10px; color: #ffffff !important; }
 .perf-left p { font-size: 11px; line-height: 1.6; color: #DBEAFE !important; margin-bottom: 15px; }
 
 .perf-valor-box { text-align: center; }
-.perf-valor { font-size: 48px; font-weight: 800; display: block; line-height: 1; }
+.perf-valor { font-size: 32px; font-weight: 800; display: block; line-height: 1; }
 .perf-valor-label { font-size: 10px; font-weight: 700; text-transform: uppercase; opacity: 0.8; }
 
 .btn-perf-ver-relatorio {
@@ -258,25 +258,31 @@ body {
 }
 
 .filtros-barra {
-    padding: 20px;
+    padding: 15px 20px;
     border-bottom: 1px solid var(--borda);
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
 }
 
-.grupo-filtro-linha { display: flex; gap: 15px; }
+.grupo-filtro-linha { 
+    display: flex; 
+    gap: 15px; 
+    flex-wrap: wrap; 
+}
 
 .btn-filtro-compact {
     background: white;
     border: 1px solid var(--borda);
-    padding: 8px 12px;
+    padding: 6px 10px;
     border-radius: 8px;
     font-size: 11px;
     font-weight: 700;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     color: var(--azul-main);
     cursor: pointer;
 }
@@ -332,27 +338,27 @@ body {
     font-weight: 800;
     color: var(--texto-light);
     text-transform: uppercase;
-    padding: 15px 20px;
+    padding: 10px 15px;
     border-bottom: 1px solid var(--borda);
 }
 
 .tabela-alunos td {
-    padding: 12px 20px;
+    padding: 8px 15px;
     border-bottom: 1px solid #f8fafc;
-    font-size: 12px;
+    font-size: 11px;
     color: var(--texto);
 }
 
 .td-aluno-row { display: flex; align-items: center; gap: 12px; }
 
 .avatar-circle {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
     border-radius: 10px; /* Quadrado arredondado */
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
     background: #f1f5f9;
 }
@@ -375,14 +381,16 @@ body {
 .status-ativo { color: var(--verde); }
 .status-pendente-finan { color: var(--laranja); }
 .status-trancado { color: var(--vermelho); }
+.status-normal { color: var(--texto-light); }
 
 /* ========== PAGINACAO ========== */
 .rodape-tabela {
-    padding: 15px 20px;
+    padding: 20px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: white;
+    border-top: 1px solid var(--borda);
 }
 
 .paginacao-botoes { display: flex; gap: 5px; }
@@ -396,19 +404,27 @@ body {
     font-weight: 700;
     cursor: pointer;
     color: var(--texto-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
 }
 .btn-pag.active { background: var(--azul-main); color: white; }
-.btn-pag:hover:not(.active) { background: #f1f5f9; }
+.btn-pag:hover:not(.active):not(:disabled) { background: #f1f5f9; }
+.btn-pag:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
 
 /* ========== BOTTOM TIP ========== */
 .card-dica-full {
     background: #f4f7ff;
     border-radius: 16px;
-    padding: 25px;
-    margin-top: 30px;
+    padding: 15px 25px;
+    margin-top: 20px;
     display: grid;
     grid-template-columns: auto 1fr;
-    gap: 25px;
+    gap: 20px;
     align-items: center;
 }
 
@@ -431,3 +447,33 @@ body {
 .dica-link-bold { font-size: 10px; font-weight: 800; color: var(--azul-main); text-decoration: none; text-transform: uppercase; }
 .dica-link-muted { font-size: 10px; font-weight: 700; color: var(--texto-light); text-decoration: none; text-transform: uppercase; }
 
+/* === BADGES DE RISCO === */
+.status-badge-risco {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+.status-badge-risco i {
+    font-size: 6px;
+}
+.status-badge-risco.risco-alto {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+.status-badge-risco.risco-medio {
+    background-color: rgba(245, 158, 11, 0.1);
+    color: #d4800a;
+}
+.status-badge-risco.risco-baixo {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+.status-badge-risco.risco-normal {
+    background-color: rgba(100, 116, 139, 0.1);
+    color: #64748b;
+}

@@ -11,6 +11,267 @@
     <script src="/services/script.js?v=2.1"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
     <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <style>
+        /* === FLOATING BANNER LOTE === */
+        .floating-banner-lote {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #002b5e;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            width: 90%;
+            max-width: 800px;
+        }
+        .floating-banner-lote.show {
+            bottom: 30px;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lote-info-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .lote-count-badge {
+            background: #f6821f;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+        .lote-actions-btns {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-lote-acao {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-lote-aprovar {
+            background: #10b981;
+            color: white;
+        }
+        .btn-lote-aprovar:hover {
+            background: #059669;
+        }
+        .btn-lote-reprovar {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-lote-reprovar:hover {
+            background: #dc2626;
+        }
+        .btn-lote-cancelar {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #475569;
+        }
+        .btn-lote-cancelar:hover {
+            color: white;
+            border-color: white;
+        }
+
+        /* === CUSTOM CHECKBOXES === */
+        input[type="checkbox"].check-submissao,
+        input[type="checkbox"]#check-all-submissoes {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            background: white;
+            position: relative;
+        }
+        input[type="checkbox"].check-submissao:hover:not(:disabled),
+        input[type="checkbox"]#check-all-submissoes:hover {
+            border-color: #f6821f;
+        }
+        input[type="checkbox"].check-submissao:checked,
+        input[type="checkbox"]#check-all-submissoes:checked {
+            background: #f6821f;
+            border-color: #f6821f;
+        }
+        input[type="checkbox"].check-submissao:checked::before,
+        input[type="checkbox"]#check-all-submissoes:checked::before {
+            content: '\2714';
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        input[type="checkbox"].check-submissao:disabled {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* === CUSTOM MODAL === */
+        .modal-lote-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-lote-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-lote-card {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-lote-overlay.show .modal-lote-card {
+            transform: scale(1);
+        }
+        .modal-lote-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-lote-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #002b5e;
+            margin: 0;
+        }
+        .modal-lote-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-lote-close:hover {
+            color: #64748b;
+        }
+        .modal-lote-body {
+            padding: 24px;
+        }
+        .modal-lote-body p {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .modal-lote-textarea-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .modal-lote-textarea-wrap label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+        }
+        .modal-lote-textarea-wrap textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+            resize: none;
+            transition: border-color 0.2s;
+        }
+        .modal-lote-textarea-wrap textarea:focus {
+            border-color: #f6821f;
+        }
+        .modal-lote-footer {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn-modal-cancel {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal-cancel:hover {
+            background: #f1f5f9;
+        }
+        .btn-modal-confirm {
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal-confirm.btn-aprovar {
+            background: #10b981;
+        }
+        .btn-modal-confirm.btn-aprovar:hover {
+            background: #059669;
+        }
+        .btn-modal-confirm.btn-reprovar {
+            background: #ef4444;
+        }
+        .btn-modal-confirm.btn-reprovar:hover {
+            background: #dc2626;
+        }
+    </style>
 </head>
 
 <body>
@@ -22,24 +283,19 @@
             const selectCurso = document.querySelector('.filter-select');
             const tabs = document.querySelectorAll('.tab-link');
 
-            if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Sincronizando com o banco de dados...</td></tr>';
+            let paginaAtual = 1;
+            const POR_PAGINA = 10;
+            let todasSubmissoes = [];
+            let ultimoContadores = null;
 
-            // ── Carregar Cursos ──
-            apiGet('/coordenador/meus-cursos').then(cursos => {
-                if (selectCurso && Array.isArray(cursos)) {
-                    selectCurso.innerHTML = '<option value="all">Todos os Cursos</option>';
-                    cursos.forEach(c => {
-                        const opt = document.createElement('option');
-                        opt.value = c.id;
-                        opt.textContent = c.name;
-                        selectCurso.appendChild(opt);
-                    });
-                }
-            }).catch(err => console.error('Erro ao carregar cursos:', err));
+            if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Sincronizando com o banco de dados...</td></tr>';
+
+            // ── Cursos removidos do filtro a pedido do usuário ──
+            const selectPeriodo = document.getElementById('select-periodo');
 
             // ── Carregar Dados ──
             async function carregarDados() {
-                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Atualizando...</td></tr>';
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Atualizando...</td></tr>';
                 
                 const cursoVal = selectCurso ? selectCurso.value : 'all';
                 const tabAtiva = document.querySelector('.tab-link.active');
@@ -53,9 +309,7 @@
                 const status = statusMap[textoTab] || 'TODAS';
 
                 try {
-                    let url = (cursoVal === 'all' || cursoVal === 'Todos os Cursos') 
-                        ? '/coordenador/submissoes' 
-                        : `/coordenador/submissoes/${cursoVal}`;
+                    let url = '/coordenador/submissoes';
                     
                     url += `?status=${status}`;
 
@@ -72,7 +326,10 @@
                         return ordem === 'desc' ? db - da : da - db;
                     });
 
-                    renderTable(subs, contadores);
+                    todasSubmissoes = subs;
+                    ultimoContadores = contadores;
+                    paginaAtual = 1;
+                    renderTable();
 
                 } catch (err) {
                     console.error('Erro ao carregar dados:', err);
@@ -81,7 +338,7 @@
             }
 
             // ── Event Listeners ──
-            selectCurso?.addEventListener('change', carregarDados);
+            selectPeriodo?.addEventListener('change', renderTable);
             const selectOrdem = document.getElementById('filtro-ordem-coord');
             selectOrdem?.addEventListener('change', carregarDados);
             tabs.forEach(tab => {
@@ -92,7 +349,15 @@
                 });
             });
 
-            function renderTable(subs, contadores) {
+            function renderTable() {
+                let subs = [...todasSubmissoes];
+                const contadores = ultimoContadores;
+
+                const periodo = selectPeriodo ? selectPeriodo.value : 'all';
+                if (periodo !== 'all') {
+                    subs = subs.filter(s => String(s.current_semester) === String(periodo));
+                }
+
                 const kpiPendentes = document.getElementById('val-pendentes');
                 const kpiAprovadas = document.getElementById('val-aprovadas');
                 const kpiReprovadas = document.getElementById('val-reprovadas');
@@ -110,22 +375,37 @@
                 if (!tabelaBody) return;
                 tabelaBody.innerHTML = '';
 
-                if (subs.length === 0) {
-                    tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:var(--texto-light);">Nenhum protocolo encontrado.</td></tr>';
+                const master = document.getElementById('check-all-submissoes');
+                if (master) master.checked = false;
+
+                const total = subs.length;
+                const totalPags = Math.ceil(total / POR_PAGINA) || 1;
+                if (paginaAtual > totalPags) paginaAtual = 1;
+                const inicio = (paginaAtual - 1) * POR_PAGINA;
+                const paginados = subs.slice(inicio, inicio + POR_PAGINA);
+
+                if (total === 0) {
+                    tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--texto-light);">Nenhum protocolo encontrado.</td></tr>';
                     if (tabelaInfo) tabelaInfo.textContent = 'Mostrando 0 de 0 submissões';
                     if (rodapeTabela) rodapeTabela.style.display = 'none';
                     return;
                 }
 
                 if (rodapeTabela) rodapeTabela.style.display = 'flex';
-                if (tabelaInfo) tabelaInfo.textContent = `Mostrando 1-${Math.min(subs.length, 10)} de ${contadores ? contadores.total : subs.length} submissões`;
+                if (tabelaInfo) {
+                    const fim = Math.min(inicio + POR_PAGINA, total);
+                    tabelaInfo.textContent = `Mostrando ${inicio + 1}-${fim} de ${total} submissões`;
+                }
 
-                subs.slice(0, 10).forEach((s, idx) => {
+                paginados.forEach((s, idx) => {
                     const statusStr = s.status ? s.status.toLowerCase() : 'submitted';
                     let statusClass = 'status-pendente';
                     let statusLabel = 'Pendente';
                     if (statusStr === 'approved' || statusStr === 'approved') { statusClass = 'status-aprovado'; statusLabel = 'Aprovado'; }
                     else if (statusStr === 'rejected') { statusClass = 'status-reprovado'; statusLabel = 'Reprovado'; }
+
+                    const isPendente = statusStr !== 'approved' && statusStr !== 'rejected';
+                    const disabledAttr = isPendente ? '' : 'disabled';
 
                     // Determinar categoria da atividade para badge
                     let catClass = 'ativ-complementar';
@@ -137,6 +417,9 @@
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
+                        <td>
+                            <input type="checkbox" class="check-submissao" data-id="${s.submission_id || s.id}" onclick="atualizarBannerLote()" ${disabledAttr}>
+                        </td>
                         <td>
                             <div class="td-aluno">
                                 <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.student_name || 'A')}&background=random&color=fff" class="avatar-aluno" alt="Avatar">
@@ -166,12 +449,191 @@
                     `;
                     tabelaBody.appendChild(tr);
                 });
+
+                renderPaginacao(totalPags);
             }
 
             function fallbackTable() {
                 const tabelaBody = document.getElementById('tabela-body');
-                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:40px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
             }
+
+            // ── Funções de Lote ──
+            function toggleTodosCheckboxes(master) {
+                const checks = document.querySelectorAll('.check-submissao:not([disabled])');
+                checks.forEach(c => c.checked = master.checked);
+                atualizarBannerLote();
+            }
+
+            function deselecionarTudo() {
+                const master = document.getElementById('check-all-submissoes');
+                if (master) master.checked = false;
+                toggleTodosCheckboxes({ checked: false });
+            }
+
+            function atualizarBannerLote() {
+                const checks = document.querySelectorAll('.check-submissao:checked');
+                const banner = document.getElementById('floating-banner-lote');
+                const countEl = document.getElementById('lote-selecionados-count');
+                
+                if (checks.length > 0) {
+                    if (countEl) countEl.textContent = checks.length;
+                    if (banner) banner.classList.add('show');
+                } else {
+                    if (banner) banner.classList.remove('show');
+                }
+            }
+
+            let acaoLotePendente = null;
+
+            function abrirModalLote(statusFinal) {
+                const checks = document.querySelectorAll('.check-submissao:checked');
+                const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
+                if (ids.length === 0) return;
+
+                acaoLotePendente = statusFinal;
+                
+                const modal = document.getElementById('modal-lote');
+                const title = document.getElementById('modal-lote-title');
+                const text = document.getElementById('modal-lote-text');
+                const commentInput = document.getElementById('modal-lote-comment');
+                const confirmBtn = document.getElementById('btn-modal-lote-confirm');
+
+                commentInput.value = '';
+
+                if (statusFinal === 'approved') {
+                    title.textContent = 'Aprovação em Lote';
+                    text.innerHTML = `Você está prestes a <strong>aprovar</strong> ${ids.length} submissões em lote.`;
+                    commentInput.placeholder = 'Digite uma observação (opcional)...';
+                    confirmBtn.textContent = 'Aprovar em Lote';
+                    confirmBtn.className = 'btn-modal-confirm btn-aprovar';
+                } else {
+                    title.textContent = 'Reprovação em Lote';
+                    text.innerHTML = `Você está prestes a <strong>reprovar</strong> ${ids.length} submissões em lote.`;
+                    commentInput.placeholder = 'Digite o motivo da reprovação (obrigatório)...';
+                    confirmBtn.textContent = 'Reprovar em Lote';
+                    confirmBtn.className = 'btn-modal-confirm btn-reprovar';
+                }
+
+                modal.classList.add('show');
+            }
+
+            function fecharModalLote() {
+                const modal = document.getElementById('modal-lote');
+                if (modal) modal.classList.remove('show');
+                acaoLotePendente = null;
+            }
+
+            async function confirmarAcaoLote() {
+                if (!acaoLotePendente) return;
+                
+                const checks = document.querySelectorAll('.check-submissao:checked');
+                const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
+                if (ids.length === 0) return;
+
+                const comment = document.getElementById('modal-lote-comment').value.trim();
+
+                if (acaoLotePendente === 'rejected' && comment === '') {
+                    alert('O motivo de reprovação é obrigatório.');
+                    return;
+                }
+
+            const acao = acaoLotePendente;
+            fecharModalLote();
+
+            try {
+                const resp = await apiPatch('/coordenador/validar-lote', {
+                    ids,
+                    status_final: acao,
+                    comment: comment || (acao === 'approved' ? 'Aprovação em lote' : '')
+                });
+
+                    if (resp && !resp.erro) {
+                        alert(resp.mensagem || 'Operação realizada com sucesso!');
+                        deselecionarTudo();
+                        carregarDados();
+                    } else {
+                        alert('Erro ao processar: ' + (resp?.erro || 'Erro desconhecido'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    alert("Erro ao conectar com o servidor.");
+                }
+            }
+
+            function renderPaginacao(totalPags) {
+                const container = document.getElementById('paginacao-controles');
+                if (!container) return;
+
+                let html = `<button class="btn-pag-arrow" onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>
+                                <i class='bx bx-chevron-left'></i>
+                            </button>`;
+
+                for (let i = 1; i <= totalPags; i++) {
+                    if (totalPags > 6 && i !== 1 && i !== totalPags && Math.abs(i - paginaAtual) > 1) {
+                        if (i === 2 && paginaAtual > 3) {
+                            html += '<button class="btn-pag" disabled>...</button>';
+                        } else if (i === totalPags - 1 && paginaAtual < totalPags - 2) {
+                            html += '<button class="btn-pag" disabled>...</button>';
+                        }
+                        continue;
+                    }
+                    html += `<button class="btn-pag numeric ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
+                }
+
+                html += `<button class="btn-pag-arrow" onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPags ? 'disabled' : ''}>
+                             <i class='bx bx-chevron-right'></i>
+                         </button>`;
+
+                container.innerHTML = html;
+            }
+
+            function mudarPagina(n) {
+                paginaAtual = n;
+                renderTable();
+                document.querySelector('.card-tabela-avancada')?.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            window.toggleTodosCheckboxes = toggleTodosCheckboxes;
+            window.deselecionarTudo = deselecionarTudo;
+            window.atualizarBannerLote = atualizarBannerLote;
+            window.abrirModalLote = abrirModalLote;
+            window.fecharModalLote = fecharModalLote;
+            window.confirmarAcaoLote = confirmarAcaoLote;
+            window.mudarPagina = mudarPagina;
+
+            function getDadosExportacaoSubmissoes() {
+                if (!todasAsSubmissoes || todasAsSubmissoes.length === 0) return null;
+                const cabecalho = ['ID', 'Estudante', 'RA', 'Categoria', 'Horas', 'Status', 'Data'];
+                const linhas = todasAsSubmissoes.map(s => [
+                    s.id || s.submission_id,
+                    s.student_name || s.nome_aluno || 'Aluno',
+                    s.ra || 'N/A',
+                    s.category_name || 'GERAL',
+                    s.requested_hours || 0,
+                    s.status || 'Pendente',
+                    s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('pt-BR') : ''
+                ]);
+                return { cabecalho, linhas };
+            }
+
+            window.exportarListaCSV = function() {
+                const dados = getDadosExportacaoSubmissoes();
+                if (dados) {
+                    exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0,10)}`, dados.cabecalho, dados.linhas);
+                } else {
+                    alert("Nenhuma submissão para exportar.");
+                }
+            };
+
+            window.exportarListaPDF = async function() {
+                const dados = getDadosExportacaoSubmissoes();
+                if (dados) {
+                    await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0,10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
+                } else {
+                    alert("Nenhuma submissão para exportar.");
+                }
+            };
 
             // --- INICIALIZAÇÃO ---
             carregarDados();
@@ -223,7 +685,8 @@
                     <p>Gestão de horas complementares e atividades extracurriculares.</p>
                 </div>
                 <div class="head-btns">
-                    <button class="btn-csv"><i class='bx bx-download'></i> Exportar CSV</button>
+                    <button class="btn-csv" onclick="exportarListaPDF()"><i class='bx bx-file'></i> Exportar PDF</button>
+                    <button class="btn-csv" onclick="exportarListaCSV()"><i class='bx bx-download'></i> Exportar CSV</button>
                     <button class="btn-nova-ativ" onclick="window.location.href='cadastrar_regra.html'"><i class='bx bx-plus'></i> Cadastrar Regra</button>
                 </div>
             </div>
@@ -267,14 +730,22 @@
             <section class="card-tabela-avancada" style="margin: 0 2px 30px;">
                 <div class="filters-row">
                     <div class="filters-tabs">
-                        <button class="tab-link active">Todas</button>
-                        <button class="tab-link" id="tab-pendentes">Pendentes</button>
+                        <button class="tab-link active" id="tab-pendentes">Pendentes</button>
                         <button class="tab-link">Aprovadas</button>
                         <button class="tab-link">Reprovadas</button>
+                        <button class="tab-link">Todas</button>
                     </div>
                     <div class="filters-selects">
-                        <select class="filter-select">
-                            <option>Todos os Cursos</option>
+                        <select class="filter-select" id="select-periodo">
+                            <option value="all">Todos os Períodos</option>
+                            <option value="8">8º Período</option>
+                            <option value="7">7º Período</option>
+                            <option value="6">6º Período</option>
+                            <option value="5">5º Período</option>
+                            <option value="4">4º Período</option>
+                            <option value="3">3º Período</option>
+                            <option value="2">2º Período</option>
+                            <option value="1">1º Período</option>
                         </select>
                         <select class="filter-select" id="filtro-ordem-coord">
                             <option value="desc">Mais recentes</option>
@@ -286,6 +757,7 @@
                 <table class="tabela-protocolos">
                     <thead>
                         <tr>
+                            <th style="width:40px;"><input type="checkbox" id="check-all-submissoes" onclick="toggleTodosCheckboxes(this)"></th>
                             <th>ALUNO</th>
                             <th>ATIVIDADE</th>
                             <th>HORAS</th>
@@ -301,14 +773,8 @@
 
                 <div class="rodape-tabela">
                     <span class="info-paginacao" id="tabela-info">Carregando métricas...</span>
-                    <div class="paginacao">
-                        <button class="btn-pag-arrow"><i class='bx bx-chevron-left'></i></button>
-                        <button class="btn-pag numeric active">1</button>
-                        <button class="btn-pag numeric">2</button>
-                        <button class="btn-pag numeric">3</button>
-                        <button class="btn-pag-arrow">...</button>
-                        <button class="btn-pag numeric">19</button>
-                        <button class="btn-pag-arrow"><i class='bx bx-chevron-right'></i></button>
+                    <div class="paginacao" id="paginacao-controles">
+                        <!-- JS Render -->
                     </div>
                 </div>
             </section>
@@ -320,7 +786,47 @@
 
             </div><!-- /.page-container -->
 
+            <!-- Floating Batch Action Banner -->
+            <div id="floating-banner-lote" class="floating-banner-lote">
+                <div class="lote-info-wrap">
+                    <span class="lote-count-badge" id="lote-selecionados-count">0</span>
+                    <span>submissões selecionadas</span>
+                </div>
+                <div class="lote-actions-btns">
+                    <button class="btn-lote-acao btn-lote-aprovar" onclick="abrirModalLote('approved')">
+                        <i class='bx bx-check-circle'></i> Aprovar em Lote
+                    </button>
+                    <button class="btn-lote-acao btn-lote-reprovar" onclick="abrirModalLote('rejected')">
+                        <i class='bx bx-x-circle'></i> Reprovar em Lote
+                    </button>
+                    <button class="btn-lote-acao btn-lote-cancelar" onclick="deselecionarTudo()">
+                        Cancelar
+                    </button>
+                </div>
+            </div>
+
         </main>
+    </div>
+
+    <!-- Modal de Validação em Lote -->
+    <div id="modal-lote" class="modal-lote-overlay">
+        <div class="modal-lote-card">
+            <div class="modal-lote-header">
+                <h3 id="modal-lote-title">Aprovação em Lote</h3>
+                <button class="modal-lote-close" onclick="fecharModalLote()">&times;</button>
+            </div>
+            <div class="modal-lote-body">
+                <p id="modal-lote-text">Você está prestes a aprovar submissões em lote.</p>
+                <div class="modal-lote-textarea-wrap">
+                    <label for="modal-lote-comment" id="modal-lote-comment-label">Observação/Justificativa:</label>
+                    <textarea id="modal-lote-comment" placeholder="Digite uma observação..."></textarea>
+                </div>
+            </div>
+            <div class="modal-lote-footer">
+                <button class="btn-modal-cancel" onclick="fecharModalLote()">Cancelar</button>
+                <button class="btn-modal-confirm" id="btn-modal-lote-confirm" onclick="confirmarAcaoLote()">Confirmar</button>
+            </div>
+        </div>
     </div>
 </body>
 </html>

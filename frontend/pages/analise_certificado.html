@@ -82,7 +82,7 @@
                 <div>
                     <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
-                <button class="btn-back" onclick="window.history.back()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                <button class="btn-back" onclick="const p = (localStorage.getItem('perfil')||'').toUpperCase(); window.location.href = (p === 'SUPER_ADMIN') ? 'submissoes_superadmin.html' : 'protocoloadm.html';" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
                     <i class='bx bx-arrow-back'></i> VOLTAR
                 </button>
             </header>
@@ -93,7 +93,17 @@
                     <h1>Análise de Certificado</h1>
                     <p class="subtitle-protocol" id="subtitle-protocol">Carregando protocolo...</p>
                 </div>
-                <span id="badge-status" class="badge-status badge-pendente">PENDENTE</span>
+                <div style="display: flex; align-items: center; gap: 15px; margin-left: auto; align-self: center;">
+                    <div class="controles-navegacao" style="display: flex; gap: 8px;">
+                        <button id="btn-navegacao-anterior" class="btn-navegacao" title="Certificado Anterior" disabled>
+                            <i class='bx bx-chevron-left'></i> Anterior
+                        </button>
+                        <button id="btn-navegacao-proximo" class="btn-navegacao" title="Próximo Certificado" disabled>
+                            Próximo <i class='bx bx-chevron-right'></i>
+                        </button>
+                    </div>
+                    <span id="badge-status" class="badge-status badge-pendente">PENDENTE</span>
+                </div>
             </section>
 
             <div id="loading-state" class="loading-state">
@@ -365,9 +375,43 @@
                     renderRegrasVazias();
                 }
 
+                // Carregar Navegação
+                carregarNavegacao(submissaoId);
+
             } catch (err) {
                 document.getElementById('loading-state').innerHTML =
                     '<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>Falha na conexão com o servidor.</span>';
+            }
+        }
+
+        async function carregarNavegacao(id) {
+            try {
+                const nav = await apiGet(`/coordenador/submissao/${id}/navegacao`);
+                
+                const btnPrev = document.getElementById('btn-navegacao-anterior');
+                const btnNext = document.getElementById('btn-navegacao-proximo');
+
+                if (btnPrev) {
+                    if (nav && nav.prev_id) {
+                        btnPrev.disabled = false;
+                        btnPrev.onclick = () => window.location.href = `analise_certificado.html?id=${nav.prev_id}`;
+                    } else {
+                        btnPrev.disabled = true;
+                        btnPrev.onclick = null;
+                    }
+                }
+
+                if (btnNext) {
+                    if (nav && nav.next_id) {
+                        btnNext.disabled = false;
+                        btnNext.onclick = () => window.location.href = `analise_certificado.html?id=${nav.next_id}`;
+                    } else {
+                        btnNext.disabled = true;
+                        btnNext.onclick = null;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar navegacao:", e);
             }
         }
 
@@ -380,6 +424,14 @@
 
             atualizarBadgeStatus(d.status);
             bloqueiarBotoes(d.status);
+
+            const perfil = localStorage.getItem('perfil');
+            if (perfil === 'super_admin' || perfil === 'admin') {
+                const boxParecer = document.querySelector('.box-parecer');
+                const actionBtns = document.querySelector('.action-buttons-horizontal');
+                if (boxParecer) boxParecer.style.display = 'none';
+                if (actionBtns) actionBtns.style.display = 'none';
+            }
 
             const container = document.getElementById('container-visualizacao');
             if (d.storage_path) {
@@ -407,23 +459,62 @@
                 document.getElementById('btn-ver-arquivo').style.display = 'none';
             }
 
+            // --- PROCESSAMENTO INTELIGENTE DO CARD DE OCR E METADADOS ---
             const boxOcr = document.getElementById('box-ocr-dados');
             if (d.ocr_extracted_text) {
                 boxOcr.style.display = 'block';
 
-                const ocrTitulo      = document.getElementById('ocr-titulo');
+                const ocrTitulo = document.getElementById('ocr-titulo');
                 const ocrInstituicao = document.getElementById('ocr-instituicao');
-                const ocrAno         = document.getElementById('ocr-ano');
-                const ocrDuracao     = document.getElementById('ocr-duracao');
+                const ocrAno = document.getElementById('ocr-ano');
+                const ocrDuracao = document.getElementById('ocr-duracao');
 
-                ocrTitulo.value      = d.ocr_titulo      || d.title || '';
-                ocrInstituicao.value = d.ocr_instituicao || 'Não identificado';
-                ocrAno.value         = d.ocr_ano         || (d.activity_date ? new Date(d.activity_date).getFullYear() : '');
-                ocrDuracao.value     = d.ocr_duracao     ? `${d.ocr_duracao}h` : (d.requested_hours ? `${d.requested_hours}h` : '');
+                // 1. Título
+                ocrTitulo.value = d.title || '';
+
+                // 2. Ano de Emissão
+                let ano = '';
+                if (d.activity_date) {
+                    ano = new Date(d.activity_date).getFullYear();
+                }
+                if (!ano && d.ocr_extracted_text) {
+                    const anoMatch = d.ocr_extracted_text.match(/\b(20\d{2}|19\d{2})\b/);
+                    if (anoMatch) ano = anoMatch[0];
+                }
+                ocrAno.value = ano || new Date().getFullYear();
+
+                // 3. Carga Horária/Duração
+                let duracao = d.requested_hours || d.declared_hours || '';
+                if (duracao) {
+                    duracao = `${duracao}h`;
+                } else if (d.ocr_extracted_text) {
+                    const durMatch = d.ocr_extracted_text.match(/(\d+)\s*(?:horas|h|hours)\b/i);
+                    if (durMatch) duracao = `${durMatch[1]}h`;
+                }
+                ocrDuracao.value = duracao;
+
+                // 4. Instituição Emissora
+                let instituicao = d.description || '';
+                if (!instituicao && d.ocr_extracted_text) {
+                    const keywords = ['Udemy', 'Coursera', 'Senac', 'Alura', 'Harvard', 'Google', 'Cisco', 'FIA', 'PUC', 'Fundação Bradesco'];
+                    for (const kw of keywords) {
+                        if (new RegExp(kw, 'i').test(d.ocr_extracted_text)) {
+                            instituicao = kw;
+                            break;
+                        }
+                    }
+                    if (!instituicao) {
+                        const linhas = d.ocr_extracted_text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                        if (linhas.length > 0 && linhas[0].length < 40) {
+                            instituicao = linhas[0];
+                        }
+                    }
+                }
+                ocrInstituicao.value = instituicao || 'Não identificado';
             } else {
                 boxOcr.style.display = 'none';
             }
-
+            // -------------------------------------------------------------
 
             document.getElementById('aluno-nome').textContent = d.student_name || '—';
             document.getElementById('aluno-info').textContent = `Email: ${d.student_email || '—'} • ${d.course_name || '—'}`;

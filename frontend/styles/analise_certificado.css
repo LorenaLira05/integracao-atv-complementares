@@ -948,4 +948,28 @@ body {
     border-color: var(--azul-main);
 }
 
+/* === BOTOES DE NAVEGACAO === */
+.btn-navegacao {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: white;
+    color: var(--azul-main);
+    border: 1px solid var(--borda-dark);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.2s;
+}
+.btn-navegacao:hover:not(:disabled) {
+    background: #f1f5f9;
+    border-color: var(--azul-main);
+}
+.btn-navegacao:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: #f8fafc;
+}
 

@@ -40,24 +40,35 @@ exports.getDashboardCoordenador = async (req, res) => {
             });
         }
 
-        //  Métricas principais 
-       const metricas = await pool.query(
-        `SELECT
-            COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) AS pendentes,
-            COUNT(*) FILTER (WHERE status = 'approved')                   AS aprovadas,
-            COUNT(*) FILTER (WHERE status = 'rejected')                   AS reprovadas,
-            COUNT(DISTINCT uc.user_id)                                     AS total_alunos,
-            ROUND(
-                SUM(s.approved_hours) / NULLIF(COUNT(DISTINCT uc.user_id), 0)
-            , 1) AS media_horas_por_aluno
-        FROM submissions s
-        JOIN user_courses uc ON uc.id = s.user_course_id
-        WHERE uc.course_id = ANY($1)`,
-        [course_ids]
-    );
+        //  Métricas principais
+        const metricas = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) AS pendentes,
+                COUNT(*) FILTER (WHERE status = 'approved')                   AS aprovadas,
+                COUNT(*) FILTER (WHERE status = 'rejected')                   AS reprovadas,
+                COALESCE(SUM(approved_hours) FILTER (WHERE status = 'approved'), 0) AS total_horas_aprovadas
+            FROM view_submissoes_completo
+            WHERE course_id = ANY($1)`,
+            [course_ids]
+        );
+
+        const alunosMetricas = await pool.query(
+            `SELECT
+                COUNT(DISTINCT user_id) AS total_alunos
+            FROM view_resumo_aluno_por_curso
+            WHERE course_id = ANY($1)`,
+            [course_ids]
+        );
 
         const metricasRow = metricas.rows[0] || {};
-        const totalAlunos = parseInt(metricasRow.total_alunos || 0);
+        const totalAlunos = parseInt(alunosMetricas.rows[0]?.total_alunos || 0);
+        
+        let media_horas_por_aluno = 0;
+        if (totalAlunos > 0) {
+            media_horas_por_aluno = (parseFloat(metricasRow.total_horas_aprovadas || 0) / totalAlunos).toFixed(1);
+        }
+        metricasRow.media_horas_por_aluno = media_horas_por_aluno;
+        metricasRow.total_alunos = totalAlunos;
 
         
         let porCategoria = [];
@@ -197,6 +208,28 @@ exports.getDashboardCoordenador = async (req, res) => {
             cursoNome = cursoInfo.rows[0]?.name || null;
         } catch (e) {}
 
+        //  Alunos com horas faltantes
+        let alunosHorasFaltantes = 0;
+        try {
+            const horasFaltantes = await pool.query(`
+                SELECT COUNT(DISTINCT uc.user_id) AS alunos_horas_faltantes
+                FROM user_courses uc
+                JOIN courses c ON c.id = uc.course_id
+                LEFT JOIN (
+                    SELECT user_course_id, SUM(approved_hours) AS total_aprovado
+                    FROM submissions
+                    WHERE status = 'approved'
+                    GROUP BY user_course_id
+                ) h ON h.user_course_id = uc.id
+                WHERE uc.course_id = ANY($1)
+                  AND uc.is_active = true
+                  AND COALESCE(h.total_aprovado, 0) < c.minimum_required_hours
+            `, [course_ids]);
+            alunosHorasFaltantes = parseInt(horasFaltantes.rows[0].alunos_horas_faltantes || 0);
+        } catch (e) {
+            console.warn('[Dashboard] Erro horas faltantes:', e.message);
+        }
+
         res.status(200).json({
             metricas: {
                 pendentes:   parseInt(metricasRow.pendentes  || 0),
@@ -204,59 +237,18 @@ exports.getDashboardCoordenador = async (req, res) => {
                 reprovadas:  parseInt(metricasRow.reprovadas || 0),
                 media_horas: parseFloat(metricasRow.media_horas_por_aluno || 0)
             },
-            total_alunos:       totalAlunos,
-            total_cursos:       course_ids.length,
-            curso:              cursoNome,
-            por_categoria:      porCategoria,
-            cursos_mais_envios: cursosMaisEnvios,
-            cursos_em_risco:    cursosEmRisco,
-            ultimas_atividades: ultimasAtividades,
-            insights:           insightsPipeline,
-            recomendacoes:      recomendacoesPipeline,
-            resumoRisco:        resumoRiscoPipeline,
-            updated_at:         new Date().toISOString()
-        });
-
-let alunosHorasFaltantes = 0;
-try {
-    const horasFaltantes = await pool.query(`
-        SELECT COUNT(DISTINCT uc.user_id) AS alunos_horas_faltantes
-        FROM user_courses uc
-        JOIN courses c ON c.id = uc.course_id
-        LEFT JOIN (
-            SELECT user_course_id, SUM(approved_hours) AS total_aprovado
-            FROM submissions
-            WHERE status = 'approved'
-            GROUP BY user_course_id
-        ) h ON h.user_course_id = uc.id
-        WHERE uc.course_id = ANY($1)
-          AND uc.is_active = true
-          AND COALESCE(h.total_aprovado, 0) < c.minimum_required_hours
-    `, [course_ids]);
-    alunosHorasFaltantes = parseInt(horasFaltantes.rows[0].alunos_horas_faltantes || 0);
-    } catch (e) {
-        console.warn('[Dashboard] Erro horas faltantes:', e.message);
-    }
-
-    res.status(200).json({
-        metricas: {
-            pendentes:   parseInt(metricasRow.pendentes  || 0),
-            aprovadas:   parseInt(metricasRow.aprovadas  || 0),
-            reprovadas:  parseInt(metricasRow.reprovadas || 0),
-            media_horas: parseFloat(metricasRow.media_horas_por_aluno || 0)
-        },
-        total_alunos:            totalAlunos,
-        alunos_horas_faltantes:  alunosHorasFaltantes,
-        total_cursos:            course_ids.length,
-        curso:                   cursoNome,
-        por_categoria:           porCategoria,
-        cursos_mais_envios:      cursosMaisEnvios,
-        cursos_em_risco:         cursosEmRisco,
-        ultimas_atividades:      ultimasAtividades,
-        insights:                insightsPipeline,
-        recomendacoes:           recomendacoesPipeline,
-        resumoRisco:             resumoRiscoPipeline,
-        updated_at:              new Date().toISOString()
+            total_alunos:            totalAlunos,
+            alunos_horas_faltantes:  alunosHorasFaltantes,
+            total_cursos:            course_ids.length,
+            curso:                   cursoNome,
+            por_categoria:           porCategoria,
+            cursos_mais_envios:      cursosMaisEnvios,
+            cursos_em_risco:         cursosEmRisco,
+            ultimas_atividades:      ultimasAtividades,
+            insights:                insightsPipeline,
+            recomendacoes:           recomendacoesPipeline,
+            resumoRisco:             resumoRiscoPipeline,
+            updated_at:              new Date().toISOString()
         });
 
 
@@ -342,15 +334,10 @@ exports.getDashboardGeral = async (req, res) => {
         // cards
         const metricas = await pool.query(`
             SELECT
-                COUNT(DISTINCT uc.user_id)                                          AS total_alunos,
-                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))    AS submissoes_pendentes,
-                COUNT(DISTINCT c.id) FILTER (WHERE c.is_active = true)              AS cursos_ativos,
-                ROUND(
-                    SUM(s.approved_hours) / NULLIF(COUNT(DISTINCT uc.user_id), 0)
-                , 1)                                                                AS media_horas
-            FROM submissions s
-            JOIN user_courses uc ON uc.id = s.user_course_id
-            JOIN courses c ON c.id = uc.course_id
+                (SELECT COUNT(DISTINCT u.id) FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id AND r.name = 'student') AS total_alunos,
+                (SELECT COUNT(*) FROM submissions WHERE status NOT IN ('approved', 'rejected')) AS submissoes_pendentes,
+                (SELECT COUNT(*) FROM courses WHERE is_active = true) AS cursos_ativos,
+                (SELECT ROUND(COALESCE(SUM(approved_hours), 0) / NULLIF(COUNT(DISTINCT user_course_id), 0), 1) FROM submissions) AS media_horas
         `);
 
         const m = metricas.rows[0];

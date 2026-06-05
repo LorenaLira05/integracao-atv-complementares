@@ -331,3 +331,166 @@ document.addEventListener('DOMContentLoaded', () => {
 function abrirAnalise(id) {
     window.location.href = `analise_certificado.html?id=${id}`;
 }
+
+/* ========== EXPORTAÇÃO (PDF / CSV) ========== */
+
+function carregarBiblioteca(src) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${src}"]`)) {
+            resolve();
+            return;
+        }
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+async function exportarDadosParaPDF(nomeArquivo, tituloRelatorio, cabecalhos, dados) {
+    try {
+        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js');
+        
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF(cabecalhos.length > 6 ? 'landscape' : 'portrait');
+        
+        doc.setFontSize(16);
+        doc.text(tituloRelatorio, 14, 15);
+        doc.setFontSize(10);
+        doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 22);
+
+        doc.autoTable({
+            startY: 28,
+            head: [cabecalhos],
+            body: dados,
+            theme: 'striped',
+            headStyles: { fillColor: [0, 77, 153] },
+            styles: { fontSize: 8, cellPadding: 3 }
+        });
+
+        doc.save(`${nomeArquivo}.pdf`);
+    } catch (e) {
+        console.error("Erro ao gerar PDF:", e);
+        alert("Erro ao gerar PDF.");
+    }
+}
+
+function exportarDadosParaCSV(nomeArquivo, cabecalhos, dados) {
+    const escapeCSV = (value) => {
+        if (value === null || value === undefined) return '""';
+        const str = String(value);
+        if (str.includes(',') || str.includes('"') || str.includes('\\n')) {
+            return `"${str.replace(/"/g, '""')}"`;
+        }
+        return str;
+    };
+
+    const rows = dados.map(row => row.map(escapeCSV).join(','));
+    const csvContent = "\uFEFF" + [cabecalhos.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${nomeArquivo}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function carregarBiblioteca(url) {
+    return new Promise((resolve, reject) => {
+        if (document.querySelector(`script[src="${url}"]`)) {
+            return resolve();
+        }
+        const script = document.createElement('script');
+        script.src = url;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+async function carregarImagem(url) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous';
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            resolve(canvas.toDataURL('image/png'));
+        };
+        img.onerror = () => resolve(null);
+        img.src = url;
+    });
+}
+
+async function exportarDadosParaPDF(nomeArquivo, tituloStr, cabecalhos, dados) {
+    try {
+        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js');
+        
+        const { jsPDF } = window.jspdf;
+        const orientacao = cabecalhos.length > 6 ? 'landscape' : 'portrait';
+        const doc = new jsPDF(orientacao, 'pt', 'A4');
+        
+        // Logo
+        const logoData = await carregarImagem('https://logodownload.org/wp-content/uploads/2014/10/senac-logo-2.png');
+        if (logoData) {
+            doc.addImage(logoData, 'PNG', 40, 30, 80, 40);
+            doc.setFontSize(18);
+            doc.text(tituloStr, 130, 55);
+        } else {
+            doc.setFontSize(18);
+            doc.text(tituloStr, 40, 50);
+        }
+        
+        doc.autoTable({
+            head: [cabecalhos],
+            body: dados,
+            startY: 80,
+            theme: 'striped',
+            headStyles: { fillColor: [0, 77, 153] }
+        });
+        
+        doc.save(`${nomeArquivo}.pdf`);
+    } catch(e) {
+        console.error(e);
+        alert('Erro ao gerar PDF: ' + e.message);
+    }
+}
+
+async function exportarTelaParaPDF(elementId, nomeArquivo) {
+    try {
+        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        
+        const element = document.getElementById(elementId);
+        if (!element) throw new Error("Elemento não encontrado");
+
+        const btnContainer = element.querySelector('.header-info-badges');
+        if (btnContainer) btnContainer.style.visibility = 'hidden'; 
+        
+        const canvas = await html2canvas(element, { scale: 2, useCORS: true });
+        
+        if (btnContainer) btnContainer.style.visibility = 'visible'; 
+        
+        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'pt', 'A4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(`${nomeArquivo}.pdf`);
+    } catch (e) {
+        console.error("Erro ao exportar tela:", e);
+        alert("Erro ao gerar PDF da tela.");
+    }
+}

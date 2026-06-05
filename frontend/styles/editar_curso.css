@@ -4,6 +4,10 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', 'Inter', sans-serif; }
 
+:root {
+    --texto-dark: #1e293b;
+}
+
 body { background: var(--bg-page); color: var(--texto-dark); }
 
 .layout-geral { display: flex; min-height: 100vh; }
@@ -127,6 +131,7 @@ body { background: var(--bg-page); color: var(--texto-dark); }
 .form-input.error { border-color: var(--vermelho); background: #fff5f5; }
 .form-textarea { resize: vertical; min-height: 110px; line-height: 1.6; }
 .form-select { appearance: none; cursor: pointer; }
+.form-select option { color: #1e293b; background: white; }
 
 .select-wrap { position: relative; }
 .select-wrap i {
