@@ -40,7 +40,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             });
         }
 
-        // ── Métricas principais ──
+        //  Métricas principais 
        const metricas = await pool.query(
         `SELECT
             COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) AS pendentes,
@@ -59,14 +59,23 @@ exports.getDashboardCoordenador = async (req, res) => {
         const metricasRow = metricas.rows[0] || {};
         const totalAlunos = parseInt(metricasRow.total_alunos || 0);
 
-        // ── Por categoria ──
+        
         let porCategoria = [];
         try {
+            const periodo = req.query.periodo || 'total';
+            let filtroPeriodo = '';
+            if (periodo === 'mensal') {
+                filtroPeriodo = `AND submitted_at >= date_trunc('month', NOW())`;
+            } else if (periodo === 'anual') {
+                filtroPeriodo = `AND submitted_at >= date_trunc('year', NOW())`;
+            }
+
             const res1 = await pool.query(
                 `SELECT category_name AS categoria, COUNT(*) AS total
-                 FROM view_submissoes_completo
-                 WHERE course_id = ANY($1)
-                 GROUP BY category_name ORDER BY total DESC`,
+                FROM view_submissoes_completo
+                WHERE course_id = ANY($1)
+                ${filtroPeriodo}
+                GROUP BY category_name ORDER BY total DESC`,
                 [course_ids]
             );
             porCategoria = res1.rows;
@@ -74,7 +83,6 @@ exports.getDashboardCoordenador = async (req, res) => {
             console.warn('[Dashboard] Erro categorias:', e.message);
         }
 
-        // ── Últimas atividades ──
         let ultimasAtividades = [];
         try {
             const res2 = await pool.query(
@@ -90,7 +98,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             console.warn('[Dashboard] Erro atividades:', e.message);
         }
 
-        // ── Cursos com mais envios ──
+        //  Cursos com mais envios
         let cursosMaisEnvios = [];
         try {
             const res3 = await pool.query(
@@ -103,7 +111,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             cursosMaisEnvios = res3.rows;
         } catch (e) {}
 
-        // ── Cursos em risco ──
+        //  Cursos em risco
         let cursosEmRisco = [];
         try {
             const resRisco = await pool.query(
@@ -130,7 +138,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             console.warn('[Dashboard] classificacao_risco indisponível:', e.message);
         }
 
-        // ── Pipeline analítico ──
+        //  Pipeline analítico 
         let insightsPipeline = [], recomendacoesPipeline = [], resumoRiscoPipeline = [];
 
         try {
@@ -180,7 +188,6 @@ exports.getDashboardCoordenador = async (req, res) => {
             console.warn('[Dashboard] Tabela classificacao_risco não encontrada.');
         }
 
-        // ── Nome do curso ──
         let cursoNome = null;
         try {
             const cursoInfo = await pool.query(
@@ -210,11 +217,54 @@ exports.getDashboardCoordenador = async (req, res) => {
             updated_at:         new Date().toISOString()
         });
 
-    } catch (err) {
-        console.error('Erro Dashboard Coordenador:', err);
-        res.status(500).json({ erro: err.message });
+let alunosHorasFaltantes = 0;
+try {
+    const horasFaltantes = await pool.query(`
+        SELECT COUNT(DISTINCT uc.user_id) AS alunos_horas_faltantes
+        FROM user_courses uc
+        JOIN courses c ON c.id = uc.course_id
+        LEFT JOIN (
+            SELECT user_course_id, SUM(approved_hours) AS total_aprovado
+            FROM submissions
+            WHERE status = 'approved'
+            GROUP BY user_course_id
+        ) h ON h.user_course_id = uc.id
+        WHERE uc.course_id = ANY($1)
+          AND uc.is_active = true
+          AND COALESCE(h.total_aprovado, 0) < c.minimum_required_hours
+    `, [course_ids]);
+    alunosHorasFaltantes = parseInt(horasFaltantes.rows[0].alunos_horas_faltantes || 0);
+    } catch (e) {
+        console.warn('[Dashboard] Erro horas faltantes:', e.message);
     }
-};
+
+    res.status(200).json({
+        metricas: {
+            pendentes:   parseInt(metricasRow.pendentes  || 0),
+            aprovadas:   parseInt(metricasRow.aprovadas  || 0),
+            reprovadas:  parseInt(metricasRow.reprovadas || 0),
+            media_horas: parseFloat(metricasRow.media_horas_por_aluno || 0)
+        },
+        total_alunos:            totalAlunos,
+        alunos_horas_faltantes:  alunosHorasFaltantes,
+        total_cursos:            course_ids.length,
+        curso:                   cursoNome,
+        por_categoria:           porCategoria,
+        cursos_mais_envios:      cursosMaisEnvios,
+        cursos_em_risco:         cursosEmRisco,
+        ultimas_atividades:      ultimasAtividades,
+        insights:                insightsPipeline,
+        recomendacoes:           recomendacoesPipeline,
+        resumoRisco:             resumoRiscoPipeline,
+        updated_at:              new Date().toISOString()
+        });
+
+
+        } catch (err) {
+            console.error('Erro Dashboard Coordenador:', err);
+            res.status(500).json({ erro: err.message });
+        }
+    };
 
 exports.postAtualizarInsightSobDemanda = async (req, res) => {
     console.log('=== BOTÃO DE INSIGHTS ACIONADO ===');
@@ -283,5 +333,109 @@ exports.postAtualizarInsightSobDemanda = async (req, res) => {
     } catch (err) {
         console.error('Erro no controller de insights sob demanda:', err);
         return res.status(500).json({ erro: err.message });
+    }
+};
+
+//dashboard geral para superadmin
+exports.getDashboardGeral = async (req, res) => {
+    try {
+        // cards
+        const metricas = await pool.query(`
+            SELECT
+                COUNT(DISTINCT uc.user_id)                                          AS total_alunos,
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))    AS submissoes_pendentes,
+                COUNT(DISTINCT c.id) FILTER (WHERE c.is_active = true)              AS cursos_ativos,
+                ROUND(
+                    SUM(s.approved_hours) / NULLIF(COUNT(DISTINCT uc.user_id), 0)
+                , 1)                                                                AS media_horas
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            JOIN courses c ON c.id = uc.course_id
+        `);
+
+        const m = metricas.rows[0];
+
+        //  cursos com maior risco
+        const cursosRisco = await pool.query(`
+            SELECT
+                c.name                                                              AS curso,
+                COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))         AS alunos_em_risco,
+                COUNT(*)                                                            AS total_alunos,
+                ROUND(
+                    COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))::numeric
+                    / NULLIF(COUNT(*), 0) * 100
+                )                                                                   AS risco_percentual
+            FROM classificacao_risco cr
+            JOIN courses c ON c.id = cr.curso_id
+            GROUP BY c.id, c.name
+            HAVING COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio')) > 0
+            ORDER BY risco_percentual DESC, alunos_em_risco DESC
+            LIMIT 5
+        `);
+
+        // Top 5 cursos com mais pendências
+        const totalPendentes = parseInt(m.submissoes_pendentes || 0);
+
+        const cursosPendencias = await pool.query(`
+            SELECT
+                c.name                                                              AS curso,
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))    AS pendencias,
+                ROUND(
+                    COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))::numeric
+                    / NULLIF($1, 0) * 100
+                , 1)                                                                AS percentual_total
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            JOIN courses c ON c.id = uc.course_id
+            GROUP BY c.id, c.name
+            HAVING COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected')) > 0
+            ORDER BY pendencias DESC
+            LIMIT 5
+        `, [totalPendentes]);
+
+        // Dados do gráfico de barras (todos os cursos) 
+        const grafico = await pool.query(`
+            SELECT
+                c.name                                                              AS curso,
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))    AS pendencias
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            JOIN courses c ON c.id = uc.course_id
+            GROUP BY c.id, c.name
+            ORDER BY pendencias DESC
+        `);
+
+        // Insights superadmin do pipeline
+        let insights = [];
+        try {
+            const r = await pool.query(`
+                SELECT titulo, descricao, nivel_alerta, tipo_insight, valor_numerico
+                FROM insights
+                WHERE perfil_destino = 'superadmin'
+                ORDER BY data_geracao DESC
+                LIMIT 4
+            `);
+            insights = r.rows;
+        } catch (e) {
+            console.warn('[DashboardGeral] Tabela insights indisponível:', e.message);
+        }
+
+        res.status(200).json({
+            metricas: {
+                total_alunos:          parseInt(m.total_alunos || 0),
+                submissoes_pendentes:  parseInt(m.submissoes_pendentes || 0),
+                media_horas:           parseFloat(m.media_horas || 0),
+                cursos_ativos:         parseInt(m.cursos_ativos || 0),
+            },
+            cursos_maior_risco:    cursosRisco.rows,
+            top_pendencias:        cursosPendencias.rows,
+            grafico_pendencias:    grafico.rows,
+            insights,
+            updated_at:            new Date().toISOString(),
+        });
+
+    } catch (err) {
+        console.error('Erro DashboardGeral:', err);
+        res.status(500).json({ erro: err.message });
     }
 };

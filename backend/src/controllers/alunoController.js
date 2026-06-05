@@ -97,9 +97,9 @@ exports.postSubmeterAtividade = async (req, res) => {
         )
     );
 
-        const erroCriticoIA = arquivosInseridos.some(arq => arq.erro || !arq.dados_ia_extraidos);
-        if (erroCriticoIA) {
-            throw new Error('Falha crítica no processamento inteligente dos certificados. Envio cancelado.');
+        const erroCriticoIA = arquivosInseridos.some(arq => arq.erro);
+            if (erroCriticoIA) {
+                throw new Error('Falha crítica no processamento dos certificados. Envio cancelado.');
         }
 
         const coordenadores = await client.query(

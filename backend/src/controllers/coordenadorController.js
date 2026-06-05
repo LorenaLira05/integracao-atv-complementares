@@ -529,29 +529,46 @@ exports.getSubmissaoPorId = async (req, res) => {
 
     const idNum = parseInt(id);
     if (isNaN(idNum)) {
-        return res.status(400).json({ erro: "ID de submissão inválido." });
+        return res.status(400).json({ erro: 'ID de submissão inválido.' });
     }
 
     try {
         const resultado = await pool.query(
-            `SELECT *
-             FROM view_submissoes_detalhes
-             WHERE submission_id = $1`,
+            `SELECT * FROM view_submissoes_detalhes WHERE submission_id = $1`,
             [idNum]
         );
 
         if (resultado.rows.length === 0) {
-            return res.status(404).json({
-                erro: "Submissão não encontrada."
-            });
+            return res.status(404).json({ erro: 'Submissão não encontrada.' });
         }
 
-        res.status(200).json(resultado.rows[0]);
+        const arquivo = await pool.query(
+            `SELECT ocr_extracted_text, ocr_confidence, storage_path,
+                    ocr_dados->>'titulo'      AS ocr_titulo,
+                    ocr_dados->>'instituicao' AS ocr_instituicao,
+                    ocr_dados->>'ano'         AS ocr_ano,
+                    ocr_dados->>'duracao'     AS ocr_duracao
+             FROM submission_files
+             WHERE submission_id = $1
+             ORDER BY uploaded_at ASC LIMIT 1`,
+            [idNum]
+        );
+
+        const row = resultado.rows[0];
+        const arq = arquivo.rows[0] || {};
+
+        res.status(200).json({
+            ...row,
+            ocr_extracted_text: arq.ocr_extracted_text || null,
+            ocr_titulo:         arq.ocr_titulo         || null,
+            ocr_instituicao:    arq.ocr_instituicao    || null,
+            ocr_ano:            arq.ocr_ano            || null,
+            ocr_duracao:        arq.ocr_duracao        || null,
+            storage_path:       arq.storage_path       || row.storage_path || null,
+        });
 
     } catch (err) {
-        res.status(500).json({
-            erro: err.message
-        });
+        res.status(500).json({ erro: err.message });
     }
 };
 

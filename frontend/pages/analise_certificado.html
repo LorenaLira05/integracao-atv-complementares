@@ -407,62 +407,23 @@
                 document.getElementById('btn-ver-arquivo').style.display = 'none';
             }
 
-            // --- PROCESSAMENTO INTELIGENTE DO CARD DE OCR E METADADOS ---
             const boxOcr = document.getElementById('box-ocr-dados');
             if (d.ocr_extracted_text) {
                 boxOcr.style.display = 'block';
 
-                const ocrTitulo = document.getElementById('ocr-titulo');
+                const ocrTitulo      = document.getElementById('ocr-titulo');
                 const ocrInstituicao = document.getElementById('ocr-instituicao');
-                const ocrAno = document.getElementById('ocr-ano');
-                const ocrDuracao = document.getElementById('ocr-duracao');
+                const ocrAno         = document.getElementById('ocr-ano');
+                const ocrDuracao     = document.getElementById('ocr-duracao');
 
-                // 1. Título
-                ocrTitulo.value = d.title || '';
-
-                // 2. Ano de Emissão
-                let ano = '';
-                if (d.activity_date) {
-                    ano = new Date(d.activity_date).getFullYear();
-                }
-                if (!ano && d.ocr_extracted_text) {
-                    const anoMatch = d.ocr_extracted_text.match(/\b(20\d{2}|19\d{2})\b/);
-                    if (anoMatch) ano = anoMatch[0];
-                }
-                ocrAno.value = ano || new Date().getFullYear();
-
-                // 3. Carga Horária/Duração
-                let duracao = d.requested_hours || d.declared_hours || '';
-                if (duracao) {
-                    duracao = `${duracao}h`;
-                } else if (d.ocr_extracted_text) {
-                    const durMatch = d.ocr_extracted_text.match(/(\d+)\s*(?:horas|h|hours)\b/i);
-                    if (durMatch) duracao = `${durMatch[1]}h`;
-                }
-                ocrDuracao.value = duracao;
-
-                // 4. Instituição Emissora
-                let instituicao = d.description || '';
-                if (!instituicao && d.ocr_extracted_text) {
-                    const keywords = ['Udemy', 'Coursera', 'Senac', 'Alura', 'Harvard', 'Google', 'Cisco', 'FIA', 'PUC', 'Fundação Bradesco'];
-                    for (const kw of keywords) {
-                        if (new RegExp(kw, 'i').test(d.ocr_extracted_text)) {
-                            instituicao = kw;
-                            break;
-                        }
-                    }
-                    if (!instituicao) {
-                        const linhas = d.ocr_extracted_text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-                        if (linhas.length > 0 && linhas[0].length < 40) {
-                            instituicao = linhas[0];
-                        }
-                    }
-                }
-                ocrInstituicao.value = instituicao || 'Não identificado';
+                ocrTitulo.value      = d.ocr_titulo      || d.title || '';
+                ocrInstituicao.value = d.ocr_instituicao || 'Não identificado';
+                ocrAno.value         = d.ocr_ano         || (d.activity_date ? new Date(d.activity_date).getFullYear() : '');
+                ocrDuracao.value     = d.ocr_duracao     ? `${d.ocr_duracao}h` : (d.requested_hours ? `${d.requested_hours}h` : '');
             } else {
                 boxOcr.style.display = 'none';
             }
-            // -------------------------------------------------------------
+
 
             document.getElementById('aluno-nome').textContent = d.student_name || '—';
             document.getElementById('aluno-info').textContent = `Email: ${d.student_email || '—'} • ${d.course_name || '—'}`;

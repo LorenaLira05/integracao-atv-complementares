@@ -65,48 +65,17 @@ function getFileType(originalname) {
  * Utilizada dentro da criação da submissão
  * usando a mesma transação (client).
  */
-const processarEInserirArquivo = async (
-    client,
-    submissionId,
-    file
-) => {
-    const caminhoFisico = path.join(
-        __dirname,
-        '../../uploads',
-        file.filename
-    );
+const processarEInserirArquivo = async (client, submissionId, file) => {
+    const caminhoFisico = path.join(__dirname, '../../uploads', file.filename);
 
-    const resultadoOCR = await executarOCR(
-        caminhoFisico,
-        file.mimetype
-    );
+    const resultadoOCR = await executarOCR(caminhoFisico, file.mimetype);
 
     const resultado = await client.query(
-        `
-        INSERT INTO submission_files
-        (
-            submission_id,
-            original_filename,
-            storage_path,
-            file_type,
-            mime_type,
-            file_size_kb,
-            ocr_extracted_text,
-            ocr_confidence
-        )
-        VALUES
-        (
-            $1,
-            $2,
-            $3,
-            $4::file_type_enum,
-            $5,
-            $6,
-            $7,
-            $8
-        )
-        RETURNING *
-        `,
+        `INSERT INTO submission_files
+         (submission_id, original_filename, storage_path, file_type,
+          mime_type, file_size_kb, ocr_extracted_text, ocr_confidence, ocr_dados)
+         VALUES ($1,$2,$3,$4::file_type_enum,$5,$6,$7,$8,$9)
+         RETURNING *`,
         [
             submissionId,
             file.originalname,
@@ -114,25 +83,22 @@ const processarEInserirArquivo = async (
             getFileType(file.originalname),
             file.mimetype,
             Math.round(file.size / 1024),
-            resultadoOCR.texto ||
-                resultadoOCR.textoBruto ||
-                '',
-            resultadoOCR.confianca || 0
+            resultadoOCR.texto || resultadoOCR.textoBruto || '',
+            resultadoOCR.confianca || 0,
+            JSON.stringify(resultadoOCR.dados || {})
         ]
     );
 
     return {
         ...resultado.rows[0],
-        dados_ia_extraidos:
-            resultadoOCR.dados || {
-                titulo: 'Não identificado',
-                instituicao: 'Não identificada',
-                duracao: 'Não identificada',
-                ano: 'Não identificado'
-            }
+        dados_ia_extraidos: resultadoOCR.dados || {
+            titulo: 'Não identificado',
+            instituicao: 'Não identificada',
+            duracao: 'Não identificada',
+            ano: 'Não identificado'
+        }
     };
 };
-
 /**
  * POST /aluno/submissao/:submission_id/arquivo
  */
