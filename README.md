@@ -1,282 +1,223 @@
-  <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac Logo" width="150" />
-  <h1>Sistema de Gestão Acadêmica SENAC</h1>
-  <p><strong>Plataforma Completa para Gestão de Atividades Complementares e Protocolos</strong></p>
-  
+# Sistema de Horas Complementares — Senac
+
+Sistema acadêmico para submissão, análise e gestão de horas complementares. Inclui API REST, interface web multi-perfil e aplicativo mobile.
+
+## Índice
+
+- [Arquitetura](#arquitetura)
+- [Stack](#stack)
+- [Configuração](#configuração)
+- [Rodando o projeto](#rodando-o-projeto)
+- [API](#api)
+- [Pipeline de análise](#pipeline-de-análise)
+- [Mobile](#mobile)
+
 ---
 
-# Sistema de Gerenciamento de Horas Complementares
-
-Sistema completo para gerenciamento de horas complementares acadêmicas desenvolvido para a **Faculdade Senac**. Permite que alunos submetam atividades com certificados, coordenadores analisem e aprovem submissões, e o super admin monitore tudo com insights gerados por IA.
-
----
-
-##  Arquitetura
+## Arquitetura
 
 ```
-integracao-atv-complementares/
+/
 ├── sistema-horas-complementares/
-│   ├── backend/          # API REST — Node.js + Express 5
-│   └── frontend/         # Interface web — HTML/CSS/JS
-└── mobile/               # App mobile — React Native + Expo
+│   ├── backend/      # Node.js · Express 5 · PostgreSQL
+│   └── frontend/     # HTML/CSS/JS estático (servido pelo backend)
+└── mobile/           # React Native · Expo 54
 ```
 
----
-
-## Funcionalidades
-
-### 👨‍🎓 Aluno
-- Submissão de atividades complementares com upload de certificados (PDF/imagem)
-- Acompanhamento de status de cada submissão (pendente, aprovado, reprovado, devolvido para ajuste)
-- Resumo de horas acumuladas por categoria
-- Notificações sobre aprovações e feedbacks
-- Extrato imprimível de horas
-
-### 👩‍🏫 Coordenador
-- Análise de submissões dos alunos do próprio curso
-- Aprovação/reprovação com feedback
-- OCR automático de certificados via Tesseract.js
-- Relatórios de desempenho por curso
-- Exportação de dados em CSV
-
-### 🛡️ Super Admin
-- Gestão de cursos, coordenadores e alunos
-- Dashboard com métricas gerais da instituição
-- Classificação de risco de evasão por aluno (pipeline Python)
-- Insights e recomendações geradas por IA (Groq LLM)
-- Atualização manual do pipeline de análise
+O backend serve o frontend estático e expõe a API REST que o mobile consome. O pipeline de análise em Python é executado via `child_process` agendado com `node-cron`.
 
 ---
 
-## Stack Tecnológica
+## Stack
 
-### Backend
-| Tecnologia | Uso |
+**Backend**
+
+| | |
 |---|---|
-| Node.js + Express 5 | Servidor e API REST |
-| PostgreSQL + `pg` | Banco de dados |
-| JWT + bcryptjs | Autenticação e autorização |
-| Nodemailer | E-mails de notificação e 2FA |
-| Tesseract.js + Sharp + pdf2pic | OCR de certificados |
-| Groq SDK | Insights via LLM |
-| Multer | Upload de arquivos |
-| node-cron | Execução agendada do pipeline (todo dia às 3h) |
-| Python + psycopg2 | Scripts de análise e classificação de risco |
+| Runtime | Node.js 18+ |
+| Framework | Express 5 |
+| Banco | PostgreSQL 14+ via `pg` |
+| Auth | JWT + bcryptjs |
+| Upload | Multer |
+| OCR | Tesseract.js + Sharp + pdf2pic |
+| E-mail | Nodemailer |
+| IA | Groq SDK (LLM) |
+| Agendamento | node-cron |
+| Análise | Python 3.10+ com psycopg2 |
 
-### Frontend Web
-- HTML5 + CSS3 + JavaScript puro
-- Servido estaticamente pelo próprio Express
+**Mobile**
 
-### Mobile
-| Tecnologia | Uso |
+| | |
 |---|---|
-| React Native 0.81 | App mobile |
-| Expo SDK 54 | Build e desenvolvimento |
-| React Navigation 7 | Navegação entre telas |
-| Axios | Requisições à API |
-| expo-document-picker / expo-image-picker | Upload de arquivos |
-| TypeScript | Tipagem estática |
+| Framework | React Native 0.81 |
+| Build | Expo SDK 54 |
+| Navegação | React Navigation 7 |
+| HTTP | Axios |
+| Linguagem | TypeScript |
 
 ---
 
-## Como rodar
-
-### Pré-requisitos
-- Node.js 18+
-- Python 3.10+
-- PostgreSQL 14+
-
-### 1. Banco de dados
+## Configuração
 
 Crie o banco de dados:
+
 ```sql
-CREATE DATABASE atividades_complementares;
+CREATE DATABASE atividades_complementares_senac;
 ```
 
-### 2. Backend
+Crie `.env` na raiz do projeto com base nas variáveis abaixo:
+
+```env
+PORT=
+DB_HOST=
+DB_PORT=
+DB_NAME=
+DB_USER=
+DB_PASSWORD=
+JWT_SECRET=
+MAIL_USER=
+MAIL_PASS=
+GROQ_API_KEY=
+```
+
+---
+
+## Rodando o projeto
+
+**Backend**
 
 ```bash
 cd sistema-horas-complementares/backend
 npm install
+npm run dev        # nodemon
+npm start          # produção
 ```
 
-Crie o arquivo `.env` e então:
+O servidor sobe na porta definida em `PORT` (padrão `3001`). O frontend é servido automaticamente em `/`.
 
-```bash
-# desenvolvimento
-npm run dev
-
-# produção
-npm start
-```
-
-O servidor sobe em `http://localhost:3001`.
-
-### 3. Frontend Web
-
-O frontend é servido automaticamente pelo backend — basta acessar `http://localhost:3001` no navegador.
-
-### 4. App Mobile
+**Mobile**
 
 ```bash
 cd mobile
 npm install
 ```
 
-Configure o arquivo `mobile/.env`:
+Configure `mobile/.env`:
+
 ```env
-EXPO_PUBLIC_API_URL=http://<seu-ip-local>:3001
+EXPO_PUBLIC_API_URL=http://<seu-ip-local>:<porta>
 ```
 
 ```bash
 npx expo start
 ```
 
-Escaneie o QR Code com o aplicativo **Expo Go** (Android/iOS).
+Escaneie o QR Code com o **Expo Go**.
 
 ---
 
-## Variáveis de Ambiente
+## API
 
-Crie um `.env` na raiz do backend com as seguintes variáveis:
+Todas as rotas protegidas exigem `Authorization: Bearer <token>`.
 
-```env
-# Servidor
-PORT=3001
+O middleware valida o JWT e checa se o perfil do usuário está na lista de permissões da rota — um usuário pode ter múltiplos perfis simultaneamente.
 
-# Banco de dados
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=atividades_complementares_senac
-DB_USER=postgres
-DB_PASSWORD=sua_senha
-
-# Autenticação
-JWT_SECRET=sua_chave_jwt_secreta
-
-# E-mail (Nodemailer)
-MAIL_USER=seu@email.com
-MAIL_PASS=sua_senha_de_app
-
-# IA (Groq)
-GROQ_API_KEY=sua_chave_groq
-```
+**Perfis:** `student` · `coordinator` · `super_admin`
 
 ---
 
-## Rotas da API
+### `/auth`
 
-### Auth — `/auth`
 | Método | Rota | Descrição |
 |---|---|---|
-| POST | `/auth/login` | Login com e-mail e senha |
-| POST | `/auth/primeiro-acesso` | Primeiro acesso / redefinir senha |
-
-### Aluno — `/aluno`
-| Método | Rota | Descrição |
-|---|---|---|
-| POST | `/aluno/submissao` | Submeter atividade com certificados |
-| PUT | `/aluno/submissao/:id` | Editar submissão |
-| DELETE | `/aluno/submissao/:id` | Deletar submissão |
-| GET | `/aluno/submissoes` | Listar minhas submissões |
-| GET | `/aluno/resumo-horas` | Resumo de horas por categoria |
-| GET | `/aluno/meus-dados` | Dados do perfil |
-| GET | `/aluno/notificacoes` | Listar notificações |
-| POST | `/aluno/notificacoes/ler-todas` | Marcar todas como lidas |
-
-### Coordenador — `/coordenador`
-Rotas protegidas para análise, aprovação/reprovação de submissões e relatórios do curso.
-
-### Admin (Super Admin) — `/admin`
-Rotas para gestão de cursos, coordenadores, alunos e execução do pipeline de IA.
-
-### Dashboard — `/dashboard`
-Métricas consolidadas para os painéis de cada perfil.
-
-### Upload — `/upload`
-Upload e recuperação de arquivos de certificados.
+| POST | `/auth/login` | Autenticação |
+| POST | `/auth/primeiro-acesso` | Definição de senha no primeiro acesso |
 
 ---
 
-## Pipeline de Análise (Python)
+### `/aluno`
 
-Os scripts em `backend/src/scripts/` executam análises periódicas no banco:
+| Método | Rota | Perfis | Descrição |
+|---|---|---|---|
+| POST | `/aluno/submissao` | student, coordinator | Nova submissão (até 10 arquivos) |
+| PUT | `/aluno/submissao/:id` | student, coordinator | Editar submissão |
+| DELETE | `/aluno/submissao/:id` | student | Deletar submissão |
+| GET | `/aluno/submissoes` | student, coordinator | Listar submissões do usuário |
+| GET | `/aluno/resumo-horas` | student, coordinator | Horas por categoria |
+| GET | `/aluno/meus-dados` | student, coordinator | Dados do perfil |
+| GET | `/aluno/cursos` | student, coordinator | Cursos disponíveis |
+| GET | `/aluno/notificacoes` | student, coordinator | Notificações |
+| POST | `/aluno/notificacoes/ler-todas` | student, coordinator | Marcar todas como lidas |
+| GET | `/aluno/extrato-print` | — | Extrato imprimível |
+| POST | `/aluno/submissao/:id/arquivo` | student, coordinator | Anexar arquivo adicional |
+| GET | `/aluno/submissao/:id/arquivo` | student, coordinator | Recuperar arquivo |
 
-| Script | Função |
+---
+
+### `/coordenador`
+
+Rotas de análise e aprovação de submissões restritas ao escopo do próprio curso do coordenador.
+
+---
+
+### `/admin`
+
+| Método | Rota | Perfis | Descrição |
+|---|---|---|---|
+| GET/POST | `/admin/cursos` `/admin/curso` | super_admin | Listar / criar curso |
+| PUT/DELETE | `/admin/curso/:id` | super_admin | Atualizar / deletar curso |
+| GET | `/admin/curso/:id/coordenador` | super_admin | Coordenador do curso |
+| GET | `/admin/submissoes` | super_admin | Todas as submissões |
+| GET/POST | `/admin/coordenadores` `/admin/coordenador` | super_admin | Listar / cadastrar coordenador |
+| PUT/DELETE | `/admin/coordenador/:id` | super_admin | Atualizar / deletar coordenador |
+| GET | `/admin/alunos` | super_admin, coordinator | Listar alunos |
+| GET | `/admin/limites-cursos` | super_admin | Limites de horas por curso |
+| GET | `/admin/logs` | super_admin | Logs do sistema |
+| GET | `/admin/exportar-relatorio` | super_admin, coordinator | Exportar CSV |
+
+---
+
+### `/dashboard` · `/upload`
+
+Métricas consolidadas por perfil e gerenciamento de arquivos de certificados.
+
+---
+
+## Pipeline de análise
+
+Scripts Python em `backend/src/scripts/` executados diariamente às **03:00** via `node-cron`, ou sob demanda pelo super admin.
+
+| Script | Responsabilidade |
 |---|---|
-| `executar_pipeline.py` | Orquestra todos os scripts abaixo |
+| `executar_pipeline.py` | Orquestrador — chama todos os demais em sequência |
 | `classificacao_risco.py` | Classifica alunos por risco de não completar horas |
-| `gerar_insights_ia.py` | Gera insights com Groq LLM |
-| `gerar_insights_alunos.py` | Insights individuais por aluno |
+| `gerar_insights_ia.py` | Insights narrativos via Groq LLM |
+| `gerar_insights_alunos.py` | Análise individual por aluno |
 | `gerar_insights_categorias.py` | Análise por categoria de atividade |
 | `gerar_insights_cursos.py` | Análise por curso |
 | `gerar_recomendacoes.py` | Recomendações automáticas |
 | `calcular_tempo_medio.py` | Tempo médio de análise por coordenador |
 
-O pipeline roda automaticamente **todo dia às 3h** via `node-cron`, e também pode ser acionado manualmente pelo super admin.
+Resultados são persistidos diretamente no PostgreSQL (tabelas `classificacao_risco`, `insights`, `recomendacoes`).
 
 ---
 
-## Telas do App Mobile
+## Mobile
 
-| Tela | Descrição |
-|---|---|
-| Welcome | Tela inicial com logo Senac |
-| Login | Autenticação com e-mail e senha |
-| ForgotPassword | Recuperação de senha |
-| FirstAccess | Fluxo de primeiro acesso |
-| SelectCourse | Seleção do curso ativo |
-| Dashboard | Painel principal com resumo de horas |
-| SubmitHours | Formulário de nova submissão |
-| SubmitDocument | Upload de certificados |
-| SubmitSuccess | Confirmação de envio |
-| HoursList | Lista de submissões com filtros |
-| HourDetail | Detalhes de uma submissão |
-| Notifications | Central de notificações |
-| Profile | Perfil do aluno |
-
----
-
-## Perfis de Acesso
-
-| Perfil | Acesso |
-|---|---|
-| `student` | Submissões, resumo de horas, notificações |
-| `coordinator` | Análise de submissões do próprio curso, relatórios |
-| `superadmin` | Gestão total, dashboard global, IA insights |
-
----
-
-## Estrutura de Pastas (Backend)
+**Fluxo de navegação**
 
 ```
-backend/
-└── src/
-    ├── config/
-    │   └── database.js          # Conexão com o PostgreSQL
-    ├── controllers/
-    │   ├── alunoController.js
-    │   ├── coordenadorController.js
-    │   ├── adminController.js
-    │   ├── authController.js
-    │   ├── dashboardController.js
-    │   ├── relatoriosController.js
-    │   └── uploadController.js
-    ├── middleware/
-    │   └── auth.js              # Validação de JWT e roles
-    ├── routes/
-    │   ├── authRoutes.js
-    │   ├── aluno.js
-    │   ├── coordenador.js
-    │   ├── admin.js
-    │   ├── dashboard.js
-    │   └── upload.js
-    ├── scripts/                 # Pipeline Python de análise
-    ├── services/
-    │   ├── emailService.js      # Nodemailer
-    │   └── ocrService.js        # Tesseract.js
-    ├── utils/
-    │   └── logger.js
-    └── server.js
+Welcome
+  └─ Login / ForgotPassword
+       └─ FirstAccess (primeiro login)
+       └─ SelectCourse
+            └─ Dashboard
+                 ├─ SubmitHours → SubmitDocument → SubmitSuccess
+                 ├─ HoursList → HourDetail
+                 ├─ Notifications
+                 └─ Profile
 ```
 
----
+**Status de submissão**
+
+`submitted` · `pendente` · `aprovado` · `rejeitado` · `returned_for_adjustment`
