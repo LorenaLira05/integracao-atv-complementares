@@ -13,6 +13,3 @@ node_modules/
 uploads/
 __pycache__/
 *.pyc
-.claude 
-.expo
-CLAUDE.md 

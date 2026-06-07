@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Primeiro Acesso</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/primeiro_acesso.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+</head>
+<body>
+    <div class="layout-wrapper">
+        <!-- Top Navbar -->
+        <header class="navbar-topo">
+            <div class="logo-titulo">PORTAL ACADÊMICO</div>
+            <div class="navbar-actions">
+                <button class="nav-btn" title="Idioma"><i class='bx bx-globe'></i></button>
+                <button class="nav-btn" title="Ajuda"><i class='bx bx-help-circle'></i></button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+            <div class="card-redefinir">
+                <!-- Circular Check Icon -->
+                <div class="success-icon-wrap">
+                    <div class="success-icon-circle">
+                        <i class='bx bx-check'></i>
+                    </div>
+                </div>
+
+                <span class="processo-tag">PROCESSO CONCLUÍDO</span>
+                <h1>Primeiro acesso</h1>
+                <p class="instrucoes">Este é o seu primeiro acesso. Por segurança, redefina sua senha. As senhas devem ser idênticas e conter no mínimo 6 caracteres.</p>
+
+                <!-- Redefine Form -->
+                <form id="form-redefinir" onsubmit="event.preventDefault(); submeterNovaSenha();">
+                    <!-- New Password Input -->
+                    <div class="inputbox">
+                        <label for="novaSenha">Nova senha</label>
+                        <div class="input-wrapper">
+                            <i class="bx bx-lock-alt icon-left"></i>
+                            <input type="password" id="novaSenha" placeholder="••••••••" required>
+                            <i class="bx bx-hide icon-right toggle-senha" onclick="toggleSenha('novaSenha', this)"></i>
+                        </div>
+                    </div>
+
+                    <!-- Confirm Password Input -->
+                    <div class="inputbox">
+                        <label for="confirmarSenha">Confirmar senha</label>
+                        <div class="input-wrapper">
+                            <i class="bx bx-lock-alt icon-left"></i>
+                            <input type="password" id="confirmarSenha" placeholder="••••••••" required>
+                            <i class="bx bx-hide icon-right toggle-senha" onclick="toggleSenha('confirmarSenha', this)"></i>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit" class="btn-submit">
+                        IR PARA TELA INICIAL <i class='bx bx-right-arrow-alt'></i>
+                    </button>
+                </form>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="rodape-legal">
+            <div class="footer-links">
+                <a href="#">PRIVACY POLICY</a>
+                <a href="#">TERMS OF SERVICE</a>
+                <a href="#">SUPPORT</a>
+            </div>
+            <p class="copyright">© 2026 SENAC ACADEMIC. ALL RIGHTS RESERVED.</p>
+        </footer>
+    </div>
+
+    <script>
+        // Check if user is logged in (has token)
+        const token = localStorage.getItem('token');
+        if (!token) {
+            window.location.href = '/pages/index.html';
+        }
+
+        // Toggle Password visibility
+        function toggleSenha(inputId, eyeIcon) {
+            const input = document.getElementById(inputId);
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeIcon.classList.replace('bx-hide', 'bx-show');
+            } else {
+                input.type = 'password';
+                eyeIcon.classList.replace('bx-show', 'bx-hide');
+            }
+        }
+
+        // Submit form
+        async function submeterNovaSenha() {
+            const novaSenha = document.getElementById('novaSenha').value;
+            const confirmarSenha = document.getElementById('confirmarSenha').value;
+
+            if (novaSenha.length < 6) {
+                alert('A senha deve conter no mínimo 6 caracteres.');
+                return;
+            }
+
+            if (novaSenha !== confirmarSenha) {
+                alert('As senhas não coincidem.');
+                return;
+            }
+
+            try {
+                // Call primeiro-acesso endpoint
+                const res = await fetch('/auth/primeiro-acesso', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ novaSenha })
+                });
+
+                const data = await res.json();
+                if (res.status !== 200 || data.erro) {
+                    alert(data.erro || 'Erro ao redefinir a senha.');
+                    return;
+                }
+
+                alert('Senha alterada com sucesso! Bem-vindo.');
+
+                // Redirect to the appropriate dashboard
+                const perfil = localStorage.getItem('perfil') || '';
+                const perfilUpper = perfil.toUpperCase();
+
+                if (perfilUpper === 'STUDENT' || perfilUpper === 'ALUNO') {
+                    window.location.href = '/pages/Dasboard.html';
+                } else if (perfilUpper === 'COORDINATOR' || perfilUpper === 'COORDENADOR') {
+                    window.location.href = '/pages/dashboardadm.html';
+                } else if (perfilUpper === 'ADMIN' || perfilUpper === 'SUPER_ADMIN') {
+                    window.location.href = '/pages/cursosuperadm.html';
+                } else {
+                    window.location.href = '/pages/index.html';
+                }
+
+            } catch (err) {
+                console.error(err);
+                alert('Erro de conexão com o servidor.');
+            }
+        }
+    </script>
+</body>
+</html>

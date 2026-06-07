@@ -1,0 +1,21 @@
+const express = require('express');
+const router = express.Router();
+const authMiddleware = require('../middleware/auth');
+const adminController = require('../controllers/adminController');
+
+router.get('/cursos', authMiddleware(['super_admin']), adminController.getListaCursos);
+router.post('/curso', authMiddleware(['super_admin']), adminController.postCriarCurso);
+router.put('/curso/:id', authMiddleware(['super_admin']), adminController.putAtualizarCurso);
+router.delete('/curso/:id', authMiddleware(['super_admin']), adminController.deleteCurso);
+router.get('/curso/:course_id/coordenador', authMiddleware(['super_admin']), adminController.getCoordenadorPorCurso);
+router.get('/submissoes', authMiddleware(['super_admin']), adminController.getSubmissoesGeral);
+router.get('/coordenadores', authMiddleware(['super_admin']), adminController.getListaCoordenadores);
+router.post('/coordenador', authMiddleware(['super_admin']), adminController.postCadastrarCoordenador);
+router.put('/coordenador/:id', authMiddleware(['super_admin']), adminController.putAtualizarCoordenador);
+router.delete('/coordenador/:id', authMiddleware(['super_admin']), adminController.deleteCoordenador);
+router.get('/alunos', authMiddleware(['super_admin', 'coordinator']), adminController.getListaAlunos);
+router.get('/limites-cursos', authMiddleware(['super_admin']), adminController.getLimitesCursos);
+router.get('/logs', authMiddleware(['super_admin']), adminController.getLogs);
+router.get('/exportar-relatorio', authMiddleware(['super_admin', 'coordinator']), adminController.getExportarRelatorio);
+
+module.exports = router;

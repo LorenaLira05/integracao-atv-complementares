@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Gestão de Cursos</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/cursosuperadm.css">
+    <script src="/services/apiHelper.js"></script>
+    <script src="/services/script.js"></script>
+    <style>
+        @keyframes spin-refresh {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .spin-animation-infinite {
+            animation: spin-refresh 1s linear infinite;
+            display: inline-block;
+        }
+    </style>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['SUPER_ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+            </nav>
+
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=S+A&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Super Admin</strong>
+                        <small id="sidebar-role-global">SUPER ADMIN</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout==='function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Header -->
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Super Administrador</span>
+                </div>
+                <button class="btn-back" onclick="window.history.back()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                    <i class='bx bx-arrow-back'></i> VOLTAR
+                </button>
+            </header>
+
+            <div class="page-container">
+
+                <!-- Title & Action -->
+                <div class="header-action-row">
+                    <div class="page-title">
+                        <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>cursos</span></div>
+                        <h1>Gestão de Cursos <span>(Super Adm)</span></h1>
+                        <p>Administração global de cursos, matrizes curriculares e carga horária acadêmica.</p>
+                    </div>
+                    <button class="btn-primary" onclick="window.location.href='criar_curso.html'">
+                        <i class='bx bx-plus-circle'></i> Criar Novo Curso
+                    </button>
+                </div>
+
+                <!-- KPIs -->
+                <div class="kpis-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-badge" id="kpi-badge-mes">+4 ESTE MÊS</div>
+                        <div class="kpi-icon kpi-icon-blue"><i class='bx bx-book'></i></div>
+                        <div class="kpi-title">Total de Cursos</div>
+                        <div class="kpi-value" id="kpi-total-cursos">124</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon kpi-icon-orange"><i class='bx bx-user-voice'></i></div>
+                        <div class="kpi-title">Coordenadores Ativos</div>
+                        <div class="kpi-value" id="kpi-coord-ativos">48</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon kpi-icon-orange"><i class='bx bx-time-five'></i></div>
+                        <div class="kpi-title">Aguardando Revisão</div>
+                        <div class="kpi-value" id="kpi-pendentes">12</div>
+                    </div>
+
+                    <div class="kpi-card">
+                        <div class="kpi-icon kpi-icon-blue"><i class='bx bx-group'></i></div>
+                        <div class="kpi-title">Alunos Matriculados</div>
+                        <div class="kpi-value" id="kpi-alunos">3.842</div>
+                    </div>
+                </div>
+
+                <!-- Table Area -->
+                <div class="table-container">
+
+                    <div class="table-header">
+                        <h2>Listagem de Cursos</h2>
+                        <div class="table-actions" style="display: flex; gap: 15px; align-items: center;">
+                            <div class="search-box-table" style="position: relative;">
+                                <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                                <input type="text" id="input-busca" placeholder="Buscar curso..." style="padding: 10px 10px 10px 35px; border: 1px solid var(--borda, #e2e8f0); border-radius: 8px; font-size: 13px; outline: none; width: 250px; color: var(--texto-base, #1e293b);">
+                            </div>
+                            <button class="btn-outline"><i class='bx bx-filter'></i> Filtrar</button>
+                            <button class="btn-outline" onclick="exportarGeralPDF()"><i class='bx bx-file'></i> Exportar PDF</button>
+                            <button class="btn-outline" onclick="exportarGeralCSV()"><i class='bx bx-download'></i> Exportar CSV</button>
+                        </div>
+                    </div>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>NOME DO CURSO</th>
+                                <th>COORDENADOR VINCULADO</th>
+                                <th>DATA DE CRIAÇÃO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Item 1 -->
+                            <tr>
+                                <td>
+                                    <div class="td-curso">
+                                        <div class="curso-sigla">ADS</div>
+                                        <div class="curso-info">
+                                            <strong>Análise e Desenvolvimento de Sistemas</strong>
+                                            <small>Bacharelado • 8 semestres</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="td-coordenador">
+                                        <div class="coord-avatar">M</div>
+                                        <span>Dr. Marcos Oliveira</span>
+                                    </div>
+                                </td>
+                                <td class="td-data">12 Jan,<br>2023</td>
+                                <td><span class="status-pill status-ativo">Ativo</span></td>
+                                <td>
+                                    <div class="td-acoes">
+                                        <i class='bx bx-pencil'></i>
+                                        <i class='bx bx-show'></i>
+                                        <i class='bx bx-archive'></i>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Item 2 -->
+                            <tr>
+                                <td>
+                                    <div class="td-curso">
+                                        <div class="curso-sigla sigla-amarela">ADM</div>
+                                        <div class="curso-info">
+                                            <strong>Gestão Comercial</strong>
+                                            <small>Tecnólogo • 4 semestres</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="td-coordenador">
+                                        <div class="coord-avatar">H</div>
+                                        <span>Profa. Helena Souza</span>
+                                    </div>
+                                </td>
+                                <td class="td-data">05 Mar,<br>2023</td>
+                                <td><span class="status-pill status-ativo">Ativo</span></td>
+                                <td>
+                                    <div class="td-acoes">
+                                        <i class='bx bx-pencil'></i>
+                                        <i class='bx bx-show'></i>
+                                        <i class='bx bx-archive'></i>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Item 3 -->
+                            <tr>
+                                <td>
+                                    <div class="td-curso">
+                                        <div class="curso-sigla">DSG</div>
+                                        <div class="curso-info">
+                                            <strong>Design de Experiência (UX)</strong>
+                                            <small>Especialização • 2 semestres</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="td-coordenador pendente">
+                                        <div class="coord-avatar">NA</div>
+                                        <span>Pendente vinculação</span>
+                                    </div>
+                                </td>
+                                <td class="td-data">28 Out,<br>2023</td>
+                                <td><span class="status-pill status-rascunho">Rascunho</span></td>
+                                <td>
+                                    <div class="td-acoes">
+                                        <i class='bx bx-pencil'></i>
+                                        <i class='bx bx-show'></i>
+                                        <i class='bx bx-archive'></i>
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Item 4 -->
+                            <tr>
+                                <td>
+                                    <div class="td-curso">
+                                        <div class="curso-sigla sigla-cinza">ENG</div>
+                                        <div class="curso-info">
+                                            <strong>Engenharia de Software</strong>
+                                            <small>Bacharelado • 10 semestres</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="td-coordenador">
+                                        <div class="coord-avatar">R</div>
+                                        <span>Dr. Ricardo Santos</span>
+                                    </div>
+                                </td>
+                                <td class="td-data">15 Nov,<br>2022</td>
+                                <td><span class="status-pill status-inativo">Inativo</span></td>
+                                <td>
+                                    <div class="td-acoes">
+                                        <i class='bx bx-pencil'></i>
+                                        <i class='bx bx-show'></i>
+                                        <i class='bx bx-archive'></i>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    <div class="pagination-row">
+                        <div class="pagination-info">
+                            Mostrando 1-4 de 124 cursos
+                        </div>
+                        <div class="pagination-controls">
+                            <button class="page-btn arrow"><i class='bx bx-chevron-left'></i></button>
+                            <button class="page-btn active">1</button>
+                            <button class="page-btn">2</button>
+                            <button class="page-btn">3</button>
+                            <span class="page-btn arrow">...</span>
+                            <button class="page-btn">31</button>
+                            <button class="page-btn arrow"><i class='bx bx-chevron-right'></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Modules -->
+                <div class="bottom-modules">
+
+                    <!-- Relatórios Rápidos -->
+                    <div class="module-relatorios">
+                        <h3>Relatórios Rápidos</h3>
+                        <p>Acesse métricas avançadas de desempenho por curso e taxa de evasão semestral.</p>
+                        <button class="btn-white" onclick="gerarRelatorioRapido(event)">GERAR AGORA</button>
+                    </div>
+
+                    <!-- Suporte Administrativo -->
+                    <div class="module-suporte">
+                        <h3>Suporte Administrativo</h3>
+                        <p>Precisa de ajuda com a estrutura curricular ou migração de dados?</p>
+                        <div class="suporte-action">
+                            <div class="avatar-group">
+                                <div class="av"></div>
+                                <div class="av"></div>
+                                <div class="av"></div>
+                            </div>
+                            <span class="link-ti">Falar com a TI</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+            <footer class="rodape-dashboard" style="text-align: center;">
+                <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const currentPage = window.location.pathname.split('/').pop() || 'cursosuperadm.html';
+            const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+            links.forEach(link => {
+                if (link.getAttribute('href') === currentPage) {
+                    link.classList.add('active');
+                } else {
+                    link.classList.remove('active');
+                }
+            });
+
+            // Profile info from localStorage
+            const nome = localStorage.getItem('nome');
+            const perfil = localStorage.getItem('perfil');
+
+            if (nome) {
+                const sideNome = document.getElementById('sidebar-nome-global');
+                if (sideNome) sideNome.textContent = nome;
+                const sideAvatar = document.getElementById('sidebar-avatar-global');
+                if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+            }
+
+            if (perfil) {
+                const labelMap = { 'super_admin': 'SUPER ADMIN', 'admin': 'SUPER ADMIN', 'coordinator': 'COORDENADOR', 'student': 'ALUNO' };
+                const label = labelMap[perfil.toLowerCase()] || perfil.toUpperCase();
+                const sideRole = document.getElementById('sidebar-role-global');
+                if (sideRole) sideRole.textContent = label;
+            }
+
+            // Fetch data
+            try {
+                const [cursosResponse, coordResponse] = await Promise.all([
+                    apiGet('/admin/cursos'),
+                    apiGet('/admin/coordenadores')
+                ]);
+
+                const cursos = Array.isArray(cursosResponse) ? cursosResponse : [];
+                const coordenadores = Array.isArray(coordResponse) ? coordResponse : [];
+                window.cursos = cursos; // Para exportarGeralCSV
+                window.todosCursos = cursos; // Para exportarCSV_Curso
+
+                // Update KPIs
+                document.getElementById('kpi-total-cursos').textContent = cursos.length;
+                document.getElementById('kpi-coord-ativos').textContent = coordenadores.length;
+
+                // Alunos: soma os alunos de todos os cursos
+                apiGet('/admin/alunos').then(alunosResp => {
+                    const total = Array.isArray(alunosResp) ? alunosResp.length : 0;
+                    const el = document.getElementById('kpi-alunos');
+                    if (el) el.textContent = total.toLocaleString('pt-BR');
+                }).catch(() => {
+                    const el = document.getElementById('kpi-alunos');
+                    if (el) el.textContent = '—';
+                });
+
+                // Submissões pendentes
+                apiGet('/admin/submissoes').then(resp => {
+                    const pendentes = resp?.contadores?.pendentes || 0;
+                    const el = document.getElementById('kpi-pendentes');
+                    if (el) el.textContent = pendentes;
+                }).catch(() => {
+                    const el = document.getElementById('kpi-pendentes');
+                    if (el) el.textContent = '—';
+                });
+
+                // Render Table
+                let filtroStatus = 'todos';
+                let paginaAtual = 1;
+                const POR_PAGINA = 5;
+
+                window.renderTabela = () => {
+                    const tbody = document.querySelector('table tbody');
+                    if (!tbody) return;
+                    tbody.innerHTML = '';
+
+                    const busca = (document.getElementById('input-busca')?.value || '').toLowerCase();
+                    let lista = busca
+                        ? cursos.filter(c =>
+                            c.name.toLowerCase().includes(busca) ||
+                            (c.code || '').toLowerCase().includes(busca)
+                        )
+                        : cursos;
+
+                    if (filtroStatus === 'ativos') {
+                        lista = lista.filter(c => c.is_active !== false);
+                    } else if (filtroStatus === 'inativos') {
+                        lista = lista.filter(c => c.is_active === false);
+                    }
+
+                    // Paginação
+                    const total = lista.length;
+                    const totalPaginas = Math.ceil(total / POR_PAGINA) || 1;
+                    if (paginaAtual > totalPaginas) paginaAtual = 1;
+
+                    const inicio = (paginaAtual - 1) * POR_PAGINA;
+                    const paginados = lista.slice(inicio, inicio + POR_PAGINA);
+
+                    if (paginados.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px;">Nenhum curso encontrado.</td></tr>';
+                        
+                        const paginationInfo = document.querySelector('.pagination-info');
+                        if (paginationInfo) paginationInfo.innerHTML = 'Nenhum curso encontrado';
+                        const paginationControls = document.querySelector('.pagination-controls');
+                        if (paginationControls) paginationControls.innerHTML = '';
+                        return;
+                    }
+
+                    paginados.forEach(curso => {
+                        const coord = coordenadores.find(c => c.course_ids && c.course_ids.includes(curso.id));
+                        let dataCriacao = 'N/D';
+                        if (curso.created_at) {
+                            const d = new Date(curso.created_at);
+                            const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                            dataCriacao = `${d.getDate().toString().padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
+                        }
+                        const sigla = curso.code ? curso.code.substring(0, 3).toUpperCase() : (curso.name.substring(0, 3).toUpperCase());
+
+                        // Determinar classe da sigla baseado no nome (apenas para exemplo visual como na imagem)
+                        let siglaClass = '';
+                        if (sigla === 'ADM') siglaClass = 'sigla-amarela';
+                        if (sigla === 'ENG') siglaClass = 'sigla-cinza';
+
+                        const isAtivo = curso.is_active !== false;
+                        const statusClass = isAtivo ? 'status-ativo' : 'status-inativo';
+                        const statusText = isAtivo ? 'Ativo' : 'Inativo';
+
+                        let coordHtml = `
+                            <div class="td-coordenador pendente">
+                                <div class="coord-avatar">NA</div>
+                                <span>Pendente vinculação</span>
+                            </div>
+                        `;
+
+                        if (coord) {
+                            const initial = coord.full_name ? coord.full_name.charAt(0).toUpperCase() : 'C';
+                            coordHtml = `
+                                <div class="td-coordenador">
+                                    <div class="coord-avatar">${initial}</div>
+                                    <span>${coord.full_name}</span>
+                                </div>
+                            `;
+                        }
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td>
+                                <div class="td-curso">
+                                    <div class="curso-sigla ${siglaClass}">${sigla}</div>
+                                    <div class="curso-info">
+                                        <strong>${curso.name}</strong>
+                                        <small>${curso.modalidade || 'Bacharelado'} • ${curso.semestres || 8} semestres</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>${coordHtml}</td>
+                            <td class="td-data">${dataCriacao}</td>
+                            <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+                            <td>
+                                <div class="td-acoes">
+                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;"><i class='bx bx-pencil' title="Editar"></i></a>
+                                    <a href="editar_curso.html?id=${curso.id}" style="color:inherit;"><i class='bx bx-show' title="Visualizar"></i></a>
+                                    <i class='bx bx-archive' title="Arquivar" onclick="deletarCurso(${curso.id}, '${curso.name}')"></i>
+                                </div>
+                            </td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+
+                    // Update pagination text
+                    const paginationInfo = document.querySelector('.pagination-info');
+                    const paginationControls = document.querySelector('.pagination-controls');
+
+                    if (paginationInfo) {
+                        const inicioExibido = inicio + 1;
+                        const fimExibido = Math.min(inicio + POR_PAGINA, total);
+                        paginationInfo.innerHTML = `Mostrando <strong>${inicioExibido}-${fimExibido}</strong> de <strong>${total}</strong> cursos`;
+                    }
+
+                    if (paginationControls) {
+                        let htmlControles = `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}><i class='bx bx-chevron-left'></i></button>`;
+
+                        for (let i = 1; i <= totalPaginas; i++) {
+                            htmlControles += `<button class="page-btn ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
+                        }
+
+                        htmlControles += `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}><i class='bx bx-chevron-right'></i></button>`;
+
+                        paginationControls.innerHTML = htmlControles;
+                    }
+                };
+
+                window.mudarPagina = (n) => {
+                    paginaAtual = n;
+                    renderTabela();
+                };
+
+                // Função Deletar
+                window.deletarCurso = async (id, nome) => {
+                    if (!confirm(`Tem certeza que deseja excluir o curso "${nome}"? Esta ação não pode ser desfeita.`)) return;
+                    try {
+                        await apiDelete(`/admin/curso/${id}`);
+                        alert('Curso excluído com sucesso!');
+                        location.reload();
+                    } catch (err) {
+                        alert('Erro ao excluir curso: ' + err.message);
+                    }
+                };
+
+                // Inicial
+                renderTabela();
+
+                // Listener de busca
+                let debounce;
+                document.getElementById('input-busca')?.addEventListener('input', () => {
+                    clearTimeout(debounce);
+                    debounce = setTimeout(() => {
+                        paginaAtual = 1;
+                        renderTabela();
+                    }, 250);
+                });
+
+                // Listener de Filtro
+                const btnFiltrar = document.querySelector('.btn-outline'); // O primeiro é o Filtrar
+                btnFiltrar?.addEventListener('click', () => {
+                    if (filtroStatus === 'todos') filtroStatus = 'ativos';
+                    else if (filtroStatus === 'ativos') filtroStatus = 'inativos';
+                    else filtroStatus = 'todos';
+
+                    const labelMap = { 'todos': 'Filtrar', 'ativos': 'Ativos', 'inativos': 'Inativos' };
+                    btnFiltrar.innerHTML = `<i class='bx bx-filter'></i> ${labelMap[filtroStatus]}`;
+                    paginaAtual = 1;
+                    renderTabela();
+                });
+
+            } catch (err) {
+                console.error("Erro ao carregar dados:", err);
+                const tbody = document.querySelector('table tbody');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 20px; color: red;">Erro ao carregar dados.</td></tr>';
+                }
+            }
+        });
+
+        function exportarCSV_Curso(id) {
+            const curso = todosCursos.find(c => String(c.id) === String(id));
+            if (!curso) return;
+
+            const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
+            const linhaArr = [
+                curso.id,
+                curso.name,
+                curso.code || '',
+                curso.minimum_required_hours || 0,
+                curso.semestres || '',
+                curso.modalidade || '',
+                curso.turno || '',
+                curso.is_active ? 'Ativo' : 'Inativo'
+            ];
+
+            exportarDadosParaCSV(`curso_${curso.name.replace(/\\s+/g, '_')}`, cabecalho, [linhaArr]);
+        }
+
+        function getDadosExportacaoCursos() {
+            if (typeof cursos === 'undefined' || cursos.length === 0) return null;
+            const cabecalho = ['ID', 'Nome', 'Sigla', 'Carga Horaria', 'Semestres', 'Modalidade', 'Turno', 'Status'];
+            const linhas = cursos.map(curso => [
+                curso.id,
+                curso.name,
+                curso.code || '',
+                curso.minimum_required_hours || 0,
+                curso.semestres || '',
+                curso.modalidade || '',
+                curso.turno || '',
+                curso.is_active ? 'Ativo' : 'Inativo'
+            ]);
+            return { cabecalho, linhas };
+        }
+
+        function exportarGeralCSV() {
+            const dados = getDadosExportacaoCursos();
+            if (dados) {
+                exportarDadosParaCSV(`lista_cursos_${new Date().toISOString().slice(0, 10)}`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhum curso para exportar.");
+            }
+        }
+
+        async function exportarGeralPDF() {
+            const dados = getDadosExportacaoCursos();
+            if (dados) {
+                await exportarDadosParaPDF(`lista_cursos_${new Date().toISOString().slice(0, 10)}`, 'Listagem de Cursos', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhum curso para exportar.");
+            }
+        }
+
+        async function gerarRelatorioRapido(event) {
+            if (event) event.preventDefault();
+            const btn = event.currentTarget || document.querySelector('.module-relatorios button');
+            const originalText = btn.innerHTML;
+            
+            btn.innerHTML = `<i class='bx bx-loader-alt spin-animation-infinite'></i> GERANDO...`;
+            btn.style.pointerEvents = 'none';
+            btn.style.opacity = '0.7';
+
+            try {
+                // Como não há endpoint específico de resumo, exportamos os dados gerais em CSV
+                exportarGeralCSV();
+            } catch (err) {
+                console.error(err);
+                alert('Erro ao exportar o relatório rápido: ' + err.message);
+            } finally {
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+
+</html>

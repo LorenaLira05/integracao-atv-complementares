@@ -1,0 +1,1059 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Submissões (Super Admin)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link rel="stylesheet" href="/styles/submissoes_superadmin.css">
+    <!-- Apenas script.js — já contém apiGet, protegerPagina, logout -->
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+
+    <!-- Guard: somente SUPER_ADMIN -->
+    <script>
+        protegerPagina(['SUPER_ADMIN', 'ADMIN']);
+    </script>
+
+    <div class="layout-geral">
+
+        <!-- Sidebar Unificada (menu preenchido dinamicamente pelo script.js) -->
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao">
+                <a href="cursosuperadm.html" class="link-menu"><i class='bx bx-book'></i> Cursos</a>
+                <a href="coordenadores.html" class="link-menu"><i class='bx bx-user-voice'></i> Coordenadores</a>
+                <a href="submissoes_superadmin.html" class="link-menu"><i class='bx bx-check-square'></i> Submissões</a>
+            </nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Super Admin</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout==='function') logout(); else window.location.href='index.html';">
+                    <i class='bx bx-log-out'></i> Sair
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="conteudo-principal">
+
+            <!-- Top Header -->
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Super Administrador</span>
+                </div>
+                <button class="btn-back" onclick="window.history.back()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                    <i class='bx bx-arrow-back'></i> VOLTAR
+                </button>
+            </header>
+
+            <div class="page-container">
+
+                <!-- Title & Actions -->
+                <div class="header-action-row">
+                    <div class="page-title">
+                        <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>submissões</span></div>
+                        <h1>Listagem de Submissões</h1>
+                        <p>Gestão de horas complementares e atividades extracurriculares.</p>
+                    </div>
+                    <div class="action-buttons">
+                        <button class="btn-export" id="btn-exportar-pdf" onclick="exportarListaPDF()">
+                            <i class='bx bx-file'></i> PDF
+                        </button>
+                        <button class="btn-export" id="btn-exportar-csv" onclick="exportarListaCSV()">
+                            <i class='bx bx-download'></i> CSV
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPIs -->
+                <div class="kpis-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-blue"><i class='bx bx-file'></i></div>
+                        <div class="kpi-title">PENDENTES</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-pendentes">--</div>
+                            <div class="kpi-sub sub-orange" id="kpi-pendentes-sub">aguardando</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-green"><i class='bx bx-check-circle'></i></div>
+                        <div class="kpi-title">APROVADAS</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-aprovadas">--</div>
+                            <div class="kpi-sub sub-green">Este mês</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-red"><i class='bx bx-x-circle'></i></div>
+                        <div class="kpi-title">REPROVADAS</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-reprovadas">--</div>
+                            <div class="kpi-sub sub-gray" id="kpi-reprovadas-pct">do total</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon-wrap icon-orange"><i class='bx bx-time-five'></i></div>
+                        <div class="kpi-title">TOTAL DE ENVIOS</div>
+                        <div class="kpi-val-row">
+                            <div class="kpi-value" id="kpi-total">--</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table Area -->
+                <div class="table-container">
+
+                    <!-- Filters -->
+                    <div class="filters-row">
+                        <div class="tabs-filter">
+                            <span>Filtros:</span>
+                            <button class="active" data-filter="submitted" id="btn-filter-pendentes">Pendentes</button>
+                            <button data-filter="approved">Aprovadas</button>
+                            <button data-filter="rejected">Reprovadas</button>
+                            <button data-filter="all">Todas</button>
+                        </div>
+                        <div class="search-box-table">
+                            <i class='bx bx-search'></i>
+                            <input type="text" id="input-busca" placeholder="Buscar por aluno ou RA...">
+                        </div>
+                        <div class="selects-filter">
+                            <select id="filtro-curso">
+                                <option value="">Todos os Cursos</option>
+                            </select>
+                            <select id="filtro-ordem">
+                                <option value="desc">Mais recentes</option>
+                                <option value="asc">Mais antigas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Data Table -->
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ALUNO</th>
+                                <th style="width:80px;">PERÍODO</th>
+                                <th>ATIVIDADE</th>
+                                <th>HORAS</th>
+                                <th>DATA DE ENVIO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-submissoes">
+                            <!-- Skeleton loading -->
+                            <tr class="skeleton-row">
+                                <td colspan="7">
+                                    <div
+                                        style="height:48px;background:#e2e8f0;border-radius:8px;animation:pulse 1.5s infinite;">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="skeleton-row">
+                                <td colspan="7">
+                                    <div
+                                        style="height:48px;background:#e2e8f0;border-radius:8px;animation:pulse 1.5s infinite 0.2s;">
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr class="skeleton-row">
+                                <td colspan="7">
+                                    <div
+                                        style="height:48px;background:#e2e8f0;border-radius:8px;animation:pulse 1.5s infinite 0.4s;">
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <!-- Pagination -->
+                    <div class="pagination-row">
+                        <div class="pagination-info" id="paginacao-info">
+                            Carregando...
+                        </div>
+                        <div class="pagination-controls" id="paginacao-controles">
+                            <!-- preenchido via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Banner -->
+                <div class="bottom-banner">
+                    <div class="banner-bg-shape"></div>
+                    <div class="banner-content">
+                        <span class="banner-tag">DICA DE PRODUTIVIDADE</span>
+                        <h3>Análise em Lote</h3>
+                        <p>Use os filtros de status para localizar rapidamente submissões pendentes e agilizar o fluxo
+                            de análise durante períodos de alta demanda.</p>
+                        <button class="btn-white"
+                            onclick="document.querySelector('[data-filter=submitted]').click()">Ver Pendentes</button>
+                    </div>
+                    <div class="banner-shortcuts">
+                        <div class="shortcuts-title">Atalhos de Teclado</div>
+                        <div class="shortcut-item">
+                            <span>Filtrar pendentes</span>
+                            <span class="key-badge">Alt + P</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Buscar</span>
+                            <span class="key-badge">Alt + B</span>
+                        </div>
+                        <div class="shortcut-item">
+                            <span>Próxima página</span>
+                            <span class="key-badge">Alt + N</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+            
+        <footer class="rodape-dashboard" style="text-align: center;">
+            <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+        </footer>
+        </main>
+    </div>
+
+    <!-- Modal de Validação em Lote -->
+    <div id="modal-lote" class="modal-lote-overlay">
+        <div class="modal-lote-card">
+            <div class="modal-lote-header">
+                <h3 id="modal-lote-title">Aprovação em Lote</h3>
+                <button class="modal-lote-close" onclick="fecharModalLote()">&times;</button>
+            </div>
+            <div class="modal-lote-body">
+                <p id="modal-lote-text">Você está prestes a aprovar submissões em lote.</p>
+                <div class="modal-lote-textarea-wrap">
+                    <label for="modal-lote-comment" id="modal-lote-comment-label">Observação/Justificativa:</label>
+                    <textarea id="modal-lote-comment" placeholder="Digite uma observação..."></textarea>
+                </div>
+            </div>
+            <div class="modal-lote-footer">
+                <button class="btn-modal-cancel" onclick="fecharModalLote()">Cancelar</button>
+                <button class="btn-modal-confirm" id="btn-modal-lote-confirm" onclick="confirmarAcaoLote()">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* === FLOATING BANNER LOTE === */
+        .floating-banner-lote {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #002b5e;
+            color: white;
+            padding: 15px 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 40px;
+            z-index: 9999;
+            transition: all 0.3s ease;
+            opacity: 0;
+            pointer-events: none;
+            width: 90%;
+            max-width: 800px;
+        }
+        .floating-banner-lote.show {
+            bottom: 30px;
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .lote-info-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .lote-count-badge {
+            background: #f6821f;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 800;
+        }
+        .lote-actions-btns {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-lote-acao {
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: 0.2s;
+        }
+        .btn-lote-aprovar {
+            background: #10b981;
+            color: white;
+        }
+        .btn-lote-aprovar:hover {
+            background: #059669;
+        }
+        .btn-lote-reprovar {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-lote-reprovar:hover {
+            background: #dc2626;
+        }
+        .btn-lote-cancelar {
+            background: transparent;
+            color: #94a3b8;
+            border: 1px solid #475569;
+        }
+        .btn-lote-cancelar:hover {
+            color: white;
+            border-color: white;
+        }
+
+        /* === CUSTOM CHECKBOXES === */
+        input[type="checkbox"].check-submissao,
+        input[type="checkbox"]#check-all-submissoes {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #cbd5e1;
+            border-radius: 4px;
+            outline: none;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            background: white;
+            position: relative;
+        }
+        input[type="checkbox"].check-submissao:hover:not(:disabled),
+        input[type="checkbox"]#check-all-submissoes:hover {
+            border-color: #f6821f;
+        }
+        input[type="checkbox"].check-submissao:checked,
+        input[type="checkbox"]#check-all-submissoes:checked {
+            background: #f6821f;
+            border-color: #f6821f;
+        }
+        input[type="checkbox"].check-submissao:checked::before,
+        input[type="checkbox"]#check-all-submissoes:checked::before {
+            content: '\2714';
+            color: white;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        input[type="checkbox"].check-submissao:disabled {
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        /* === CUSTOM MODAL === */
+        .modal-lote-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .modal-lote-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-lote-card {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            transform: scale(0.95);
+            transition: transform 0.2s ease;
+        }
+        .modal-lote-overlay.show .modal-lote-card {
+            transform: scale(1);
+        }
+        .modal-lote-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-lote-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #002b5e;
+            margin: 0;
+        }
+        .modal-lote-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .modal-lote-close:hover {
+            color: #64748b;
+        }
+        .modal-lote-body {
+            padding: 24px;
+        }
+        .modal-lote-body p {
+            font-size: 14px;
+            color: #475569;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+        .modal-lote-textarea-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .modal-lote-textarea-wrap label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #334155;
+        }
+        .modal-lote-textarea-wrap textarea {
+            width: 100%;
+            height: 100px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            outline: none;
+            font-size: 13px;
+            resize: none;
+            transition: border-color 0.2s;
+        }
+        .modal-lote-textarea-wrap textarea:focus {
+            border-color: #f6821f;
+        }
+        .modal-lote-footer {
+            padding: 16px 24px;
+            background: #f8fafc;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        .btn-modal-cancel {
+            background: white;
+            border: 1px solid #cbd5e1;
+            color: #475569;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal-cancel:hover {
+            background: #f1f5f9;
+        }
+        .btn-modal-confirm {
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-modal-confirm.btn-aprovar {
+            background: #10b981;
+        }
+        .btn-modal-confirm.btn-aprovar:hover {
+            background: #059669;
+        }
+        .btn-modal-confirm.btn-reprovar {
+            background: #ef4444;
+        }
+        .btn-modal-confirm.btn-reprovar:hover {
+            background: #dc2626;
+        }
+    </style>
+
+    <script>
+        // ─── Estado global ───────────────────────────────────────────────────────
+        let todasSubmissoes = [];
+        let filtroAtual = 'submitted';
+        let buscaAtual = '';
+        let ordemAtual = 'desc';
+        let paginaAtual = 1;
+        const POR_PAGINA = 10;
+
+        // ─── Dados do usuário logado na sidebar/header ────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            const nome = localStorage.getItem('nome');
+            const perfil = localStorage.getItem('perfil');
+
+            if (nome) {
+                // Header
+                const headerNome = document.getElementById('header-nome');
+                if (headerNome) headerNome.textContent = nome;
+                const headerAvatar = document.getElementById('header-avatar');
+                if (headerAvatar) headerAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=f6821f&color=fff`;
+                // Sidebar
+                const sideNome = document.getElementById('sidebar-nome-global');
+                if (sideNome) sideNome.textContent = nome;
+                const sideAvatar = document.getElementById('sidebar-avatar-global');
+                if (sideAvatar) sideAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff`;
+            }
+            if (perfil) {
+                const labelMap = { 'super_admin': 'Super Admin', 'admin': 'Super Admin', 'coordinator': 'Coordenador', 'student': 'Aluno' };
+                const label = labelMap[perfil.toLowerCase()] || perfil;
+                const headerRole = document.getElementById('header-role');
+                if (headerRole) headerRole.textContent = label;
+                const sideRole = document.getElementById('sidebar-role-global');
+                if (sideRole) sideRole.textContent = label;
+            }
+
+            // Marca link ativo após script.js renderizar o menu
+            setTimeout(() => {
+                const currentPage = window.location.pathname.split('/').pop();
+                document.querySelectorAll('.menu-navegacao .link-menu').forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('href') === currentPage);
+                });
+            }, 50);
+
+            // Inicia carregamento
+            carregarSubmissoes();
+        });
+
+        // ─── Carrega dados do backend ─────────────────────────────────────────────
+        async function carregarSubmissoes() {
+            try {
+                const [data, cursosList] = await Promise.all([
+                    apiGet('/admin/submissoes'),
+                    apiGet('/admin/cursos')
+                ]);
+
+                if (!data) {
+                    exibirErro('Falha ao conectar com o servidor. Verifique se o backend está rodando.');
+                    return;
+                }
+                if (data.erro) {
+                    exibirErro('Erro do servidor: ' + data.erro);
+                    return;
+                }
+
+                todasSubmissoes = data.submissoes || [];
+                const contadores = data.contadores || {};
+
+                // ── KPIs ──
+                const pendentes = parseInt(contadores.pendentes || 0);
+                const aprovadas = parseInt(contadores.aprovadas || 0);
+                const reprovadas = parseInt(contadores.reprovadas || 0);
+                const total = parseInt(contadores.total || todasSubmissoes.length);
+
+                document.getElementById('kpi-pendentes').textContent = pendentes;
+                document.getElementById('kpi-aprovadas').textContent = aprovadas;
+                document.getElementById('kpi-reprovadas').textContent = reprovadas;
+                document.getElementById('kpi-total').textContent = total;
+
+                const pct = total > 0 ? Math.round((reprovadas / total) * 100) : 0;
+                const pctEl = document.getElementById('kpi-reprovadas-pct');
+                if (pctEl) pctEl.textContent = `${pct}% do total`;
+                
+                const btnPend = document.getElementById('btn-filter-pendentes');
+                if (btnPend) btnPend.textContent = `Pendentes (${pendentes})`;
+
+                // ── Popula select de cursos (Lista Real) ──
+                const selectCurso = document.getElementById('filtro-curso');
+                if (selectCurso) {
+                    // Limpa opções exceto a primeira
+                    selectCurso.innerHTML = '<option value="">Todos os Cursos</option>';
+                    
+                    const cursosNomes = Array.isArray(cursosList) 
+                        ? cursosList.map(c => c.name).sort() 
+                        : [...new Set(todasSubmissoes.map(s => s.course_name).filter(Boolean))].sort();
+
+                    cursosNomes.forEach(c => {
+                        const opt = document.createElement('option');
+                        opt.value = c;
+                        opt.textContent = c;
+                        selectCurso.appendChild(opt);
+                    });
+                }
+
+                // ── Renderiza tabela inicial ──
+                renderizarTabela();
+
+            } catch (err) {
+                console.error('Erro ao carregar submissões:', err);
+                exibirErro('Erro inesperado ao carregar dados.');
+            }
+        }
+
+        // ─── Renderiza tabela com filtros, busca e paginação ──────────────────────
+        function renderizarTabela() {
+            let lista = [...todasSubmissoes];
+
+            // Filtro de status
+            const statusFiltro = document.querySelector('.tabs-filter button.active')?.dataset.filter || 'all';
+            if (statusFiltro !== 'all') {
+                if (statusFiltro === 'submitted') {
+                    lista = lista.filter(s => ['submitted', 'returned_for_adjustment'].includes((s.status || '').toLowerCase()));
+                } else {
+                    lista = lista.filter(s => (s.status || '').toLowerCase() === statusFiltro.toLowerCase());
+                }
+            }
+
+            // Filtro de curso
+            const cursoBusca = document.getElementById('filtro-curso')?.value;
+            if (cursoBusca) {
+                lista = lista.filter(s => s.course_name === cursoBusca);
+            }
+
+            // Busca por nome ou atividade
+            const busca = (document.getElementById('input-busca')?.value || '').toLowerCase();
+            if (busca) {
+                lista = lista.filter(s =>
+                    (s.student_name || '').toLowerCase().includes(busca) ||
+                    (s.title || '').toLowerCase().includes(busca) ||
+                    (s.student_ra || '').toLowerCase().includes(busca)
+                );
+            }
+
+            // Ordenação
+            lista.sort((a, b) => {
+                const da = new Date(a.submitted_at);
+                const db = new Date(b.submitted_at);
+                return ordemAtual === 'desc' ? db - da : da - db;
+            });
+
+            // Paginação
+            const total = lista.length;
+            const totalPaginas = Math.ceil(total / POR_PAGINA) || 1;
+            if (paginaAtual > totalPaginas) paginaAtual = 1;
+
+            const inicio = (paginaAtual - 1) * POR_PAGINA;
+            const paginados = lista.slice(inicio, inicio + POR_PAGINA);
+
+            // Info
+            const infoEl = document.getElementById('paginacao-info');
+            if (infoEl) {
+                infoEl.innerHTML = total === 0
+                    ? 'Nenhuma submissão encontrada.'
+                    : `Mostrando <strong>${inicio + 1}–${Math.min(inicio + POR_PAGINA, total)}</strong> de <strong>${total}</strong> submissões`;
+            }
+
+            // Controles de paginação
+            renderizarPaginacao(totalPaginas);
+
+            // Reseta a seleção na renderização
+            const master = document.getElementById('check-all-submissoes');
+            if (master) master.checked = false;
+
+            // Linhas da tabela
+            const tbody = document.getElementById('tabela-submissoes');
+            if (!tbody) return;
+
+            if (paginados.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:#64748b;">Nenhuma submissão encontrada para os filtros selecionados.</td></tr>`;
+                atualizarBannerLote();
+                return;
+            }
+
+            tbody.innerHTML = paginados.map(s => {
+                const statusStr = (s.status || 'submitted').toLowerCase();
+                let badgeClass = 'status-pendente', badgeText = 'Pendente';
+                if (statusStr === 'approved') { badgeClass = 'status-aprovado'; badgeText = 'Aprovado'; }
+                if (statusStr === 'rejected' || statusStr === 'returned_for_adjustment') {
+                    badgeClass = 'status-reprovado'; badgeText = 'Reprovado';
+                }
+
+                const catName = s.category_name || 'Geral';
+                let catClass = 'badge-blue';
+                const catLow = catName.toLowerCase();
+                if (catLow.includes('evento') || catLow.includes('palestra')) catClass = 'badge-purple';
+                else if (catLow.includes('monitoria')) catClass = 'badge-orange';
+                else if (catLow.includes('social') || catLow.includes('voluntariado')) catClass = 'badge-green';
+                else if (catLow.includes('extensao') || catLow.includes('extensão')) catClass = 'badge-blue';
+
+                let dataEnvio = 'N/D';
+                if (s.submitted_at) {
+                    const d = new Date(s.submitted_at);
+                    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+                    dataEnvio = `${String(d.getDate()).padStart(2, '0')} ${meses[d.getMonth()]},<br>${d.getFullYear()}`;
+                }
+
+                const horas = s.approved_hours || s.horas_solicitadas || s.requested_hours || '—';
+                const cursoAbrev = s.course_name ? s.course_name.substring(0, 12) : 'N/D';
+
+                const isPendente = statusStr === 'submitted' || statusStr === 'returned_for_adjustment' || statusStr === 'pendente';
+                const disabledAttr = isPendente ? '' : 'disabled';
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="td-user">
+                                <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.student_name || 'U')}&background=random" alt="${s.student_name || 'Aluno'}">
+                                <div class="td-user-info">
+                                    <strong>${s.student_name || 'Aluno'}</strong>
+                                    <small>RA: ${s.student_ra || '—'} • ${cursoAbrev}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <span style="display:inline-block;background:#e8f0fe;color:#1a56db;font-weight:700;font-size:11px;padding:3px 8px;border-radius:20px;white-space:nowrap;">
+                                ${s.semestre ? s.semestre + 'º' : '--'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="td-activity">
+                                <strong>${s.title || 'Atividade'}</strong>
+                                <span class="badge-cat ${catClass}">${catName.toUpperCase()}</span>
+                            </div>
+                        </td>
+                        <td class="td-hours">${horas}h</td>
+                        <td class="td-date">${dataEnvio}</td>
+                        <td><span class="status-pill ${badgeClass}">${badgeText}</span></td>
+                        <td>
+                            <button class="btn-actions" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'" style="background:none; border:none; color:var(--texto-light); font-size:20px; cursor:pointer;">
+                                <i class='bx bx-dots-vertical-rounded'></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            atualizarBannerLote();
+        }
+
+        // ─── Controles de paginação ───────────────────────────────────────────────
+        function renderizarPaginacao(totalPaginas) {
+            const controles = document.getElementById('paginacao-controles');
+            if (!controles) return;
+
+            let html = `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual - 1})" ${paginaAtual === 1 ? 'disabled' : ''}>
+                            <i class='bx bx-chevron-left'></i>
+                        </button>`;
+
+            for (let i = 1; i <= totalPaginas; i++) {
+                if (totalPaginas > 7 && i > 3 && i < totalPaginas - 1 && Math.abs(i - paginaAtual) > 1) {
+                    if (i === 4) html += `<span class="page-btn">...</span>`;
+                    continue;
+                }
+                html += `<button class="page-btn ${i === paginaAtual ? 'active' : ''}" onclick="mudarPagina(${i})">${i}</button>`;
+            }
+
+            html += `<button class="page-btn arrow" onclick="mudarPagina(${paginaAtual + 1})" ${paginaAtual === totalPaginas ? 'disabled' : ''}>
+                         <i class='bx bx-chevron-right'></i>
+                     </button>`;
+
+            controles.innerHTML = html;
+        }
+
+        function mudarPagina(n) {
+            paginaAtual = n;
+            renderizarTabela();
+            document.querySelector('.table-container')?.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // ─── Filtros de status ────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.tabs-filter button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.tabs-filter button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    filtroAtual = btn.dataset.filter || 'all';
+                    paginaAtual = 1;
+                    renderizarTabela();
+                });
+            });
+
+            // Select de curso
+            document.getElementById('filtro-curso')?.addEventListener('change', () => {
+                paginaAtual = 1;
+                renderizarTabela();
+            });
+
+            // Select de ordem
+            document.getElementById('filtro-ordem')?.addEventListener('change', (e) => {
+                ordemAtual = e.target.value;
+                paginaAtual = 1;
+                renderizarTabela();
+            });
+
+            // Busca
+            let debounce;
+            document.getElementById('input-busca')?.addEventListener('input', (e) => {
+                clearTimeout(debounce);
+                debounce = setTimeout(() => {
+                    buscaAtual = e.target.value;
+                    paginaAtual = 1;
+                    renderizarTabela();
+                }, 300);
+            });
+
+            // Exportar CSV/PDF
+            document.getElementById('btn-exportar-csv')?.addEventListener('click', window.exportarListaCSV);
+            document.getElementById('btn-exportar-pdf')?.addEventListener('click', window.exportarListaPDF);
+
+            // Atalho Alt+P → Pendentes
+            document.addEventListener('keydown', (e) => {
+                if (e.altKey && e.key === 'p') document.querySelector('[data-filter="submitted"]')?.click();
+                if (e.altKey && e.key === 'b') document.getElementById('input-busca')?.focus();
+                if (e.altKey && e.key === 'n') mudarPagina(paginaAtual + 1);
+            });
+        });
+
+        // ─── Exportar CSV / PDF ───────────────────────────────────────────────────
+        function getDadosExportacaoSubmissoes() {
+            let lista = [...todasSubmissoes];
+            if (filtroAtual !== 'all') {
+                if (filtroAtual === 'submitted') {
+                    lista = lista.filter(s => ['submitted', 'returned_for_adjustment'].includes((s.status || '').toLowerCase()));
+                } else {
+                    lista = lista.filter(s => (s.status || '').toLowerCase() === filtroAtual);
+                }
+            }
+
+            if (lista.length === 0) return null;
+
+            const cabecalho = ['Aluno', 'RA', 'Curso', 'Atividade', 'Categoria', 'Horas', 'Data Envio', 'Status'];
+            const linhas = lista.map(s => {
+                const data = s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('pt-BR') : '';
+                return [
+                    s.student_name || '',
+                    s.student_ra || '',
+                    s.course_name || '',
+                    s.title || '',
+                    s.category_name || '',
+                    s.approved_hours || s.horas_solicitadas || '',
+                    data,
+                    s.status || ''
+                ];
+            });
+
+            return { cabecalho, linhas };
+        }
+
+        window.exportarListaCSV = function () {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                exportarDadosParaCSV(`submissoes_superadmin_${new Date().toISOString().slice(0, 10)}`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        };
+
+        window.exportarListaPDF = async function () {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                await exportarDadosParaPDF(`submissoes_superadmin_${new Date().toISOString().slice(0, 10)}`, 'Relatório de Submissões (Super Admin)', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        };
+
+        // ─── Exibir erro na tabela ────────────────────────────────────────────────
+        function exibirErro(msg) {
+            const tbody = document.getElementById('tabela-submissoes');
+            if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:#ef4444;">${msg}</td></tr>`;
+            ['kpi-pendentes', 'kpi-aprovadas', 'kpi-reprovadas', 'kpi-total'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = '—';
+            });
+        }
+
+        // ─── Funções de Lote ──────────────────────────────────────────────────────
+        function toggleTodosCheckboxes(master) {
+            const checks = document.querySelectorAll('.check-submissao:not([disabled])');
+            checks.forEach(c => c.checked = master.checked);
+            atualizarBannerLote();
+        }
+
+        function deselecionarTudo() {
+            const master = document.getElementById('check-all-submissoes');
+            if (master) master.checked = false;
+            toggleTodosCheckboxes({ checked: false });
+        }
+
+        function atualizarBannerLote() {
+            const checks = document.querySelectorAll('.check-submissao:checked');
+            const banner = document.getElementById('floating-banner-lote');
+            const countEl = document.getElementById('lote-selecionados-count');
+            
+            if (checks.length > 0) {
+                if (countEl) countEl.textContent = checks.length;
+                if (banner) banner.classList.add('show');
+            } else {
+                if (banner) banner.classList.remove('show');
+            }
+        }
+
+        let acaoLotePendente = null;
+
+        function abrirModalLote(statusFinal) {
+            const checks = document.querySelectorAll('.check-submissao:checked');
+            const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
+            if (ids.length === 0) return;
+
+            acaoLotePendente = statusFinal;
+            
+            const modal = document.getElementById('modal-lote');
+            const title = document.getElementById('modal-lote-title');
+            const text = document.getElementById('modal-lote-text');
+            const commentInput = document.getElementById('modal-lote-comment');
+            const confirmBtn = document.getElementById('btn-modal-lote-confirm');
+
+            commentInput.value = '';
+
+            if (statusFinal === 'approved') {
+                title.textContent = 'Aprovação em Lote';
+                text.innerHTML = `Você está prestes a <strong>aprovar</strong> ${ids.length} submissões em lote.`;
+                commentInput.placeholder = 'Digite uma observação (opcional)...';
+                confirmBtn.textContent = 'Aprovar em Lote';
+                confirmBtn.className = 'btn-modal-confirm btn-aprovar';
+            } else {
+                title.textContent = 'Reprovação em Lote';
+                text.innerHTML = `Você está prestes a <strong>reprovar</strong> ${ids.length} submissões em lote.`;
+                commentInput.placeholder = 'Digite o motivo da reprovação (obrigatório)...';
+                confirmBtn.textContent = 'Reprovar em Lote';
+                confirmBtn.className = 'btn-modal-confirm btn-reprovar';
+            }
+
+            modal.classList.add('show');
+        }
+
+        function fecharModalLote() {
+            const modal = document.getElementById('modal-lote');
+            if (modal) modal.classList.remove('show');
+            acaoLotePendente = null;
+        }
+
+        async function confirmarAcaoLote() {
+            if (!acaoLotePendente) return;
+            
+            const checks = document.querySelectorAll('.check-submissao:checked');
+            const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
+            if (ids.length === 0) return;
+
+            const comment = document.getElementById('modal-lote-comment').value.trim();
+
+            if (acaoLotePendente === 'rejected' && comment === '') {
+                alert('O motivo de reprovação é obrigatório.');
+                return;
+            }
+
+            const acao = acaoLotePendente;
+            fecharModalLote();
+
+            try {
+                const resp = await apiPatch('/coordenador/validar-lote', {
+                    ids,
+                    status_final: acao,
+                    comment: comment || (acao === 'approved' ? 'Aprovação em lote' : '')
+                });
+
+                if (resp && !resp.erro) {
+                    alert(resp.mensagem || 'Operação realizada com sucesso!');
+                    deselecionarTudo();
+                    await carregarSubmissoes();
+                } else {
+                    alert('Erro ao processar: ' + (resp?.erro || 'Erro desconhecido'));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Erro ao conectar com o servidor.");
+            }
+        }
+
+        window.toggleTodosCheckboxes = toggleTodosCheckboxes;
+        window.deselecionarTudo = deselecionarTudo;
+        window.atualizarBannerLote = atualizarBannerLote;
+        window.abrirModalLote = abrirModalLote;
+        window.fecharModalLote = fecharModalLote;
+        window.confirmarAcaoLote = confirmarAcaoLote;
+        window.mudarPagina = mudarPagina;
+
+        function getDadosExportacaoSubmissoes() {
+            if (!todasAsSubmissoes || todasAsSubmissoes.length === 0) return null;
+            const cabecalho = ['ID', 'Estudante', 'RA', 'Categoria', 'Horas', 'Status', 'Data'];
+            const linhas = todasAsSubmissoes.map(s => [
+                s.id || s.submission_id,
+                s.student_name || s.nome_aluno || 'Aluno',
+                s.ra || 'N/A',
+                s.category_name || 'GERAL',
+                s.requested_hours || 0,
+                s.status || 'Pendente',
+                s.submitted_at ? new Date(s.submitted_at).toLocaleDateString('pt-BR') : ''
+            ]);
+            return { cabecalho, linhas };
+        }
+
+        function exportarListaCSV() {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0,10)}`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        }
+
+        async function exportarListaPDF() {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0,10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        }
+    </script>
+</body>
+
+</html>

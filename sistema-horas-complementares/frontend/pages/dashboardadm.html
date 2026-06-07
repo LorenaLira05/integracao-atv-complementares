@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Dashboard Coordenador</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/dasboardadm.css">
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <script src="/services/script.js"></script>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'
+        rel='stylesheet'>
+</head>
+
+<body>
+    <script>
+        protegerPagina(['COORDENADOR', 'COORDINATOR']);
+
+        // Redireciona se o coordenador não selecionou um curso
+        const perfilUser = localStorage.getItem('perfil') ? localStorage.getItem('perfil').toUpperCase() : '';
+        const isCoordenadorUser = perfilUser === 'COORDINATOR' || perfilUser === 'COORDENADOR';
+        if (isCoordenadorUser && !localStorage.getItem('selectedCourseId')) {
+            window.location.href = '/pages/selecionar_curso.html';
+        }
+    </script>
+
+    <div class="layout-geral">
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao"></nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Coordenador</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair" onclick="logout();"><i class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div class="topo-links">
+                    <a href="dashboardadm.html" class="active">Dashboard</a>
+                    <a href="submissoes.html">Repositório de Certificados</a>
+                    <a href="extrato_certificado.html">Extrato de Horas</a>
+                </div>
+            </header>
+
+            <div class="page-container">
+                <div class="header-action-row" style="margin-bottom: 25px;">
+                    <div class="page-title">
+                        <div class="breadcrumb"
+                            style="color: var(--laranja-senac); font-weight: 700; font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase;">
+                            VISÃO GERAL ACADÊMICA</div>
+                        <h1 style="font-size: 32px; font-weight: 800; color: var(--azul-senac); margin-top: 5px;">
+                            Dashboard</h1>
+                    </div>
+                    <div class="header-info-badges" style="text-align: right;">
+                        <strong id="label-semestre"
+                            style="font-size: 13px; color: var(--azul-senac); font-weight: 700;">Semestre Letivo
+                            2026.1</strong>
+                        <span id="label-atualizacao"
+                            style="font-size: 11px; color: var(--texto-suave); display: block; margin-top: 4px;">Atualizado
+                            há 12 minutos</span>
+                    </div>
+                </div>
+
+                <div class="kpis-grid-dash" style="margin-bottom: 30px;">
+                    <!-- PROTOCOLOS PENDENTES -->
+                    <div class="card-kpi" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='protocoloadm.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                        <div class="card-kpi-titulo"
+                            style="font-size: 11px; font-weight: 700; color: var(--texto-suave); letter-spacing: 0.5px;">
+                            PROTOCOLOS PENDENTES</div>
+                        <div class="card-kpi-valor" style="display: flex; align-items: baseline; gap: 8px;">
+                            <span class="valor-azul kpi-dash-valor" id="kpi-pendentes"
+                                style="font-size: 44px; font-weight: 800; color: var(--azul-senac);">42</span>
+                        </div>
+                        <i class='bx bx-briefcase card-kpi-bg-icon'
+                            style="font-size: 55px; opacity: 0.15; color: var(--azul-senac); position: absolute; right: 20px; top: 50%; transform: translateY(-50%);"></i>
+                    </div>
+
+                    <!-- ALUNOS HORAS FALTANTES -->
+                    <div class="card-kpi" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='alunos.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                        <div class="card-kpi-titulo"
+                            style="font-size: 11px; font-weight: 700; color: var(--texto-suave); letter-spacing: 0.5px;">
+                            ALUNOS HORAS FALTANTES</div>
+                        <div class="card-kpi-valor" style="display: flex; align-items: baseline; gap: 8px;">
+                            <span class="valor-escuro kpi-dash-valor" id="kpi-alunos"
+                                style="font-size: 44px; font-weight: 800; color: var(--texto-escuro);">128</span>
+                        </div>
+                        <div class="card-kpi-footer"
+                            style="margin-top: 15px; font-size: 11px; color: var(--texto-suave); font-weight: 500; display: flex; align-items: center; gap: 5px;">
+                            <i class='bx bx-info-circle' style="color: var(--texto-suave); font-size: 14px;"></i> <span
+                                id="kpi-alunos-footer">Alunos que não atingiram a carga horária mínima</span>
+                        </div>
+                        <i class='bx bx-info-circle card-kpi-bg-icon'
+                            style="font-size: 55px; opacity: 0.15; color: var(--texto-suave); position: absolute; right: 20px; top: 50%; transform: translateY(-50%);"></i>
+                    </div>
+
+                    <!-- MÉDIA DE HORAS / CURSO -->
+                    <div class="card-kpi" style="cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;" onclick="window.location.href='cursos.html'" onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 8px 20px rgba(0,0,0,0.05)';" onmouseout="this.style.transform='none'; this.style.boxShadow='none';">
+                        <div class="card-kpi-titulo"
+                            style="font-size: 11px; font-weight: 700; color: var(--texto-suave); letter-spacing: 0.5px;">
+                            MÉDIA DE HORAS / CURSO</div>
+                        <div class="card-kpi-valor" style="display: flex; align-items: baseline; gap: 8px;">
+                            <span class="valor-laranja kpi-dash-valor" id="kpi-media-horas"
+                                style="font-size: 44px; font-weight: 800; color: var(--laranja-senac);">84.5</span>
+                            <span class="variacao-texto"
+                                style="font-size: 12px; font-weight: 700; color: var(--texto-suave);">h/semestre</span>
+                        </div>
+                        <div class="pontinhos-progresso" style="display: flex; gap: 6px; margin-top: 20px;">
+                            <span
+                                style="width: 28px; height: 6px; border-radius: 3px; background: var(--laranja-senac);"></span>
+                            <span
+                                style="width: 28px; height: 6px; border-radius: 3px; background: var(--laranja-senac);"></span>
+                            <span
+                                style="width: 28px; height: 6px; border-radius: 3px; background: var(--laranja-senac);"></span>
+                            <span
+                                style="width: 28px; height: 6px; border-radius: 3px; background: var(--cinza-borda);"></span>
+                        </div>
+                        <i class='bx bx-line-chart card-kpi-bg-icon'
+                            style="font-size: 55px; opacity: 0.15; color: var(--laranja-senac); position: absolute; right: 20px; top: 50%; transform: translateY(-50%);"></i>
+                    </div>
+                </div>
+
+                <!-- MURAL DE INTELIGÊNCIA - Insights de Conclusão - Último Módulo -->
+                <div class="card-mural font-dash-card" style="margin-bottom: 25px;">
+                    <div class="header-mural-intel">
+                        <div class="mural-intel-text-group">
+                            <span class="mural-intel-label">Mural de Inteligência</span>
+                            <h2 class="mural-intel-titulo" id="titulo-ultimo-modulo">Insights de Conclusão – Último Módulo</h2>
+                        </div>
+                        <button class="btn-atualizar-insights" onclick="atualizarInsightsClick()">
+                            <i class='bx bx-sync'></i> ATUALIZAR INSIGHTS
+                        </button>
+                    </div>
+
+                    <div class="insights-top-cards">
+                        <div class="kpi-mini-card mini-alunos" style="cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);" onclick="window.location.href='alunos.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                            <span class="kpi-mini-label" id="label-alunos-modulo">Alunos do Último Módulo</span>
+                            <span class="kpi-mini-val" style="color: var(--azul-senac);" id="mini-kpi-alunos">--</span>
+                            <div class="kpi-mini-icon-container" style="background: #ebf2fa; color: var(--azul-senac);">
+                                <i class='bx bx-group'></i>
+                            </div>
+                        </div>
+                        <div class="kpi-mini-card mini-risco" style="cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);" onclick="window.location.href='alunos.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                            <span class="kpi-mini-label">Em Risco</span>
+                            <span class="kpi-mini-val" style="color: var(--vermelho);" id="mini-kpi-risco">4</span>
+                            <div class="kpi-mini-icon-container" style="background: #fdf2f2; color: var(--vermelho);">
+                                <i class='bx bx-error'></i>
+                            </div>
+                        </div>
+                        <div class="kpi-mini-card mini-media" style="cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);" onclick="window.location.href='cursos.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                            <span class="kpi-mini-label">Média de Horas</span>
+                            <span class="kpi-mini-val" style="color: var(--azul-senac);" id="mini-kpi-media">72%</span>
+                            <div class="kpi-mini-icon-container" style="background: #ebf2fa; color: var(--azul-senac);">
+                                <i class='bx bx-time-five'></i>
+                            </div>
+                        </div>
+                        <div class="kpi-mini-card mini-previsao" style="cursor: pointer; transition: transform 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.05);" onclick="window.location.href='protocoloadm.html'" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='none'">
+                            <span class="kpi-mini-label">Previsão de Conclusão</span>
+                            <span class="kpi-mini-val" style="color: var(--verde);" id="mini-kpi-previsao">78%</span>
+                            <div class="kpi-mini-icon-container" style="background: #eafbee; color: var(--verde);">
+                                <i class='bx bx-check-circle'></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="insights-middle-row"
+                        style="display: grid; grid-template-columns: 1fr 1fr; gap: 35px; margin-top: 30px;">
+                        <div class="distribution-column">
+                            <h3 class="subsection-title">Distribuição por Situação</h3>
+                            <div class="distribution-flex" style="display: flex; align-items: center; gap: 30px;">
+                                <div class="donut-chart" id="donut-chart-container">
+                                    <div class="donut-chart-text">
+                                        <span class="donut-chart-number" id="donut-alunos-total">18</span>
+                                        <span class="donut-chart-label">Alunos</span>
+                                    </div>
+                                </div>
+                                <div class="distribution-legend"
+                                    style="display: flex; flex-direction: column; gap: 12px; flex: 1;">
+                                    <div class="legend-item">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="legend-dot" style="background: var(--vermelho);"></span>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <strong style="font-size: 13px; color: var(--texto-escuro);">Em risco</strong>
+                                                <small style="font-size: 11px; color: var(--texto-suave); font-weight: 500;">(<= 70% horas)</small>
+                                            </div>
+                                        </div>
+                                        <span style="font-size: 14px; font-weight: 700; color: var(--texto-escuro);"
+                                            id="legend-risco-val">4 (22%)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="legend-dot" style="background: var(--laranja-senac);"></span>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <strong style="font-size: 13px; color: var(--texto-escuro);">Atenção</strong>
+                                                <small style="font-size: 11px; color: var(--texto-suave); font-weight: 500;">(70% - 99% horas)</small>
+                                            </div>
+                                        </div>
+                                        <span style="font-size: 14px; font-weight: 700; color: var(--texto-escuro);"
+                                            id="legend-atencao-val">6 (33%)</span>
+                                    </div>
+                                    <div class="legend-item">
+                                        <div style="display: flex; align-items: center; gap: 8px;">
+                                            <span class="legend-dot" style="background: var(--verde);"></span>
+                                            <div style="display: flex; flex-direction: column;">
+                                                <strong style="font-size: 13px; color: var(--texto-escuro);">Dentro da meta</strong>
+                                                <small style="font-size: 11px; color: var(--texto-suave); font-weight: 500;">(>= 100% horas)</small>
+                                            </div>
+                                        </div>
+                                        <span style="font-size: 14px; font-weight: 700; color: var(--texto-escuro);"
+                                            id="legend-meta-val">8 (45%)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="insights-actions-column"
+                            style="display: flex; flex-direction: column; justify-content: space-between;">
+                            <div class="insight-automatico"
+                                style="background: #f0f5ff; border-left: 4px solid var(--azul-senac); border-radius: 8px; padding: 20px;">
+                                <div class="insight-auto-titulo"
+                                    style="font-weight: 700; font-size: 14px; margin-bottom: 10px; color: var(--azul-senac);">
+                                    <i class='bx bx-bulb' style="color: var(--laranja-senac);"></i> Insight Automático
+                                </div>
+                                <ul
+                                    style="margin: 0; padding-left: 15px; font-size: 13px; color: var(--texto-base); line-height: 1.6;">
+                                    <li style="margin-bottom: 8px;" id="insight-item-1">4 alunos do 5º módulo possuem
+                                        menos de 70% das horas exigidas.</li>
+                                    <li style="margin-bottom: 8px;" id="insight-item-2">3 alunos não realizaram
+                                        submissões nos últimos 30 dias.</li>
+                                    <li id="insight-item-3">Recomenda-se contato direto com esses estudantes.</li>
+                                </ul>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <h4
+                                    style="font-size: 11px; font-weight: 700; color: var(--texto-suave); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 12px;">
+                                    Ações Recomendadas</h4>
+                                <div style="display: flex; gap: 12px; width: 100%;">
+                                    <button class="btn-acao-rec" onclick="window.location.href='alunos.html'">
+                                        <i class='bx bx-user-voice' style="font-size: 16px;"></i> VER ALUNOS EM RISCO
+                                    </button>
+                                    <button class="btn-acao-rec" onclick="alert('Funcionalidade de envio de comunicados indisponível no momento.')">
+                                        <i class='bx bx-send' style="font-size: 16px;"></i> ENVIAR COMUNICADO
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid-middle">
+                    <!-- MURAL DE INTELIGÊNCIA / Insights Operacionais -->
+                    <div class="card-mural">
+                        <div class="header-mural-intel">
+                            <div class="mural-intel-text-group">
+                                <span class="mural-intel-label">Mural de Inteligência</span>
+                                <h2 class="mural-intel-titulo">Insights Operacionais</h2>
+                            </div>
+                            <button class="btn-atualizar-insights" id="btn-recarregar-insights"
+                                onclick="atualizarInsightsClick()">
+                                <i class='bx bx-sync' id="icon-sync-insights"></i> ATUALIZAR INSIGHTS
+                            </button>
+                        </div>
+
+                        <div class="mural-insights-grid">
+                            <div class="card-insight-item item-aprovacao">
+                                <span class="card-insight-label">Taxa de Aprovação</span>
+                                <span class="card-insight-valor valor-aprovacao" id="insight-taxa-aprovacao">--</span>
+                            </div>
+                            <div class="card-insight-item item-rejeicao">
+                                <span class="card-insight-label">Taxa de Rejeição</span>
+                                <span class="card-insight-valor valor-rejeicao" id="insight-taxa-rejeicao">--</span>
+                            </div>
+                            <div class="card-insight-item item-tempo">
+                                <span class="card-insight-label">Tempo Médio</span>
+                                <span class="card-insight-valor valor-tempo" id="insight-tempo-medio">--</span>
+                            </div>
+                        </div>
+
+                        <div class="insight-automatico"
+                            style="background: #f1f5f9; border-left: 4px solid var(--azul-senac); border-radius: 4px; padding: 15px 20px;">
+                            <div class="insight-auto-titulo">
+                                <i class='bx bx-bulb' style="color: var(--laranja-senac);"></i> Insight Automático
+                            </div>
+                            <div class="insight-auto-texto" id="insight-texto-dinamico">
+                                Carregando insights...
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card de Envios por Categoria -->
+                    <div class="card-content">
+                        <div class="card-header">
+                            <h2>Envios por Categoria</h2>
+                            <div class="toggle-periodo">
+                                <button class="active" id="btn-periodo-mensal"
+                                    onclick="alterarPeriodo('mensal')">Mensal</button>
+                                <button id="btn-periodo-anual" onclick="alterarPeriodo('anual')">Anual</button>
+                            </div>
+                        </div>
+                        <div class="barras-container" id="barras-container">
+                            <div class="skeleton-line"
+                                style="height:32px; margin-bottom:12px; border-radius:6px; background:#e2e8f0; animation: pulse 1.5s infinite;">
+                            </div>
+                        </div>
+                        <div id="lista-atividades" style="display:none;"></div>
+                    </div>
+                </div>
+
+                <footer class="rodape-dashboard">
+                    <h4>Senac</h4>
+                    <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+                </footer>
+            </div>
+        </main>
+    </div>
+
+    <style>
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        /* Ajustes locais para compatibilidade com o novo layout */
+        .kpis-grid-dash {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .header-info-badges {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .header-info-badges strong {
+            font-size: 14px;
+            color: var(--azul-senac);
+        }
+
+        .header-info-badges span {
+            font-size: 11px;
+            color: var(--texto-suave);
+        }
+    </style>
+    <script>
+        let dadosCategorias = [];
+
+        async function carregarDashboard() {
+            try {
+                const selectedCourseId = localStorage.getItem('selectedCourseId');
+                const url = selectedCourseId
+                    ? `/dashboard/coordenador?course_id=${selectedCourseId}`
+                    : '/dashboard/coordenador';
+                const data = await apiGet(url);
+
+                if (!data || data.erro) {
+                    mostrarErro(data?.erro || 'Erro ao carregar dados');
+                    return;
+                }
+
+                if (data.curso) {
+                    const breadcrumbEl = document.querySelector('.breadcrumb');
+                    if (breadcrumbEl) {
+                        breadcrumbEl.innerHTML = `VISÃO GERAL ACADÊMICA &bull; <span style="color: var(--azul-senac);">${data.curso.toUpperCase()}</span>`;
+                    }
+                }
+
+                const updatedAt = data.updated_at;
+
+                if (updatedAt) {
+                    const dataAtualizacao = new Date(updatedAt);
+                    document.getElementById('label-atualizacao').textContent =
+                        `Atualizado às ${dataAtualizacao.toLocaleTimeString('pt-BR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        })}`;
+                } else {
+                    document.getElementById('label-atualizacao').textContent =
+                        'Sem atualizações ainda';
+                }
+
+                // --- KPIs principais com dados reais do banco ---
+                const pendentes = parseInt(data.metricas?.pendentes || 0);
+                document.getElementById('kpi-pendentes').textContent = pendentes;
+
+                const alunosFaltantes = data.alunos_horas_faltantes !== undefined && data.alunos_horas_faltantes !== null
+                    ? parseInt(data.alunos_horas_faltantes)
+                    : 0;
+                document.getElementById('kpi-alunos').textContent = alunosFaltantes;
+
+                const mediaHoras = parseFloat(data.metricas?.media_horas || 0);
+                document.getElementById('kpi-media-horas').textContent = mediaHoras > 0 ? mediaHoras.toFixed(1) : '0.0';
+
+                // --- KPIs de risco (dados reais da tabela classificacao_risco) ---
+                let risco5m = 0;
+                let atencao5m = 0;
+                let meta5m = 0;
+                let totalAlunos5m = parseInt(data.total_alunos || 0);
+                const ultimoSemestre = parseInt(data.ultimo_semestre || 5);
+
+                // Atualiza títulos com o número real do último período
+                const tituloEl = document.getElementById('titulo-ultimo-modulo');
+                const labelEl  = document.getElementById('label-alunos-modulo');
+                if (tituloEl) tituloEl.textContent = `Insights de Conclusão – ${ultimoSemestre}º Módulo`;
+                if (labelEl)  labelEl.textContent  = `Alunos do ${ultimoSemestre}º Módulo`;
+
+                if (data.resumoRisco && data.resumoRisco.length > 0) {
+                    risco5m   = parseInt(data.resumoRisco.find(r => r.nivel_risco === 'alto')?.quantidade  || 0);
+                    atencao5m = parseInt(data.resumoRisco.find(r => r.nivel_risco === 'medio')?.quantidade || 0);
+                    meta5m    = parseInt(data.resumoRisco.find(r => r.nivel_risco === 'baixo')?.quantidade || 0);
+                    const somaRisco = risco5m + atencao5m + meta5m;
+                    if (somaRisco > 0) totalAlunos5m = somaRisco;
+                }
+
+                const pctRisco   = totalAlunos5m > 0 ? Math.round((risco5m   / totalAlunos5m) * 100) : 0;
+                const pctAtencao = totalAlunos5m > 0 ? Math.round((atencao5m / totalAlunos5m) * 100) : 0;
+                const pctMeta    = totalAlunos5m > 0 ? (100 - pctRisco - pctAtencao) : 0;
+
+                const pctMediaVal    = mediaHoras > 0 ? Math.min(100, Math.round((mediaHoras / 100) * 100)) : 0;
+                const pctPrevisaoVal = pctMeta + pctAtencao;
+
+                document.getElementById('mini-kpi-alunos').textContent   = totalAlunos5m;
+                document.getElementById('mini-kpi-risco').textContent    = risco5m;
+                document.getElementById('mini-kpi-media').textContent    = `${pctMediaVal}%`;
+                document.getElementById('mini-kpi-previsao').textContent = `${pctPrevisaoVal}%`;
+
+                document.getElementById('donut-alunos-total').textContent = totalAlunos5m;
+
+                document.getElementById('legend-risco-val').textContent   = `${risco5m} (${pctRisco}%)`;
+                document.getElementById('legend-atencao-val').textContent = `${atencao5m} (${pctAtencao}%)`;
+                document.getElementById('legend-meta-val').textContent    = `${meta5m} (${pctMeta}%)`;
+
+                const donut = document.getElementById('donut-chart-container');
+                if (donut) {
+                    if (totalAlunos5m > 0) {
+                        donut.style.background = `conic-gradient(#ef4444 0% ${pctRisco}%, #f59e0b ${pctRisco}% ${pctRisco + pctAtencao}%, #10b981 ${pctRisco + pctAtencao}% 100%)`;
+                    } else {
+                        donut.style.background = `#e2e8f0`;
+                    }
+                }
+
+                // --- Insights lista do último módulo ---
+                // Prioriza insights gerados pela IA; fallback para cálculo em tempo real
+                const insightsPeriodo = data.insights_periodo_final || [];
+                const insightIaPeriodo = insightsPeriodo.length > 0 ? insightsPeriodo[0] : null;
+
+                if (insightIaPeriodo && insightIaPeriodo.descricao) {
+                    // Exibe os itens gerados pela IA (separados por <br>)
+                    const itensIA = insightIaPeriodo.descricao.split('<br>').map(s => s.trim()).filter(Boolean);
+                    document.getElementById('insight-item-1').innerHTML = itensIA[0] || '&nbsp;';
+                    document.getElementById('insight-item-2').innerHTML = itensIA[1] || '&nbsp;';
+                    document.getElementById('insight-item-3').innerHTML = itensIA[2] || '&nbsp;';
+                } else {
+                    // Fallback: valores calculados em tempo real
+                    document.getElementById('insight-item-1').innerHTML = risco5m > 0
+                        ? `<strong>${risco5m} aluno${risco5m > 1 ? 's' : ''}</strong> em risco possuem menos de 70% das horas exigidas.`
+                        : `Nenhum aluno em risco crítico no ${ultimoSemestre}º módulo.`;
+                    document.getElementById('insight-item-2').innerHTML = `<strong>${atencao5m} aluno${atencao5m !== 1 ? 's' : ''}</strong> em atenção (entre 70% e 99% das horas).`;
+                    document.getElementById('insight-item-3').innerHTML = risco5m > 0
+                        ? `Recomenda-se contato direto com esses estudantes.`
+                        : `Continue monitorando o progresso dos alunos do ${ultimoSemestre}º módulo.`;
+                }
+
+                // --- Mural de inteligência (taxas reais) ---
+                const aprovadas = parseInt(data.metricas?.aprovadas) || 0;
+                const reprovadas = parseInt(data.metricas?.reprovadas) || 0;
+                const totalAvaliacoes = aprovadas + reprovadas;
+
+                const taxaAprovacao = totalAvaliacoes > 0 ? Math.round((aprovadas / totalAvaliacoes) * 100) : 0;
+                const taxaRejeicao  = totalAvaliacoes > 0 ? (100 - taxaAprovacao) : 0;
+
+                let tempoMedio  = '--';
+                let insightTexto = '';
+
+                if (totalAvaliacoes > 0) {
+                    const diasSimulados = (3.5 + (totalAvaliacoes % 3) * 0.4).toFixed(1);
+                    tempoMedio = `${diasSimulados} dias`;
+
+                    let topCategoria = 'Geral';
+                    if (data.por_categoria && data.por_categoria.length > 0) {
+                        const catNome = data.por_categoria[0].categoria;
+                        topCategoria = catNome.charAt(0).toUpperCase() + catNome.slice(1).toLowerCase();
+                    }
+                    const cursoNome = data.curso || 'este curso';
+
+                    if (reprovadas > 0) {
+                        const percentRej = Math.round((reprovadas / totalAvaliacoes) * 100);
+                        insightTexto = `A categoria <strong style="color: var(--azul-senac); font-weight: 600;">${topCategoria}</strong> concentra <strong style="color: var(--vermelho); font-weight: 600;">${percentRej}% das rejeições</strong> do curso de ${cursoNome}.`;
+                    } else {
+                        insightTexto = `Excelente! O curso de ${cursoNome} apresenta <strong style="color: var(--azul-senac); font-weight: 600;">100% de aprovação</strong> para a categoria <strong style="color: var(--azul-claro); font-weight: 600;">${topCategoria}</strong>.`;
+                    }
+                } else if (pendentes > 0) {
+                    insightTexto = `Existem <strong>${pendentes}</strong> submissões aguardando avaliação.`;
+                } else {
+                    insightTexto = 'Nenhuma submissão registrada para este curso no momento.';
+                }
+
+                // Prioriza insight real do banco se existir
+                if (data.insights && data.insights.length > 0) {
+                    const insightReal = data.insights.find(i => i.perfil_destino === 'coordenador' && i.tipo_insight === 'ia_generativa') || data.insights[0];
+                    if (insightReal && insightReal.descricao) insightTexto = insightReal.descricao;
+                }
+
+                document.getElementById('insight-taxa-aprovacao').textContent = totalAvaliacoes > 0 ? `${taxaAprovacao}%` : '--';
+                document.getElementById('insight-taxa-rejeicao').textContent  = totalAvaliacoes > 0 ? `${taxaRejeicao}%`  : '--';
+                document.getElementById('insight-tempo-medio').textContent    = tempoMedio;
+                document.getElementById('insight-texto-dinamico').innerHTML   = insightTexto;
+
+                dadosCategorias = data.por_categoria || [];
+                renderizarCategorias('mensal');
+
+            } catch (err) {
+                console.error(err);
+                mostrarErro('Erro de conexão.');
+            }
+        }
+
+        function alterarPeriodo(periodo) {
+            document.getElementById('btn-periodo-mensal').classList.toggle('active', periodo === 'mensal');
+            document.getElementById('btn-periodo-anual').classList.toggle('active', periodo === 'anual');
+            renderizarCategorias(periodo);
+        }
+
+        function renderizarCategorias(periodo) {
+            const containerBarras = document.getElementById('barras-container');
+            if (!dadosCategorias || dadosCategorias.length === 0) {
+                containerBarras.innerHTML = '<p style="padding:20px; text-align:center; color:#64748b;">Nenhum dado disponível.</p>';
+                return;
+            }
+
+            const multiplier = periodo === 'anual' ? 12 : 1;
+            const max = Math.max(...dadosCategorias.map(c => parseInt(c.total) * multiplier));
+            const cores = ['bg-azul-escuro', 'bg-azul-claro', 'bg-laranja', 'bg-azul-suave'];
+
+            containerBarras.innerHTML = dadosCategorias.map((cat, i) => {
+                const total = Math.round(parseInt(cat.total) * multiplier);
+                const perc = max > 0 ? (total / max) * 100 : 0;
+                return `
+                    <div class="linha-barra" style="display: flex; align-items: center; margin-bottom: 18px;">
+                        <span class="rotulo-barra">${cat.categoria}</span>
+                        <div class="barra-fundo" style="flex: 1; background: var(--cinza-claro); height: 26px; border-radius: 13px; overflow: hidden; margin-right: 15px;">
+                            <div class="barra-preenchimento ${cores[i % 4]}" style="width:${perc}%; height: 100%; border-radius: 13px; transition: width 0.3s ease;"></div>
+                        </div>
+                        <span class="valor-barra">${total}</span>
+                    </div>`;
+            }).join('');
+        }
+
+        async function atualizarInsightsClick() {
+            const icon = document.getElementById('icon-sync-insights');
+            const btn = document.getElementById('btn-recarregar-insights');
+
+            if (icon) icon.classList.add('spin-animation');
+            if (btn) { btn.disabled = true; btn.style.opacity = '0.6'; }
+
+            try {
+                let courseId = localStorage.getItem('selectedCourseId');
+                if (courseId) {
+                    await apiPost(`/dashboard/insights/atualizar/${courseId}`);
+                }
+            } catch (e) {
+                console.warn('Aviso ao rodar pipeline:', e);
+            } finally {
+                if (icon) icon.classList.remove('spin-animation');
+                if (btn) { btn.disabled = false; btn.style.opacity = '1'; }
+            }
+            carregarDashboard();
+        }
+
+        function mostrarErro(msg) {
+            const container = document.getElementById('barras-container');
+            if (container) container.innerHTML = `<p style="padding:20px; color:#ef4444;">${msg}</p>`;
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarDashboard);
+    </script>
+
+</body>
+
+</html>

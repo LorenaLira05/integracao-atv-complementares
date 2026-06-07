@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Análise de Certificado</title>
+    <meta name="description"
+        content="Análise e validação de certificados de atividades complementares - Senac Gestão Acadêmica">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="/styles/analise_certificado.css">
+    <script src="/services/script.js"></script>
+    <script src="/services/apiHelper.js"></script>
+    <link rel="stylesheet" href="/styles/sidebar.css">
+    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+</head>
+
+<body>
+    <script>protegerPagina(['COORDENADOR', 'SUPER_ADMIN']);</script>
+
+    <div id="toast" class="toast">
+        <i class='bx bx-check-circle'></i>
+        <span id="toast-msg">Mensagem</span>
+    </div>
+
+    <div class="layout-geral">
+
+        <aside class="sidebar-dark">
+            <div class="logo-secao">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <span class="logo-subtext">GESTÃO ACADÊMICA</span>
+            </div>
+            <nav class="menu-navegacao">
+                <a href="dashboardadm.html" class="link-menu"><i class='bx bx-grid-alt'></i> Dashboard</a>
+                <a href="alunos.html" class="link-menu"><i class='bx bx-group'></i> Alunos</a>
+                <a href="protocoloadm.html" class="link-menu active"><i class='bx bx-upload'></i> Submissões</a>
+                <a href="relatorios.html" class="link-menu"><i class='bx bx-bar-chart-alt-2'></i> Relatórios</a>
+                <a href="configuracao.html" class="link-menu"><i class='bx bx-cog'></i> Configurações</a>
+            </nav>
+            <div class="sidebar-bottom-action">
+                <div class="perfil-sidebar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <div class="perfil-sidebar-info">
+                        <strong id="sidebar-nome-global">Usuário</strong>
+                        <small id="sidebar-role-global">Gestão</small>
+                    </div>
+                </div>
+                <a href="#" class="link-menu link-sair"
+                    onclick="if(typeof logout === 'function') logout(); else window.location.href='index.html';"><i
+                        class='bx bx-log-out'></i> Sair</a>
+            </div>
+        </aside>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                const currentPage = window.location.pathname.split('/').pop() || 'dashboardadm.html';
+                const links = document.querySelectorAll('.sidebar-dark .menu-navegacao .link-menu');
+                links.forEach(link => {
+                    if (link.getAttribute('href') === currentPage) {
+                        link.classList.add('active');
+                    } else {
+                        link.classList.remove('active');
+                    }
+                });
+
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
+            });
+        </script>
+
+        <main class="conteudo-principal">
+            <header class="cabecalho-topo">
+                <div>
+                    <span class="titulo-portal">Portal do Coordenador</span>
+                </div>
+                <button class="btn-back" onclick="const p = (localStorage.getItem('perfil')||'').toUpperCase(); window.location.href = (p === 'SUPER_ADMIN') ? 'submissoes_superadmin.html' : 'protocoloadm.html';" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                    <i class='bx bx-arrow-back'></i> VOLTAR
+                </button>
+            </header>
+
+            <div class="breadcrumb">Submissões<i class='bx bx-chevron-right'></i> <span>Análise de Certificado</span></div>
+            <section class="head-kpis">
+                <div class="head-text">
+                    <h1>Análise de Certificado</h1>
+                    <p class="subtitle-protocol" id="subtitle-protocol">Carregando protocolo...</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 15px; margin-left: auto; align-self: center;">
+                    <div class="controles-navegacao" style="display: flex; gap: 8px;">
+                        <button id="btn-navegacao-anterior" class="btn-navegacao" title="Certificado Anterior" disabled>
+                            <i class='bx bx-chevron-left'></i> Anterior
+                        </button>
+                        <button id="btn-navegacao-proximo" class="btn-navegacao" title="Próximo Certificado" disabled>
+                            Próximo <i class='bx bx-chevron-right'></i>
+                        </button>
+                    </div>
+                    <span id="badge-status" class="badge-status badge-pendente">PENDENTE</span>
+                </div>
+            </section>
+
+            <div id="loading-state" class="loading-state">
+                <div class="spinner"></div>
+                <span>Carregando dados da submissão...</span>
+            </div>
+
+            <div class="analise-grid" id="analise-grid" style="display:none;">
+
+                <div class="col-esquerda">
+                    <div class="box-certificado-preview">
+                        <div class="box-label-header">
+                            <span class="box-label">DOCUMENTO ENVIADO</span>
+                            <div style="display: flex; gap: 10px;">
+                                <a id="btn-ver-arquivo" href="#" target="_blank" class="btn-ver-arquivo">
+                                    <i class='bx bx-link-external'></i> Ver Original
+                                </a>
+                            </div>
+                        </div>
+                        <div id="container-visualizacao" class="container-visualizacao">
+                            <div class="mock-cert" id="placeholder-preview">
+                                <i class='bx bx-loader-alt bx-spin' style="font-size: 40px; color: var(--laranja);"></i>
+                                <p>Carregando documento...</p>
+                            </div>
+                        </div>
+                    </div>
+ 
+                    <!-- NOVO CARD OCR STRUCT -->
+                    <div class="box-ocr-dados" id="box-ocr-dados" style="display:none;">
+                        <span class="box-label">TEXTO EXTRAÍDO PELO OCR</span>
+                        <div class="input-wrapper-ocr" style="margin-top: 15px;">
+                            <label>TÍTULO</label>
+                            <input type="text" id="ocr-titulo" placeholder="Título do curso ou atividade">
+                        </div>
+                        <div class="input-wrapper-ocr">
+                            <label>INSTITUIÇÃO</label>
+                            <input type="text" id="ocr-instituicao" placeholder="Instituição Emissora">
+                        </div>
+                        <div class="input-group-row" style="margin-bottom: 0;">
+                            <div class="input-col">
+                                <label>ANO</label>
+                                <input type="text" id="ocr-ano" placeholder="Ano de Emissão">
+                            </div>
+                            <div class="input-col">
+                                <label>DURAÇÃO (HORAS)</label>
+                                <input type="text" id="ocr-duracao" placeholder="Carga Horária">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="box-regras">
+                        <div class="regras-header">
+                            <i class='bx bxl-stack-overflow text-laranja'></i>
+                            <div>
+                                <h3>Regras de Horas Complementares</h3>
+                                <p>Configure os pesos e categorias para atividades extra-curriculares.</p>
+                            </div>
+                        </div>
+                        <div class="regras-cards" id="regras-cards">
+                            <div class="regra-item">
+                                <div class="r-head">
+                                    <small>CARREGANDO</small>
+                                    <i class='bx bx-loader-alt text-laranja'></i>
+                                </div>
+                                <h4>Buscando regras...</h4>
+                                <p>Aguarde</p>
+                            </div>
+                        </div>
+                        <div class="nova-regra-form">
+                            <h4>CADASTRAR NOVO TIPO DE ATIVIDADE</h4>
+                            <div class="input-group-row">
+                                <div class="input-col">
+                                    <label>NOME DA ATIVIDADE</label>
+                                    <input type="text" id="nova-categoria-nome" placeholder="Ex: Projeto de Extensão">
+                                </div>
+                                <div class="input-col">
+                                    <label>PESO DA HORA</label>
+                                    <input type="number" id="nova-categoria-peso" placeholder="1.0" step="0.1" min="0.1">
+                                </div>
+                            </div>
+                            <button class="btn-salvar-regra" id="btn-salvar-regra" onclick="salvarNovaCategoria()">
+                                <i class='bx bx-save'></i> Salvar Nova Regra
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-direita">
+                    <div class="box-info-aluno">
+                        <small class="box-label">INFORMAÇÕES DO PROTOCOLO</small>
+                        <div class="aluno-profile">
+                            <div class="avatar-text-initials" id="aluno-avatar">GA</div>
+                            <div class="aluno-details">
+                                <h3 id="aluno-nome">Carregando...</h3>
+                                <p id="aluno-info">RA: — • Curso</p>
+                            </div>
+                        </div>
+                        <div class="info-kpis">
+                            <div class="kpi-mini">
+                                <small>CARGA DECLARADA</small>
+                                <h4 id="kpi-horas">—</h4>
+                            </div>
+                            <div class="kpi-mini">
+                                <small>TIPO DE ATIVIDADE</small>
+                                <span class="badge-blue" id="kpi-tipo">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="box-parecer">
+                        <small class="box-label">PARECER DO COORDENADOR</small>
+                        <div class="input-wrapper">
+                            <label>TIPO DE ATIVIDADE</label>
+                            <input type="text" id="input-tipo-atividade" class="input-atividade-parecer" placeholder="Digitar....">
+                        </div>
+                        <div class="input-wrapper">
+                            <label>CARGA HORÁRIA DEFERIDA (HORAS)</label>
+                            <input type="number" id="input-horas" class="input-horas" value="0" min="0" max="999" placeholder="Escolher carga horaria">
+                            <small class="hint-text" id="hint-limite">O limite institucional para esta categoria é definido pelas regras do curso.</small>
+                        </div>
+                        <div class="input-wrapper">
+                            <label>OBSERVAÇÕES</label>
+                            <textarea id="input-obs" placeholder="Escreva justificativa aqui..." rows="4"></textarea>
+                        </div>
+                        <div class="secao-acoes-rapidas">
+                            <span class="label-acoes-rapidas">Ações Rápidas</span>
+                            <div class="pill-acao-rapida pill-verde" onclick="aplicarAcaoRapida('sucesso')">
+                                <i class='bx bx-check-circle'></i> Parabéns! Seu certificado atende aos critérios
+                            </div>
+                            <div class="pill-acao-rapida pill-laranja" onclick="aplicarAcaoRapida('assinatura')">
+                                <i class='bx bx-error-circle'></i> Certificado sem assinatura responsável, reenviar
+                            </div>
+                            <div class="pill-acao-rapida pill-vermelho" onclick="aplicarAcaoRapida('rejeitar')">
+                                <i class='bx bx-x-circle'></i> Certificado não condiz com os critérios
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="action-buttons-horizontal">
+                        <button class="btn-horizontal btn-horizontal-reprovar" id="btn-novo-reprovar" onclick="executarDecisao('reprovar')">
+                            <i class='bx bx-x-circle'></i> REPROVAR
+                        </button>
+                        <button class="btn-horizontal btn-horizontal-aprovar" id="btn-novo-aprovar" onclick="executarDecisao('aprovar')">
+                            <i class='bx bx-check-circle'></i> APROVAR
+                        </button>
+                    </div>
+
+                    <div class="box-warning">
+                        <i class='bx bx-bulb'></i>
+                        <p><strong>IMPORTANTE:</strong> Certificados de cursos online precisam conter obrigatoriamente o
+                            CNPJ da instituição emissora para validação oficial.</p>
+                    </div>
+                </div>
+            </div>
+
+            <footer class="main-footer">
+                <div class="footer-links">
+                    <a href="#">Privacidade</a>
+                    <a href="#">Termos de Uso</a>
+                    <a href="#">Suporte Técnico</a>
+                </div>
+                <div class="footer-copy">&copy; 2026 Senac Brasil - Portal de Atividades Complementares</div>
+            </footer>
+        </main>
+    </div>
+
+    <script>
+        let submissaoId = null;
+        let courseId = null;
+
+        function showToast(msg, tipo = 'success') {
+            const t = document.getElementById('toast');
+            const m = document.getElementById('toast-msg');
+            t.className = `toast ${tipo} show`;
+            t.querySelector('i').className = tipo === 'success'
+                ? 'bx bx-check-circle'
+                : 'bx bx-error-circle';
+            m.textContent = msg;
+            setTimeout(() => t.classList.remove('show'), 3500);
+        }
+
+        function atualizarBadgeStatus(status) {
+            const container = document.querySelector('.head-text');
+            if (!container) return;
+
+            const antiga = container.querySelector('.badge-status');
+            if (antiga) antiga.remove();
+
+            const configs = {
+                'submitted': { cls: 'badge-pendente', label: 'PENDENTE' },
+                'approved': { cls: 'badge-aprovado', label: 'APROVADO' },
+                'rejected': { cls: 'badge-reprovado', label: 'REPROVADO' },
+                'returned_for_adjustment': { cls: 'badge-ajuste', label: 'DEVOLVIDO' }
+            };
+
+            const cfg = configs[status] || configs['submitted'];
+            const span = document.createElement('span');
+            span.className = `badge-status ${cfg.cls}`;
+            span.textContent = cfg.label;
+            container.appendChild(span);
+        }
+
+        function bloqueiarBotoes(status) {
+            const isFinal = ['approved', 'rejected'].includes(status);
+            if (isFinal) {
+                ['btn-novo-aprovar', 'btn-novo-reprovar'].forEach(id => {
+                    const b = document.getElementById(id);
+                    if (b) {
+                        b.disabled = true;
+                        b.style.opacity = '0.5';
+                        b.style.cursor = 'not-allowed';
+                    }
+                });
+                document.getElementById('input-horas').disabled = true;
+                document.getElementById('input-obs').disabled = true;
+                document.getElementById('input-tipo-atividade').disabled = true;
+                
+                // Desabilitar as pílulas de ação rápida também
+                document.querySelectorAll('.pill-acao-rapida').forEach(el => {
+                    el.style.pointerEvents = 'none';
+                    el.style.opacity = '0.5';
+                });
+            }
+        }
+
+        async function carregarSubmissao() {
+            const params = new URLSearchParams(window.location.search);
+            submissaoId = params.get('id');
+
+            if (!submissaoId) {
+                try {
+                    document.getElementById('loading-state').innerHTML = '<div class="spinner"></div><span>Buscando próximo protocolo pendente na fila...</span>';
+                    const cursos = await apiGet('/coordenador/meus-cursos');
+                    const cid = (cursos && cursos.length > 0) ? cursos[0].id : 1;
+
+                    const resp = await apiGet(`/coordenador/submissoes/${cid}?status=submitted`);
+                    const subs = Array.isArray(resp) ? resp : (resp.submissoes || []);
+
+                    if (subs.length > 0) {
+                        submissaoId = subs[0].id;
+                        window.history.replaceState(null, '', `analise_certificado.html?id=${submissaoId}`);
+                    } else {
+                        document.getElementById('loading-state').innerHTML =
+                            '<i class="bx bx-check-shield" style="font-size:40px;color:#10b981"></i><br><span style="margin-top:10px;display:inline-block">Fila limpa! Não há protocolos pendentes no momento.</span><br><br><a href="protocoloadm.html" style="color:#0056b3;text-decoration:none">Voltar ao painel</a>';
+                        return;
+                    }
+                } catch (e) {
+                    document.getElementById('loading-state').innerHTML =
+                        '<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>Erro ao buscar fila de protocolos.</span>';
+                    return;
+                }
+            }
+
+            try {
+                const data = await apiGet(`/coordenador/submissao/${submissaoId}`);
+
+                if (!data || data.erro) {
+                    document.getElementById('loading-state').innerHTML =
+                        `<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>${data?.erro || 'Erro ao carregar submissão.'}</span>`;
+                    return;
+                }
+
+                preencherTela(data);
+
+                courseId = data.course_id || null;
+                if (courseId) {
+                    carregarRegras(courseId);
+                } else {
+                    renderRegrasVazias();
+                }
+
+                // Carregar Navegação
+                carregarNavegacao(submissaoId);
+
+            } catch (err) {
+                document.getElementById('loading-state').innerHTML =
+                    '<i class="bx bx-error" style="font-size:40px;color:#ef4444"></i><span>Falha na conexão com o servidor.</span>';
+            }
+        }
+
+        async function carregarNavegacao(id) {
+            try {
+                const nav = await apiGet(`/coordenador/submissao/${id}/navegacao`);
+                
+                const btnPrev = document.getElementById('btn-navegacao-anterior');
+                const btnNext = document.getElementById('btn-navegacao-proximo');
+
+                if (btnPrev) {
+                    if (nav && nav.prev_id) {
+                        btnPrev.disabled = false;
+                        btnPrev.onclick = () => window.location.href = `analise_certificado.html?id=${nav.prev_id}`;
+                    } else {
+                        btnPrev.disabled = true;
+                        btnPrev.onclick = null;
+                    }
+                }
+
+                if (btnNext) {
+                    if (nav && nav.next_id) {
+                        btnNext.disabled = false;
+                        btnNext.onclick = () => window.location.href = `analise_certificado.html?id=${nav.next_id}`;
+                    } else {
+                        btnNext.disabled = true;
+                        btnNext.onclick = null;
+                    }
+                }
+            } catch (e) {
+                console.error("Erro ao carregar navegacao:", e);
+            }
+        }
+
+        function preencherTela(d) {
+            document.getElementById('loading-state').style.display = 'none';
+            document.getElementById('analise-grid').style.display = 'grid';
+
+            document.getElementById('subtitle-protocol').textContent =
+                `Protocolo #${d.id} • ${d.category_name || 'Atividade Complementar'}`;
+
+            atualizarBadgeStatus(d.status);
+            bloqueiarBotoes(d.status);
+
+            const perfil = localStorage.getItem('perfil');
+            if (perfil === 'super_admin' || perfil === 'admin') {
+                const boxParecer = document.querySelector('.box-parecer');
+                const actionBtns = document.querySelector('.action-buttons-horizontal');
+                if (boxParecer) boxParecer.style.display = 'none';
+                if (actionBtns) actionBtns.style.display = 'none';
+            }
+
+            const container = document.getElementById('container-visualizacao');
+            if (d.storage_path) {
+                let path = d.storage_path;
+                if (!path.includes('uploads')) path = `/uploads/${path}`;
+                if (!path.startsWith('/')) path = '/' + path;
+
+                document.getElementById('btn-ver-arquivo').href = path;
+
+                const ext = d.storage_path.split('.').pop().toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'webp'].includes(ext)) {
+                    container.innerHTML = `<img src="${path}" class="cert-img-preview" alt="Certificado" style="width:100%; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1);">`;
+                } else if (ext === 'pdf') {
+                    container.innerHTML = `<iframe src="${path}#toolbar=0" width="100%" height="500px" style="border:none; border-radius:8px;"></iframe>`;
+                } else {
+                    container.innerHTML = `
+                        <div class="mock-cert">
+                            <i class='bx bx-file' style="font-size:48px; color:var(--azul-main);"></i>
+                            <p>Arquivo .${ext.toUpperCase()} não possui visualização direta.</p>
+                            <a href="${path}" target="_blank" class="btn-ver-arquivo" style="margin-top:10px;">Clique para abrir</a>
+                        </div>`;
+                }
+            } else {
+                container.innerHTML = '<p style="padding:20px; text-align:center;">Nenhum arquivo encontrado.</p>';
+                document.getElementById('btn-ver-arquivo').style.display = 'none';
+            }
+
+            // --- PROCESSAMENTO INTELIGENTE DO CARD DE OCR E METADADOS ---
+            const boxOcr = document.getElementById('box-ocr-dados');
+            if (d.ocr_extracted_text) {
+                boxOcr.style.display = 'block';
+
+                const ocrTitulo = document.getElementById('ocr-titulo');
+                const ocrInstituicao = document.getElementById('ocr-instituicao');
+                const ocrAno = document.getElementById('ocr-ano');
+                const ocrDuracao = document.getElementById('ocr-duracao');
+
+                // 1. Título
+                ocrTitulo.value = d.ocr_titulo || '';
+
+                // 2. Ano de Emissão
+                let ano = d.ocr_ano || '';
+                if (!ano && d.ocr_extracted_text) {
+                    const anoMatch = d.ocr_extracted_text.match(/\b(20\d{2}|19\d{2})\b/g);
+                    if (anoMatch && anoMatch.length > 0) {
+                        // Pega o maior ano encontrado no texto (ex: se tiver 2023 da lei e 2025 da emissão, pega 2025)
+                        ano = Math.max(...anoMatch.map(Number)).toString();
+                    }
+                }
+                ocrAno.value = ano || '';
+
+                // 3. Carga Horária/Duração
+                let duracao = d.ocr_duracao || '';
+                if (duracao) {
+                    if (!String(duracao).toLowerCase().endsWith('h')) {
+                        duracao = `${duracao}h`;
+                    }
+                } else if (d.ocr_extracted_text) {
+                    const durMatch = d.ocr_extracted_text.match(/(\d+)\s*(?:horas|h|hours)\b/i);
+                    if (durMatch) duracao = `${durMatch[1]}h`;
+                }
+                ocrDuracao.value = duracao;
+
+                // 4. Instituição Emissora
+                let instituicao = d.ocr_instituicao || '';
+                if (!instituicao && d.ocr_extracted_text) {
+                    const keywords = ['Udemy', 'Coursera', 'Senac', 'Alura', 'Harvard', 'Google', 'Cisco', 'FIA', 'PUC', 'Fundação Bradesco'];
+                    for (const kw of keywords) {
+                        if (new RegExp(kw, 'i').test(d.ocr_extracted_text)) {
+                            instituicao = kw;
+                            break;
+                        }
+                    }
+                    if (!instituicao) {
+                        const linhas = d.ocr_extracted_text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+                        if (linhas.length > 0 && linhas[0].length < 40) {
+                            instituicao = linhas[0];
+                        }
+                    }
+                }
+                ocrInstituicao.value = instituicao || 'Não identificado';
+            } else {
+                boxOcr.style.display = 'none';
+            }
+            // -------------------------------------------------------------
+
+            document.getElementById('aluno-nome').textContent = d.student_name || '—';
+            document.getElementById('aluno-info').textContent = `Email: ${d.student_email || '—'} • ${d.course_name || '—'}`;
+            document.getElementById('kpi-horas').textContent = `${d.requested_hours || d.declared_hours || 0}h`;
+            document.getElementById('kpi-tipo').textContent = d.category_name || '—';
+            
+            // Tipo de atividade no card de parecer
+            document.getElementById('input-tipo-atividade').value = d.category_name || '';
+
+            const iniciais = (d.student_name || '??').split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
+            document.getElementById('aluno-avatar').textContent = iniciais;
+
+            const horasSugeridas = d.approved_hours || d.requested_hours || d.declared_hours || 0;
+            document.getElementById('input-horas').value = horasSugeridas;
+
+            if (d.comment) {
+                document.getElementById('input-obs').value = d.comment;
+            }
+        }
+
+        async function carregarRegras(cid) {
+            const regras = await apiGet(`/coordenador/regras/${cid}`);
+            const container = document.getElementById('regras-cards');
+
+            if (!regras || regras.erro || regras.length === 0) {
+                renderRegrasVazias();
+                return;
+            }
+
+            container.innerHTML = regras.map(r => `
+                <div class="regra-item">
+                    <div class="r-head">
+                        <small>CATEGORIA ATIVA</small>
+                        <i class='bx bx-check-circle text-verde'></i>
+                    </div>
+                    <h4>${r.category_name || '—'}</h4>
+                    <p>Mín: ${r.min_hours || 0}h | Máx: ${r.max_hours || '∞'}h ${r.is_required ? '| <strong>Obrigatória</strong>' : ''}</p>
+                </div>
+            `).join('');
+
+            const maxGlobal = Math.max(...regras.map(r => r.max_hours || 999));
+            if (maxGlobal < 999) {
+                document.getElementById('hint-limite').textContent =
+                    `O limite institucional máximo para o curso é de ${maxGlobal} horas semestrais.`;
+            }
+        }
+
+        function renderRegrasVazias() {
+            document.getElementById('regras-cards').innerHTML = `
+                <div class="regra-item" style="grid-column:1/-1">
+                    <div class="r-head">
+                        <small>SEM REGRAS</small>
+                        <i class='bx bx-info-circle text-laranja'></i>
+                    </div>
+                    <h4>Nenhuma regra cadastrada</h4>
+                    <p>Cadastre uma nova categoria abaixo.</p>
+                </div>
+            `;
+        }
+
+        // Pílulas de Ações Rápidas
+        function aplicarAcaoRapida(tipo) {
+            const obsTextarea = document.getElementById('input-obs');
+            const horasInput = document.getElementById('input-horas');
+            
+            if (tipo === 'sucesso') {
+                obsTextarea.value = "Parabéns! Seu certificado atende aos critérios";
+                const cargaDeclarada = parseFloat(document.getElementById('kpi-horas').textContent) || 0;
+                horasInput.value = cargaDeclarada;
+            } else if (tipo === 'assinatura') {
+                obsTextarea.value = "Certificado sem assinatura responsável, reenviar";
+                horasInput.value = 0;
+            } else if (tipo === 'rejeitar') {
+                obsTextarea.value = "Certificado não condiz com os critérios";
+                horasInput.value = 0;
+            }
+        }
+
+        // Decisão Horizontal
+        function executarDecisao(decisao) {
+            const obsValue = document.getElementById('input-obs').value.trim();
+            
+            if (decisao === 'aprovar') {
+                validar('approved');
+            } else if (decisao === 'reprovar') {
+                if (obsValue.toLowerCase().includes('reenviar') || obsValue.toLowerCase().includes('assinatura')) {
+                    validar('returned_for_adjustment');
+                } else {
+                    validar('rejected');
+                }
+            }
+        }
+
+        async function validar(statusFinal) {
+            const horasInput = document.getElementById('input-horas');
+            const obsInput = document.getElementById('input-obs');
+
+            const approved_hours = parseFloat(horasInput.value);
+            const comment = obsInput.value.trim();
+
+            if (isNaN(approved_hours) || approved_hours < 0) {
+                showToast('Informe uma carga horária válida.', 'error');
+                horasInput.focus();
+                return;
+            }
+
+            if (!comment && statusFinal !== 'approved') {
+                showToast('Adicione uma observação para reprovar ou devolver.', 'error');
+                obsInput.focus();
+                return;
+            }
+
+            const labels = {
+                'approved': 'Aprovando submissão...',
+                'rejected': 'Reprovando submissão...',
+                'returned_for_adjustment': 'Devolvendo para ajuste...'
+            };
+
+            const btnMap = {
+                'approved': document.getElementById('btn-novo-aprovar'),
+                'rejected': document.getElementById('btn-novo-reprovar'),
+                'returned_for_adjustment': document.getElementById('btn-novo-reprovar')
+            };
+
+            const btn = btnMap[statusFinal];
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = `<i class='bx bx-loader-alt' style="animation:spin 0.8s linear infinite"></i> ${labels[statusFinal]}`;
+            btn.disabled = true;
+
+            try {
+                const resp = await apiPatch(`/coordenador/validar/${submissaoId}`, {
+                    status_final: statusFinal,
+                    comment,
+                    approved_hours
+                });
+
+                if (resp && resp.mensagem) {
+                    const msgMap = {
+                        'approved': 'Submissão aprovada com sucesso!',
+                        'rejected': 'Submissão reprovada.',
+                        'returned_for_adjustment': 'Devolvida para ajuste ao aluno.'
+                    };
+                    showToast(msgMap[statusFinal], 'success');
+                    atualizarBadgeStatus(statusFinal);
+
+                    ['btn-novo-aprovar', 'btn-novo-reprovar'].forEach(id => {
+                        const b = document.getElementById(id);
+                        if (b) { b.disabled = true; b.style.opacity = '0.5'; b.style.cursor = 'not-allowed'; }
+                    });
+
+                    setTimeout(() => {
+                        window.location.href = 'protocoloadm.html';
+                    }, 2000);
+
+                } else {
+                    showToast(resp?.erro || 'Erro ao processar validação.', 'error');
+                    btn.innerHTML = textoOriginal;
+                    btn.disabled = false;
+                }
+            } catch (err) {
+                showToast('Falha na conexão. Tente novamente.', 'error');
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
+            }
+        }
+
+        async function salvarNovaCategoria() {
+            const nome = document.getElementById('nova-categoria-nome').value.trim();
+            const peso = document.getElementById('nova-categoria-peso').value.trim();
+
+            if (!nome || !peso) {
+                showToast('Preencha nome e peso da atividade.', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('btn-salvar-regra');
+            btn.textContent = 'Salvando...';
+            btn.disabled = true;
+
+            const resp = await apiPost('/coordenador/categoria', {
+                name: nome,
+                description: `Peso: ${peso} por hora`
+            });
+
+            if (resp && resp.categoria) {
+                showToast(`Categoria "${nome}" criada com sucesso!`, 'success');
+                document.getElementById('nova-categoria-nome').value = '';
+                document.getElementById('nova-categoria-peso').value = '';
+                if (courseId) carregarRegras(courseId);
+            } else {
+                showToast(resp?.erro || 'Erro ao criar categoria.', 'error');
+            }
+
+            btn.innerHTML = '<i class="bx bx-save"></i> Salvar Nova Regra';
+            btn.disabled = false;
+        }
+
+        document.addEventListener('DOMContentLoaded', carregarSubmissao);
+    </script>
+</body>
+
+</html>

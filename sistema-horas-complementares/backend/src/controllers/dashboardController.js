@@ -1,0 +1,503 @@
+const pool = require('../config/database');
+const { exec } = require('child_process');
+const path = require('path');
+
+exports.getDashboardCoordenador = async (req, res) => {
+    const user_id = parseInt(req.usuario.id);
+    const isSuperAdmin =
+        req.usuario.perfis &&
+        req.usuario.perfis.includes('super_admin');
+
+    try {
+        let course_ids = [];
+
+        if (isSuperAdmin) {
+            const todosCursos = await pool.query(
+                `SELECT id FROM courses WHERE is_active = true`
+            );
+            course_ids = todosCursos.rows.map(r => r.id);
+        } else {
+            const cursosDoCoordenador = await pool.query(
+                `SELECT course_id
+                 FROM course_coordinators
+                 WHERE user_id = $1 AND is_active = true`,
+                [user_id]
+            );
+            course_ids = cursosDoCoordenador.rows.map(r => r.course_id);
+        }
+
+        if (course_ids.length === 0) {
+            return res.status(200).json({
+                metricas: { pendentes: 0, aprovadas: 0, reprovadas: 0, media_horas: 0 },
+                total_alunos: 0,
+                total_cursos: 0,
+                por_categoria: [],
+                cursos_mais_envios: [],
+                ultimas_atividades: [],
+                insights: [],
+                recomendacoes: [],
+                resumoRisco: []
+            });
+        }
+
+        //  Métricas principais
+        const metricas = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) AS pendentes,
+                COUNT(*) FILTER (WHERE status = 'approved')                   AS aprovadas,
+                COUNT(*) FILTER (WHERE status = 'rejected')                   AS reprovadas,
+                COALESCE(SUM(approved_hours) FILTER (WHERE status = 'approved'), 0) AS total_horas_aprovadas
+            FROM view_submissoes_completo
+            WHERE course_id = ANY($1)`,
+            [course_ids]
+        );
+
+        const alunosMetricas = await pool.query(
+            `SELECT
+                COUNT(DISTINCT user_id) AS total_alunos
+            FROM view_resumo_aluno_por_curso
+            WHERE course_id = ANY($1)`,
+            [course_ids]
+        );
+
+        const metricasRow = metricas.rows[0] || {};
+        const totalAlunos = parseInt(alunosMetricas.rows[0]?.total_alunos || 0);
+
+        // Busca o número de semestres do curso para saber o último período
+        let ultimoSemestre = 1;
+        try {
+            const cursoSem = await pool.query(
+                `SELECT COALESCE(semestres, 1) AS semestres FROM courses WHERE id = $1 LIMIT 1`,
+                [course_ids[0]]
+            );
+            ultimoSemestre = parseInt(cursoSem.rows[0]?.semestres || 1);
+        } catch (e) {
+            console.warn('[Dashboard] Não foi possível obter semestres do curso:', e.message);
+        }
+        
+        let media_horas_por_aluno = 0;
+        if (totalAlunos > 0) {
+            media_horas_por_aluno = (parseFloat(metricasRow.total_horas_aprovadas || 0) / totalAlunos).toFixed(1);
+        }
+        metricasRow.media_horas_por_aluno = media_horas_por_aluno;
+        metricasRow.total_alunos = totalAlunos;
+
+        
+        let porCategoria = [];
+        try {
+            const periodo = req.query.periodo || 'total';
+            let filtroPeriodo = '';
+            if (periodo === 'mensal') {
+                filtroPeriodo = `AND submitted_at >= date_trunc('month', NOW())`;
+            } else if (periodo === 'anual') {
+                filtroPeriodo = `AND submitted_at >= date_trunc('year', NOW())`;
+            }
+
+            const res1 = await pool.query(
+                `SELECT category_name AS categoria, COUNT(*) AS total
+                FROM view_submissoes_completo
+                WHERE course_id = ANY($1)
+                ${filtroPeriodo}
+                GROUP BY category_name ORDER BY total DESC`,
+                [course_ids]
+            );
+            porCategoria = res1.rows;
+        } catch (e) {
+            console.warn('[Dashboard] Erro categorias:', e.message);
+        }
+
+        let ultimasAtividades = [];
+        try {
+            const res2 = await pool.query(
+                `SELECT submission_id, title, status, submitted_at,
+                        student_name AS nome_aluno, category_name AS categoria
+                 FROM view_submissoes_completo
+                 WHERE course_id = ANY($1)
+                 ORDER BY submitted_at DESC LIMIT 5`,
+                [course_ids]
+            );
+            ultimasAtividades = res2.rows;
+        } catch (e) {
+            console.warn('[Dashboard] Erro atividades:', e.message);
+        }
+
+        //  Cursos com mais envios
+        let cursosMaisEnvios = [];
+        try {
+            const res3 = await pool.query(
+                `SELECT course_name AS nome_curso, COUNT(*) AS total_envios
+                 FROM view_submissoes_completo
+                 WHERE course_id = ANY($1)
+                 GROUP BY course_name ORDER BY total_envios DESC LIMIT 5`,
+                [course_ids]
+            );
+            cursosMaisEnvios = res3.rows;
+        } catch (e) {}
+
+        //  Cursos em risco
+        let cursosEmRisco = [];
+        try {
+            const resRisco = await pool.query(
+                `SELECT
+                    c.name AS nome_curso,
+                    cr.curso_id,
+                    COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio')) AS alunos_em_risco,
+                    COUNT(*) AS total_alunos_risco,
+                    ROUND(
+                        COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))::numeric
+                        / NULLIF(COUNT(*), 0) * 100
+                    , 1) AS percentual_risco
+                 FROM classificacao_risco cr
+                 JOIN courses c ON c.id = cr.curso_id
+                 WHERE cr.curso_id = ANY($1)
+                 GROUP BY cr.curso_id, c.name
+                 HAVING COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio')) > 0
+                 ORDER BY alunos_em_risco DESC
+                 LIMIT 5`,
+                [course_ids]
+            );
+            cursosEmRisco = resRisco.rows;
+        } catch (e) {
+            console.warn('[Dashboard] classificacao_risco indisponível:', e.message);
+        }
+
+        //  Pipeline analítico 
+        let insightsPipeline = [], recomendacoesPipeline = [], resumoRiscoPipeline = [], insightsPeriodoPipeline = [];
+
+        try {
+            const r = await pool.query(
+                `SELECT id, perfil_destino, referencia_tipo, referencia_id,
+                        tipo_insight, titulo, descricao, nivel_alerta,
+                        valor_numerico, data_geracao
+                 FROM insights
+                 WHERE (referencia_tipo IN ('curso','periodo_final') AND referencia_id = ANY($1))
+                    OR (referencia_tipo = 'aluno' AND referencia_id IN (
+                        SELECT user_id FROM user_courses WHERE course_id = ANY($1)
+                    ))
+                    OR (perfil_destino = 'superadmin' AND $2 = true)
+                 ORDER BY data_geracao DESC`,
+                [course_ids, isSuperAdmin]
+            );
+            insightsPipeline = r.rows.filter(i => i.referencia_tipo !== 'periodo_final');
+            insightsPeriodoPipeline = r.rows.filter(i => i.referencia_tipo === 'periodo_final');
+        } catch (e) {
+            console.warn('[Dashboard] Tabela insights não encontrada.');
+        }
+
+        try {
+            const r = await pool.query(
+                `SELECT id, perfil_destino, referencia_id, nome_regra, titulo, recomendacao, motivo, prioridade
+                 FROM recomendacoes
+                 WHERE (perfil_destino = 'aluno' AND referencia_id IN (
+                     SELECT user_id FROM user_courses WHERE course_id = ANY($1)
+                 ))
+                 OR (perfil_destino = 'superadmin' AND $2 = true)`,
+                [course_ids, isSuperAdmin]
+            );
+            recomendacoesPipeline = r.rows;
+        } catch (e) {
+            console.warn('[Dashboard] Tabela recomendacoes não encontrada.');
+        }
+
+        try {
+            const r = await pool.query(
+                `SELECT nivel_risco, COUNT(*)::int as quantidade
+                 FROM classificacao_risco cr
+                 JOIN student_profiles sp ON sp.user_id = cr.aluno_id
+                 WHERE cr.curso_id = ANY($1)
+                   AND sp.semestre = $2
+                 GROUP BY nivel_risco`,
+                [course_ids, ultimoSemestre]
+            );
+            resumoRiscoPipeline = r.rows;
+        } catch (e) {
+            console.warn('[Dashboard] Tabela classificacao_risco não encontrada.');
+        }
+
+        // Total de alunos do último período (para o card do dashboard)
+        let totalAlunosUltimoPeriodo = 0;
+        try {
+            const resUltPer = await pool.query(
+                `SELECT COUNT(DISTINCT uc.user_id) AS total
+                 FROM user_courses uc
+                 JOIN student_profiles sp ON sp.user_id = uc.user_id
+                 WHERE uc.course_id = ANY($1)
+                   AND uc.is_active = true
+                   AND sp.semestre = $2`,
+                [course_ids, ultimoSemestre]
+            );
+            totalAlunosUltimoPeriodo = parseInt(resUltPer.rows[0]?.total || 0);
+        } catch (e) {
+            console.warn('[Dashboard] Erro ao contar alunos do último período:', e.message);
+        }
+
+        let cursoNome = null;
+        try {
+            const cursoInfo = await pool.query(
+                `SELECT name FROM courses WHERE id = $1 LIMIT 1`,
+                [course_ids[0]]
+            );
+            cursoNome = cursoInfo.rows[0]?.name || null;
+        } catch (e) {}
+
+        //  Alunos com horas faltantes
+        let alunosHorasFaltantes = 0;
+        try {
+            const horasFaltantes = await pool.query(`
+                SELECT COUNT(DISTINCT user_id) AS alunos_horas_faltantes
+                FROM view_resumo_aluno_por_curso
+                WHERE course_id = ANY($1)
+                  AND (total_obrigatorio - total_integralizado) > 0
+            `, [course_ids]);
+            alunosHorasFaltantes = parseInt(horasFaltantes.rows[0].alunos_horas_faltantes || 0);
+        } catch (e) {
+            console.warn('[Dashboard] Erro horas faltantes:', e.message);
+        }
+
+        res.status(200).json({
+            metricas: {
+                pendentes:   parseInt(metricasRow.pendentes  || 0),
+                aprovadas:   parseInt(metricasRow.aprovadas  || 0),
+                reprovadas:  parseInt(metricasRow.reprovadas || 0),
+                media_horas: parseFloat(metricasRow.media_horas_por_aluno || 0)
+            },
+            total_alunos:            totalAlunosUltimoPeriodo,
+            ultimo_semestre:         ultimoSemestre,
+            alunos_horas_faltantes:  alunosHorasFaltantes,
+            total_cursos:            course_ids.length,
+            curso:                   cursoNome,
+            por_categoria:           porCategoria,
+            cursos_mais_envios:      cursosMaisEnvios,
+            cursos_em_risco:         cursosEmRisco,
+            ultimas_atividades:      ultimasAtividades,
+            insights:                insightsPipeline,
+            insights_periodo_final:  insightsPeriodoPipeline,
+            recomendacoes:           recomendacoesPipeline,
+            resumoRisco:             resumoRiscoPipeline,
+            updated_at:              new Date().toISOString()
+        });
+
+
+        } catch (err) {
+            console.error('Erro Dashboard Coordenador:', err);
+            res.status(500).json({ erro: err.message });
+        }
+    };
+
+exports.postAtualizarInsightSobDemanda = async (req, res) => {
+    console.log('=== BOTÃO DE INSIGHTS ACIONADO ===');
+    console.log('Curso:', req.params.course_id);
+    const course_id = parseInt(req.params.course_id);
+    const user_id = parseInt(req.usuario.id);
+
+    try {
+        const isSuperAdmin = req.usuario.perfis && req.usuario.perfis.includes('super_admin');
+
+        if (!isSuperAdmin) {
+            const permissao = await pool.query(
+                `SELECT 1 FROM course_coordinators
+                 WHERE user_id = $1 AND course_id = $2 AND is_active = true`,
+                [user_id, course_id]
+            );
+            if (permissao.rows.length === 0) {
+                return res.status(403).json({ erro: "Acesso negado: Você não coordena este curso." });
+            }
+        }
+
+        const dadosCurso = await pool.query(
+            `SELECT name FROM courses WHERE id = $1`, [course_id]
+        );
+        if (dadosCurso.rows.length === 0) {
+            return res.status(404).json({ erro: "Curso não encontrado no sistema." });
+        }
+        const nomeCurso = dadosCurso.rows[0].name;
+
+        const metricasBanco = await pool.query(
+            `SELECT
+                COUNT(*) FILTER (WHERE status NOT IN ('approved', 'rejected')) AS pendentes,
+                COUNT(*) FILTER (WHERE status = 'approved')  AS aprovadas,
+                COUNT(*) FILTER (WHERE status = 'rejected')  AS reprovadas
+             FROM view_submissoes_completo
+             WHERE course_id = $1`,
+            [course_id]
+        );
+
+        const m = metricasBanco.rows[0];
+        const resumoMetricas = `O curso possui atualmente ${m.pendentes || 0} submissoes aguardando avaliacao, ${m.aprovadas || 0} aprovadas e ${m.reprovadas || 0} rejeitadas.`;
+
+        // Busca métricas específicas do último período para o insight de IA
+        const cursoInfo = await pool.query(
+            `SELECT COALESCE(semestres, 1) AS semestres FROM courses WHERE id = $1 LIMIT 1`,
+            [course_id]
+        );
+        const ultimoSemestrePy = parseInt(cursoInfo.rows[0]?.semestres || 1);
+
+        const metricasUltimoPeriodo = await pool.query(`
+            SELECT
+                COUNT(DISTINCT sp.user_id)                                                          AS total_alunos,
+                COUNT(DISTINCT sp.user_id) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))      AS em_risco,
+                COUNT(DISTINCT sp.user_id) FILTER (WHERE cr.nivel_risco = 'baixo')                 AS dentro_meta,
+                ROUND(COALESCE(AVG(h.total_aprovado), 0), 1)                                       AS media_horas
+            FROM student_profiles sp
+            JOIN user_courses uc ON uc.user_id = sp.user_id AND uc.course_id = $1 AND uc.is_active = true
+            LEFT JOIN classificacao_risco cr ON cr.aluno_id = sp.user_id AND cr.curso_id = $1
+            LEFT JOIN (
+                SELECT uc2.user_id, SUM(s2.approved_hours) AS total_aprovado
+                FROM submissions s2
+                JOIN user_courses uc2 ON uc2.id = s2.user_course_id AND uc2.course_id = $1
+                WHERE s2.status = 'approved'
+                GROUP BY uc2.user_id
+            ) h ON h.user_id = sp.user_id
+            WHERE sp.semestre = $2
+        `, [course_id, ultimoSemestrePy]);
+
+        // Submissões do período contadas separadamente (sem JOIN de alunos, evita multiplicação)
+        const submissoesUltimoPeriodo = await pool.query(`
+            SELECT
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved','rejected'))  AS pendentes_periodo,
+                COUNT(*) FILTER (WHERE s.status = 'approved')                    AS aprovadas_periodo
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id AND uc.course_id = $1 AND uc.is_active = true
+            JOIN student_profiles sp ON sp.user_id = uc.user_id AND sp.semestre = $2
+        `, [course_id, ultimoSemestrePy]);
+
+        const mp = metricasUltimoPeriodo.rows[0] || {};
+        const ms = submissoesUltimoPeriodo.rows[0] || {};
+        const resumoUltimoPeriodo = (
+            `Dados do ${ultimoSemestrePy}º período: ` +
+            `${mp.total_alunos || 0} alunos matriculados, ` +
+            `${mp.em_risco || 0} em risco (horas insuficientes), ` +
+            `${mp.dentro_meta || 0} dentro da meta de horas, ` +
+            `media de ${mp.media_horas || 0} horas aprovadas por aluno, ` +
+            `${ms.pendentes_periodo || 0} submissoes pendentes de avaliacao, ` +
+            `${ms.aprovadas_periodo || 0} submissoes aprovadas.`
+        );
+
+        const scriptPath = path.join(__dirname, '../scripts/gerar_insights_ia.py');
+        const nomeCursoLimpo = nomeCurso.replace(/"/g, '\\"');
+        const resumoMetricasLimpo = resumoMetricas.replace(/"/g, '\\"');
+        const resumoUltimoPeriodoLimpo = resumoUltimoPeriodo.replace(/"/g, '\\"');
+        const stringConexaoPostgres = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+
+        exec(`python "${scriptPath}" ${course_id} "${nomeCursoLimpo}" "${resumoMetricasLimpo}" "${resumoUltimoPeriodoLimpo}" ${ultimoSemestrePy}`,
+        {
+            env: { ...process.env, DATABASE_URL: stringConexaoPostgres }
+        },
+        (error, stdout, stderr) => {
+            if (error) {
+                console.error(`[Node API] Erro ao executar script Python: ${error.message}`);
+                return res.status(500).json({ erro: "Erro ao processar o motor analítico de IA." });
+            }
+            console.log(`[Node API] Saída do Python:\n${stdout}`);
+            if (stderr) console.warn(`[Node API] Avisos do Python:\n${stderr}`);
+
+            return res.status(200).json({
+                sucesso: true,
+                mensagem: `Insight cognitivo para "${nomeCurso}" gerado com sucesso.`
+            });
+        });
+
+    } catch (err) {
+        console.error('Erro no controller de insights sob demanda:', err);
+        return res.status(500).json({ erro: err.message });
+    }
+};
+
+//dashboard geral para superadmin
+exports.getDashboardGeral = async (req, res) => {
+    try {
+        // cards
+        const metricas = await pool.query(`
+            SELECT
+                (SELECT COUNT(DISTINCT u.id) FROM users u JOIN user_roles ur ON ur.user_id = u.id JOIN roles r ON r.id = ur.role_id AND r.name = 'student') AS total_alunos,
+                (SELECT COUNT(*) FROM submissions WHERE status NOT IN ('approved', 'rejected')) AS submissoes_pendentes,
+                (SELECT COUNT(*) FROM courses WHERE is_active = true) AS cursos_ativos,
+                (SELECT ROUND(COALESCE(SUM(approved_hours), 0) / NULLIF(COUNT(DISTINCT user_course_id), 0), 1) FROM submissions) AS media_horas
+        `);
+
+        const m = metricas.rows[0];
+
+        //  cursos com maior risco
+        const cursosRisco = await pool.query(`
+            SELECT
+                c.name                                                              AS curso,
+                COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))         AS alunos_em_risco,
+                COUNT(*)                                                            AS total_alunos,
+                ROUND(
+                    COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))::numeric
+                    / NULLIF(COUNT(*), 0) * 100
+                )                                                                   AS risco_percentual
+            FROM classificacao_risco cr
+            JOIN courses c ON c.id = cr.curso_id
+            GROUP BY c.id, c.name
+            HAVING COUNT(*) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio')) > 0
+            ORDER BY risco_percentual DESC, alunos_em_risco DESC
+            LIMIT 5
+        `);
+
+        // Top 5 cursos com mais pendências
+        const totalPendentes = parseInt(m.submissoes_pendentes || 0);
+
+        const cursosPendencias = await pool.query(`
+            SELECT
+                c.name                                                              AS curso,
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))    AS pendencias,
+                ROUND(
+                    COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))::numeric
+                    / NULLIF($1, 0) * 100
+                , 1)                                                                AS percentual_total
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            JOIN courses c ON c.id = uc.course_id
+            GROUP BY c.id, c.name
+            HAVING COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected')) > 0
+            ORDER BY pendencias DESC
+            LIMIT 5
+        `, [totalPendentes]);
+
+        // Dados do gráfico de barras (todos os cursos) 
+        const grafico = await pool.query(`
+            SELECT
+                c.name                                                              AS curso,
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved', 'rejected'))    AS pendencias
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id
+            JOIN courses c ON c.id = uc.course_id
+            GROUP BY c.id, c.name
+            ORDER BY pendencias DESC
+        `);
+
+        // Insights superadmin do pipeline
+        let insights = [];
+        try {
+            const r = await pool.query(`
+                SELECT titulo, descricao, nivel_alerta, tipo_insight, valor_numerico
+                FROM insights
+                WHERE perfil_destino = 'superadmin'
+                ORDER BY data_geracao DESC
+                LIMIT 4
+            `);
+            insights = r.rows;
+        } catch (e) {
+            console.warn('[DashboardGeral] Tabela insights indisponível:', e.message);
+        }
+
+        res.status(200).json({
+            metricas: {
+                total_alunos:          parseInt(m.total_alunos || 0),
+                submissoes_pendentes:  parseInt(m.submissoes_pendentes || 0),
+                media_horas:           parseFloat(m.media_horas || 0),
+                cursos_ativos:         parseInt(m.cursos_ativos || 0),
+            },
+            cursos_maior_risco:    cursosRisco.rows,
+            top_pendencias:        cursosPendencias.rows,
+            grafico_pendencias:    grafico.rows,
+            insights,
+            updated_at:            new Date().toISOString(),
+        });
+
+    } catch (err) {
+        console.error('Erro DashboardGeral:', err);
+        res.status(500).json({ erro: err.message });
+    }
+};
