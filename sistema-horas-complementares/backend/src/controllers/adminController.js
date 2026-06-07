@@ -390,7 +390,7 @@ exports.getSubmissoesGeral = async (req, res) => {
              FROM view_submissoes_completo
              WHERE course_id = ANY($1)
              ${filtroStatus}
-             ORDER BY submitted_at DESC`;
+             ORDER BY semestre DESC NULLS LAST, submitted_at DESC`;
 
         if (paginar) {
             params.push(itensPorPagina, offset);

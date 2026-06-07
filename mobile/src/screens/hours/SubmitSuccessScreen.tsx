@@ -52,12 +52,16 @@ export default function SubmitSuccessScreen({ navigation }: Props) {
           
           <View style={styles.protocolRow}>
             <Text style={styles.protocolKey}>Protocolo:</Text>
-            <Text style={styles.protocolValue}>#2023-A789B</Text>
+            <Text style={styles.protocolValue}>
+              #{new Date().getFullYear()}-{Math.random().toString(36).substring(2, 7).toUpperCase()}
+            </Text>
           </View>
           
           <View style={styles.protocolRow}>
             <Text style={styles.protocolKey}>Enviado em:</Text>
-            <Text style={styles.protocolValue}>24 Mai, 14:32</Text>
+            <Text style={styles.protocolValue}>
+              {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}, {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </Text>
           </View>
         </View>
 

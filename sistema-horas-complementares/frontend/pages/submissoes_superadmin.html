@@ -150,6 +150,7 @@
                         <thead>
                             <tr>
                                 <th>ALUNO</th>
+                                <th style="width:80px;">PERÍODO</th>
                                 <th>ATIVIDADE</th>
                                 <th>HORAS</th>
                                 <th>DATA DE ENVIO</th>
@@ -747,6 +748,11 @@
                                 </div>
                             </div>
                         </td>
+                        <td style="text-align:center;">
+                            <span style="display:inline-block;background:#e8f0fe;color:#1a56db;font-weight:700;font-size:11px;padding:3px 8px;border-radius:20px;white-space:nowrap;">
+                                ${s.semestre ? s.semestre + 'º' : '--'}
+                            </span>
+                        </td>
                         <td>
                             <div class="td-activity">
                                 <strong>${s.title || 'Atividade'}</strong>
@@ -833,8 +839,9 @@
                 }, 300);
             });
 
-            // Exportar CSV
-            document.getElementById('btn-exportar-csv')?.addEventListener('click', exportarCSV);
+            // Exportar CSV/PDF
+            document.getElementById('btn-exportar-csv')?.addEventListener('click', window.exportarListaCSV);
+            document.getElementById('btn-exportar-pdf')?.addEventListener('click', window.exportarListaPDF);
 
             // Atalho Alt+P → Pendentes
             document.addEventListener('keydown', (e) => {
@@ -844,10 +851,18 @@
             });
         });
 
-        // ─── Exportar CSV ─────────────────────────────────────────────────────────
-        function exportarCSV() {
+        // ─── Exportar CSV / PDF ───────────────────────────────────────────────────
+        function getDadosExportacaoSubmissoes() {
             let lista = [...todasSubmissoes];
-            if (filtroAtual !== 'all') lista = lista.filter(s => (s.status || '').toLowerCase() === filtroAtual);
+            if (filtroAtual !== 'all') {
+                if (filtroAtual === 'submitted') {
+                    lista = lista.filter(s => ['submitted', 'returned_for_adjustment'].includes((s.status || '').toLowerCase()));
+                } else {
+                    lista = lista.filter(s => (s.status || '').toLowerCase() === filtroAtual);
+                }
+            }
+
+            if (lista.length === 0) return null;
 
             const cabecalho = ['Aluno', 'RA', 'Curso', 'Atividade', 'Categoria', 'Horas', 'Data Envio', 'Status'];
             const linhas = lista.map(s => {
@@ -861,18 +876,29 @@
                     s.approved_hours || s.horas_solicitadas || '',
                     data,
                     s.status || ''
-                ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
+                ];
             });
 
-            const csv = [cabecalho.join(','), ...linhas].join('\n');
-            const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `submissoes_${new Date().toISOString().slice(0, 10)}.csv`;
-            link.click();
-            URL.revokeObjectURL(url);
+            return { cabecalho, linhas };
         }
+
+        window.exportarListaCSV = function () {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                exportarDadosParaCSV(`submissoes_superadmin_${new Date().toISOString().slice(0, 10)}`, dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        };
+
+        window.exportarListaPDF = async function () {
+            const dados = getDadosExportacaoSubmissoes();
+            if (dados) {
+                await exportarDadosParaPDF(`submissoes_superadmin_${new Date().toISOString().slice(0, 10)}`, 'Relatório de Submissões (Super Admin)', dados.cabecalho, dados.linhas);
+            } else {
+                alert("Nenhuma submissão para exportar.");
+            }
+        };
 
         // ─── Exibir erro na tabela ────────────────────────────────────────────────
         function exibirErro(msg) {

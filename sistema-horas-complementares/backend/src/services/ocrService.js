@@ -50,7 +50,7 @@ ${textoBruto}`;
             messages: [
                 {
                     role: 'system',
-                    content: 'Você é um assistente especialista em extrair dados de certificados. Identifique com precisão o título do curso/evento, a instituição emissora, o ano de conclusão (retorne apenas os 4 dígitos do ano, ex: 2025) e a duração da atividade (ex: "40 horas"). Retorne APENAS um objeto JSON válido contendo as chaves exatas: "titulo", "instituicao", "ano", "duracao". Não adicione explicações ou markdown.',
+                    content: 'Você é um assistente especialista em extrair dados de certificados. Identifique com precisão o título do curso/evento, a instituição emissora, o ano de conclusão (retorne apenas os 4 dígitos do ano da data de emissão ou conclusão mais recente, ex: 2025. Ignore anos antigos referentes a leis ou portarias no rodapé) e a duração da atividade (ex: "40 horas"). Retorne APENAS um objeto JSON válido contendo as chaves exatas: "titulo", "instituicao", "ano", "duracao". Não adicione explicações ou markdown.',
                 },
                 {
                     role: 'user',

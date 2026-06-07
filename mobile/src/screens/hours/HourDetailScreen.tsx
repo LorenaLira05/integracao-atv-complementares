@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
   StatusBar,
   Platform,
+  Alert,
 } from 'react-native';
 import { useSafeAreaInsets, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types';
+import { hoursService } from '../../services/api/hoursService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'HourDetail'>;
 
@@ -21,12 +23,42 @@ export default function HourDetailScreen({ navigation, route }: Props) {
   const insets = useSafeAreaInsets();
 
   const getStatusColor = (status: string) => {
-    if (status === 'Aprovada') return { bg: '#D1FAE5', text: '#059669', icon: 'checkmark-circle' };
-    if (status === 'Em Análise' || status === 'Pendente') return { bg: '#FEF3C7', text: '#D97706', icon: 'ellipsis-horizontal-circle' };
+    if (status === 'Aprovado' || status === 'Aprovada') return { bg: '#D1FAE5', text: '#059669', icon: 'checkmark-circle' };
+    if (status === 'Pendente' || status === 'Em Análise') return { bg: '#FEF3C7', text: '#D97706', icon: 'ellipsis-horizontal-circle' };
     return { bg: '#FEE2E2', text: '#DC2626', icon: 'close-circle' };
   };
 
   const statusStyle = getStatusColor(activity.status);
+
+  const handleDelete = () => {
+    Alert.alert(
+      'Excluir Submissão',
+      'Tem certeza que deseja excluir esta submissão? Esta ação excluirá permanentemente a submissão e o arquivo comprovante do servidor.',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const res = await hoursService.delete(activity.id);
+              const data = res.data as any;
+              if (data && !data.erro) {
+                Alert.alert('Sucesso', 'Submissão excluída com sucesso!', [
+                  { text: 'OK', onPress: () => navigation.goBack() }
+                ]);
+              } else {
+                Alert.alert('Erro', data?.erro || 'Erro ao excluir submissão.');
+              }
+            } catch (err: any) {
+              console.error('Erro ao excluir submissão:', err);
+              Alert.alert('Erro', 'Ocorreu um erro ao excluir a submissão.');
+            }
+          }
+        }
+      ]
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -91,7 +123,7 @@ export default function HourDetailScreen({ navigation, route }: Props) {
             <Ionicons name="attach" size={20} color="#1A1A2E" style={{ marginRight: 6 }} />
             <Text style={styles.sectionLabelDark}>Comprovante de Atividade</Text>
           </View>
-          
+
           <View style={styles.attachmentCard}>
             <View style={styles.attachmentIconBg}>
               <Ionicons name="document-text-outline" size={24} color="#1B3A6B" />
@@ -131,6 +163,13 @@ export default function HourDetailScreen({ navigation, route }: Props) {
           </View>
         )}
 
+        {activity.status === 'Pendente' && (
+          <TouchableOpacity style={styles.deleteButton} onPress={handleDelete}>
+            <Ionicons name="trash-outline" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+            <Text style={styles.deleteButtonText}>Excluir Submissão</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
 
@@ -140,17 +179,17 @@ export default function HourDetailScreen({ navigation, route }: Props) {
           <Ionicons name="grid-outline" size={24} color="#9CA3AF" />
           <Text style={styles.bottomTabLabel}>Dashboard</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.bottomTabItem} onPress={() => navigation.navigate('HoursList')}>
           <Ionicons name="reader" size={24} color="#1B3A6B" />
           <Text style={[styles.bottomTabLabel, { color: '#1B3A6B', fontWeight: '600' }]}>Atividades</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.bottomTabItem}>
           <Ionicons name="notifications-outline" size={24} color="#9CA3AF" />
           <Text style={styles.bottomTabLabel}>Alertas</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.bottomTabItem}>
           <Ionicons name="person-outline" size={24} color="#9CA3AF" />
           <Text style={styles.bottomTabLabel}>Perfil</Text>
@@ -165,7 +204,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#F7F9FC', // Fundo clarinho
   },
-  
+
   // ── HEADER ──
   header: {
     flexDirection: 'row',
@@ -408,5 +447,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
     color: '#9CA3AF',
     fontWeight: '500',
+  },
+  deleteButton: {
+    backgroundColor: '#EF4444',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    marginTop: 24,
+    marginBottom: 8,
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  deleteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

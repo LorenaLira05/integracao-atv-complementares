@@ -475,8 +475,11 @@
                 // 2. Ano de Emissão
                 let ano = d.ocr_ano || '';
                 if (!ano && d.ocr_extracted_text) {
-                    const anoMatch = d.ocr_extracted_text.match(/\b(20\d{2}|19\d{2})\b/);
-                    if (anoMatch) ano = anoMatch[0];
+                    const anoMatch = d.ocr_extracted_text.match(/\b(20\d{2}|19\d{2})\b/g);
+                    if (anoMatch && anoMatch.length > 0) {
+                        // Pega o maior ano encontrado no texto (ex: se tiver 2023 da lei e 2025 da emissão, pega 2025)
+                        ano = Math.max(...anoMatch.map(Number)).toString();
+                    }
                 }
                 ocrAno.value = ano || '';
 

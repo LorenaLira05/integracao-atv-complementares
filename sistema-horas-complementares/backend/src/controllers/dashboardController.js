@@ -62,6 +62,18 @@ exports.getDashboardCoordenador = async (req, res) => {
 
         const metricasRow = metricas.rows[0] || {};
         const totalAlunos = parseInt(alunosMetricas.rows[0]?.total_alunos || 0);
+
+        // Busca o número de semestres do curso para saber o último período
+        let ultimoSemestre = 1;
+        try {
+            const cursoSem = await pool.query(
+                `SELECT COALESCE(semestres, 1) AS semestres FROM courses WHERE id = $1 LIMIT 1`,
+                [course_ids[0]]
+            );
+            ultimoSemestre = parseInt(cursoSem.rows[0]?.semestres || 1);
+        } catch (e) {
+            console.warn('[Dashboard] Não foi possível obter semestres do curso:', e.message);
+        }
         
         let media_horas_por_aluno = 0;
         if (totalAlunos > 0) {
@@ -150,7 +162,7 @@ exports.getDashboardCoordenador = async (req, res) => {
         }
 
         //  Pipeline analítico 
-        let insightsPipeline = [], recomendacoesPipeline = [], resumoRiscoPipeline = [];
+        let insightsPipeline = [], recomendacoesPipeline = [], resumoRiscoPipeline = [], insightsPeriodoPipeline = [];
 
         try {
             const r = await pool.query(
@@ -158,7 +170,7 @@ exports.getDashboardCoordenador = async (req, res) => {
                         tipo_insight, titulo, descricao, nivel_alerta,
                         valor_numerico, data_geracao
                  FROM insights
-                 WHERE (referencia_tipo = 'curso' AND referencia_id = ANY($1))
+                 WHERE (referencia_tipo IN ('curso','periodo_final') AND referencia_id = ANY($1))
                     OR (referencia_tipo = 'aluno' AND referencia_id IN (
                         SELECT user_id FROM user_courses WHERE course_id = ANY($1)
                     ))
@@ -166,7 +178,8 @@ exports.getDashboardCoordenador = async (req, res) => {
                  ORDER BY data_geracao DESC`,
                 [course_ids, isSuperAdmin]
             );
-            insightsPipeline = r.rows;
+            insightsPipeline = r.rows.filter(i => i.referencia_tipo !== 'periodo_final');
+            insightsPeriodoPipeline = r.rows.filter(i => i.referencia_tipo === 'periodo_final');
         } catch (e) {
             console.warn('[Dashboard] Tabela insights não encontrada.');
         }
@@ -189,14 +202,33 @@ exports.getDashboardCoordenador = async (req, res) => {
         try {
             const r = await pool.query(
                 `SELECT nivel_risco, COUNT(*)::int as quantidade
-                 FROM classificacao_risco
-                 WHERE curso_id = ANY($1)
+                 FROM classificacao_risco cr
+                 JOIN student_profiles sp ON sp.user_id = cr.aluno_id
+                 WHERE cr.curso_id = ANY($1)
+                   AND sp.semestre = $2
                  GROUP BY nivel_risco`,
-                [course_ids]
+                [course_ids, ultimoSemestre]
             );
             resumoRiscoPipeline = r.rows;
         } catch (e) {
             console.warn('[Dashboard] Tabela classificacao_risco não encontrada.');
+        }
+
+        // Total de alunos do último período (para o card do dashboard)
+        let totalAlunosUltimoPeriodo = 0;
+        try {
+            const resUltPer = await pool.query(
+                `SELECT COUNT(DISTINCT uc.user_id) AS total
+                 FROM user_courses uc
+                 JOIN student_profiles sp ON sp.user_id = uc.user_id
+                 WHERE uc.course_id = ANY($1)
+                   AND uc.is_active = true
+                   AND sp.semestre = $2`,
+                [course_ids, ultimoSemestre]
+            );
+            totalAlunosUltimoPeriodo = parseInt(resUltPer.rows[0]?.total || 0);
+        } catch (e) {
+            console.warn('[Dashboard] Erro ao contar alunos do último período:', e.message);
         }
 
         let cursoNome = null;
@@ -212,18 +244,10 @@ exports.getDashboardCoordenador = async (req, res) => {
         let alunosHorasFaltantes = 0;
         try {
             const horasFaltantes = await pool.query(`
-                SELECT COUNT(DISTINCT uc.user_id) AS alunos_horas_faltantes
-                FROM user_courses uc
-                JOIN courses c ON c.id = uc.course_id
-                LEFT JOIN (
-                    SELECT user_course_id, SUM(approved_hours) AS total_aprovado
-                    FROM submissions
-                    WHERE status = 'approved'
-                    GROUP BY user_course_id
-                ) h ON h.user_course_id = uc.id
-                WHERE uc.course_id = ANY($1)
-                  AND uc.is_active = true
-                  AND COALESCE(h.total_aprovado, 0) < c.minimum_required_hours
+                SELECT COUNT(DISTINCT user_id) AS alunos_horas_faltantes
+                FROM view_resumo_aluno_por_curso
+                WHERE course_id = ANY($1)
+                  AND (total_obrigatorio - total_integralizado) > 0
             `, [course_ids]);
             alunosHorasFaltantes = parseInt(horasFaltantes.rows[0].alunos_horas_faltantes || 0);
         } catch (e) {
@@ -237,7 +261,8 @@ exports.getDashboardCoordenador = async (req, res) => {
                 reprovadas:  parseInt(metricasRow.reprovadas || 0),
                 media_horas: parseFloat(metricasRow.media_horas_por_aluno || 0)
             },
-            total_alunos:            totalAlunos,
+            total_alunos:            totalAlunosUltimoPeriodo,
+            ultimo_semestre:         ultimoSemestre,
             alunos_horas_faltantes:  alunosHorasFaltantes,
             total_cursos:            course_ids.length,
             curso:                   cursoNome,
@@ -246,6 +271,7 @@ exports.getDashboardCoordenador = async (req, res) => {
             cursos_em_risco:         cursosEmRisco,
             ultimas_atividades:      ultimasAtividades,
             insights:                insightsPipeline,
+            insights_periodo_final:  insightsPeriodoPipeline,
             recomendacoes:           recomendacoesPipeline,
             resumoRisco:             resumoRiscoPipeline,
             updated_at:              new Date().toISOString()
@@ -299,12 +325,61 @@ exports.postAtualizarInsightSobDemanda = async (req, res) => {
         const m = metricasBanco.rows[0];
         const resumoMetricas = `O curso possui atualmente ${m.pendentes || 0} submissoes aguardando avaliacao, ${m.aprovadas || 0} aprovadas e ${m.reprovadas || 0} rejeitadas.`;
 
+        // Busca métricas específicas do último período para o insight de IA
+        const cursoInfo = await pool.query(
+            `SELECT COALESCE(semestres, 1) AS semestres FROM courses WHERE id = $1 LIMIT 1`,
+            [course_id]
+        );
+        const ultimoSemestrePy = parseInt(cursoInfo.rows[0]?.semestres || 1);
+
+        const metricasUltimoPeriodo = await pool.query(`
+            SELECT
+                COUNT(DISTINCT sp.user_id)                                                          AS total_alunos,
+                COUNT(DISTINCT sp.user_id) FILTER (WHERE cr.nivel_risco IN ('alto', 'medio'))      AS em_risco,
+                COUNT(DISTINCT sp.user_id) FILTER (WHERE cr.nivel_risco = 'baixo')                 AS dentro_meta,
+                ROUND(COALESCE(AVG(h.total_aprovado), 0), 1)                                       AS media_horas
+            FROM student_profiles sp
+            JOIN user_courses uc ON uc.user_id = sp.user_id AND uc.course_id = $1 AND uc.is_active = true
+            LEFT JOIN classificacao_risco cr ON cr.aluno_id = sp.user_id AND cr.curso_id = $1
+            LEFT JOIN (
+                SELECT uc2.user_id, SUM(s2.approved_hours) AS total_aprovado
+                FROM submissions s2
+                JOIN user_courses uc2 ON uc2.id = s2.user_course_id AND uc2.course_id = $1
+                WHERE s2.status = 'approved'
+                GROUP BY uc2.user_id
+            ) h ON h.user_id = sp.user_id
+            WHERE sp.semestre = $2
+        `, [course_id, ultimoSemestrePy]);
+
+        // Submissões do período contadas separadamente (sem JOIN de alunos, evita multiplicação)
+        const submissoesUltimoPeriodo = await pool.query(`
+            SELECT
+                COUNT(*) FILTER (WHERE s.status NOT IN ('approved','rejected'))  AS pendentes_periodo,
+                COUNT(*) FILTER (WHERE s.status = 'approved')                    AS aprovadas_periodo
+            FROM submissions s
+            JOIN user_courses uc ON uc.id = s.user_course_id AND uc.course_id = $1 AND uc.is_active = true
+            JOIN student_profiles sp ON sp.user_id = uc.user_id AND sp.semestre = $2
+        `, [course_id, ultimoSemestrePy]);
+
+        const mp = metricasUltimoPeriodo.rows[0] || {};
+        const ms = submissoesUltimoPeriodo.rows[0] || {};
+        const resumoUltimoPeriodo = (
+            `Dados do ${ultimoSemestrePy}º período: ` +
+            `${mp.total_alunos || 0} alunos matriculados, ` +
+            `${mp.em_risco || 0} em risco (horas insuficientes), ` +
+            `${mp.dentro_meta || 0} dentro da meta de horas, ` +
+            `media de ${mp.media_horas || 0} horas aprovadas por aluno, ` +
+            `${ms.pendentes_periodo || 0} submissoes pendentes de avaliacao, ` +
+            `${ms.aprovadas_periodo || 0} submissoes aprovadas.`
+        );
+
         const scriptPath = path.join(__dirname, '../scripts/gerar_insights_ia.py');
         const nomeCursoLimpo = nomeCurso.replace(/"/g, '\\"');
         const resumoMetricasLimpo = resumoMetricas.replace(/"/g, '\\"');
+        const resumoUltimoPeriodoLimpo = resumoUltimoPeriodo.replace(/"/g, '\\"');
         const stringConexaoPostgres = `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
-        exec(`python "${scriptPath}" ${course_id} "${nomeCursoLimpo}" "${resumoMetricasLimpo}"`,
+        exec(`python "${scriptPath}" ${course_id} "${nomeCursoLimpo}" "${resumoMetricasLimpo}" "${resumoUltimoPeriodoLimpo}" ${ultimoSemestrePy}`,
         {
             env: { ...process.env, DATABASE_URL: stringConexaoPostgres }
         },

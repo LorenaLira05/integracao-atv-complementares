@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 const registrarLog = require('../utils/logger');
 const { emailNovaSubmissao } = require('../services/emailService');
 const { processarEInserirArquivo } = require('./uploadController');
+const fs = require('fs');
+const path = require('path');
 
 /**
  * POST /aluno/submissao
@@ -204,9 +206,12 @@ exports.putEditarSubmissao = async (req, res) => {
 exports.deleteSubmissao = async (req, res) => {
     const { id } = req.params;
     const user_id = req.usuario.id;
+    const client = await pool.connect();
 
     try {
-        const submissao = await pool.query(
+        await client.query('BEGIN');
+
+        const submissao = await client.query(
             `SELECT s.*
              FROM submissions s
              JOIN user_courses uc ON uc.id = s.user_course_id
@@ -215,21 +220,58 @@ exports.deleteSubmissao = async (req, res) => {
         );
 
         if (submissao.rows.length === 0) {
+            await client.query('ROLLBACK');
+            client.release();
             return res.status(404).json({ erro: 'Submissão não encontrada.' });
         }
 
         if (submissao.rows[0].status !== 'submitted') {
+            await client.query('ROLLBACK');
+            client.release();
             return res.status(400).json({
                 erro: 'Só é possível deletar submissões ainda não avaliadas.'
             });
         }
 
-        await pool.query(`DELETE FROM submissions WHERE id = $1`, [id]);
+        // Buscar caminhos dos arquivos físicos
+        const files = await client.query(
+            `SELECT storage_path FROM submission_files WHERE submission_id = $1`,
+            [id]
+        );
+
+        // Deletar do banco de dados (tabelas relacionadas e a principal)
+        await client.query(`DELETE FROM submission_files WHERE submission_id = $1`, [id]);
+        await client.query(`DELETE FROM notifications WHERE submission_id = $1`, [id]);
+        await client.query(`DELETE FROM submissions WHERE id = $1`, [id]);
+
+        await client.query('COMMIT');
+        client.release();
+
+        // Deletar arquivos físicos do disco
+        for (const file of files.rows) {
+            if (file.storage_path) {
+                const filename = path.basename(file.storage_path);
+                const physicalPath = path.join(__dirname, '../../uploads', filename);
+                if (fs.existsSync(physicalPath)) {
+                    try {
+                        fs.unlinkSync(physicalPath);
+                    } catch (unlinkErr) {
+                        console.error(`Erro ao deletar arquivo físico ${physicalPath}:`, unlinkErr);
+                    }
+                }
+            }
+        }
 
         await registrarLog(req.usuario.id, 'DELETAR_SUBMISSAO', 'submissions', id, {});
         res.status(200).json({ mensagem: 'Submissão deletada com sucesso!' });
 
     } catch (err) {
+        try {
+            await client.query('ROLLBACK');
+        } catch (rollbackErr) {
+            // ignorar
+        }
+        client.release();
         res.status(500).json({ erro: err.message });
     }
 };
@@ -243,8 +285,13 @@ exports.getMinhasSubmissoes = async (req, res) => {
         let filtros = '';
 
         if (status) {
-            filtros += ` AND s.status = $${params.length + 1}::submission_status_enum`;
-            params.push(status);
+            const statusUpper = status.toUpperCase();
+            if (statusUpper === 'PENDENTE') {
+                filtros += ` AND s.status NOT IN ('approved', 'rejected')`;
+            } else if (statusUpper !== 'ALL' && statusUpper !== 'TODAS') {
+                filtros += ` AND s.status = $${params.length + 1}::submission_status_enum`;
+                params.push(status);
+            }
         }
 
         if (course_id) {

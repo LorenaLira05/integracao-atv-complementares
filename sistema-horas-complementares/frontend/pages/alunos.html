@@ -11,7 +11,9 @@
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'
+        rel='stylesheet'>
 </head>
 
 <body>
@@ -33,13 +35,34 @@
 
         // ── Estado global ──
         let todosAlunos = [];
+        let todosCursos = [];
         let paginaAtual = 1;
         const POR_PAGINA = 15;
         let buscaAtual = '';
         let cursoBuscaAtual = '';
-        let statusBuscaAtual = 'ativo';
+        let statusBuscaAtual = '';
         let periodoBuscaAtual = '';
-        let riscoBuscaAtual = '';
+
+        function populatePeriodoFiltro(semestres) {
+            const select = document.getElementById('select-periodo');
+            if (!select) return;
+            const maxSem = (semestres && semestres > 0) ? semestres : 8;
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="">Todos os Semestres</option>';
+            for (let i = 1; i <= maxSem; i++) {
+                const opt = document.createElement('option');
+                opt.value = String(i);
+                opt.textContent = `${i}º Semestre`;
+                select.appendChild(opt);
+            }
+            // Restaura seleção anterior se válida; senão default = Todos
+            if (valorAtual && parseInt(valorAtual) <= maxSem) {
+                select.value = valorAtual;
+            } else {
+                select.value = '';
+                periodoBuscaAtual = '';
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             // Sidebar e Header info já são tratados pelo script.js central
@@ -60,6 +83,13 @@
             document.getElementById('select-curso')?.addEventListener('change', e => {
                 cursoBuscaAtual = e.target.value;
                 paginaAtual = 1;
+                // Atualiza opções de semestre com base no curso selecionado
+                if (cursoBuscaAtual) {
+                    const cursoSelecionado = todosCursos.find(c => String(c.id) === String(cursoBuscaAtual));
+                    populatePeriodoFiltro(cursoSelecionado ? cursoSelecionado.semestres : null);
+                } else {
+                    populatePeriodoFiltro(null); // Fallback 8 semestres
+                }
                 renderAlunos();
             });
             document.getElementById('select-status')?.addEventListener('change', e => {
@@ -69,11 +99,6 @@
             });
             document.getElementById('select-periodo')?.addEventListener('change', e => {
                 periodoBuscaAtual = e.target.value;
-                paginaAtual = 1;
-                renderAlunos();
-            });
-            document.getElementById('select-risco')?.addEventListener('change', e => {
-                riscoBuscaAtual = e.target.value;
                 paginaAtual = 1;
                 renderAlunos();
             });
@@ -88,8 +113,9 @@
                 if (perfil === 'coordinator') {
                     const meusCursos = await apiGet('/coordenador/meus-cursos');
                     const cursos = Array.isArray(meusCursos) ? meusCursos : [];
+                    todosCursos = cursos;
                     console.log('Cursos do coordenador:', cursos);
-                    
+
                     if (selectCurso && selectCurso.options.length <= 1) {
                         cursos.forEach(c => {
                             const opt = document.createElement('option');
@@ -97,6 +123,17 @@
                             opt.textContent = c.name;
                             selectCurso.appendChild(opt);
                         });
+
+                        const activeCourseId = localStorage.getItem('selectedCourseId');
+                        if (activeCourseId) {
+                            selectCurso.value = activeCourseId;
+                            cursoBuscaAtual = activeCourseId;
+                            // Ajusta semestres para o curso ativo
+                            const cursoAtivo = cursos.find(c => String(c.id) === String(activeCourseId));
+                            populatePeriodoFiltro(cursoAtivo ? cursoAtivo.semestres : null);
+                        } else {
+                            populatePeriodoFiltro(null);
+                        }
                     }
 
                     const promessas = cursos.map(c =>
@@ -123,7 +160,7 @@
                     }
                 }
                 renderAlunos();
-            } catch(e) {
+            } catch (e) {
                 console.error('Erro crítico no carregamento:', e);
                 const infoTotal = document.getElementById('info-total-alunos');
                 if (infoTotal) infoTotal.textContent = 'Erro: ' + e.message;
@@ -151,19 +188,21 @@
             if (periodoBuscaAtual) {
                 lista = lista.filter(a => String(a.semestre) === String(periodoBuscaAtual));
             }
-            if (riscoBuscaAtual) {
-                lista = lista.filter(a => (a.nivel_risco || 'baixo').toLowerCase() === riscoBuscaAtual.toLowerCase());
-            }
+
+            // Ordena: semestre DESC (último período primeiro), nome como desempate
+            lista.sort((a, b) => {
+                const semB = parseInt(b.semestre) || 0;
+                const semA = parseInt(a.semestre) || 0;
+                if (semB !== semA) return semB - semA;
+                return (a.full_name || '').localeCompare(b.full_name || '', 'pt-BR');
+            });
 
             // KPIs
             const totalEl = document.getElementById('kpi-total');
             const ativasEl = document.getElementById('kpi-ativas');
             if (totalEl) totalEl.textContent = lista.length.toLocaleString('pt-BR');
             if (ativasEl) {
-                const ativas = lista.filter(a => {
-                    const st = (a.status_matricula || 'ativo').toLowerCase().trim();
-                    return st === 'ativo';
-                }).length;
+                const ativas = lista.filter(a => (a.status_matricula || 'ativo').toLowerCase() === 'ativo').length;
                 ativasEl.textContent = ativas.toLocaleString('pt-BR');
             }
 
@@ -184,14 +223,12 @@
             tbody.innerHTML = paginados.map(a => {
                 const nome = a.full_name || 'Estudante';
                 const iniciais = nome.split(' ').slice(0, 2).map(n => n[0]).join('').toUpperCase();
-                const statusRaw = (a.status_matricula || 'ativo').toLowerCase().trim();
-                
+                const statusRaw = (a.status_matricula || 'ativo').toLowerCase();
+
                 let statusLabel = 'ATIVO';
                 let statusClass = 'status-ativo';
                 if (statusRaw === 'trancado') { statusLabel = 'TRANCADO'; statusClass = 'status-trancado'; }
                 else if (statusRaw.includes('pendente')) { statusLabel = 'PENDENTE FINANCEIRO'; statusClass = 'status-pendente-finan'; }
-                else if (statusRaw === 'concluído' || statusRaw === 'concluido') { statusLabel = 'CONCLUÍDO'; statusClass = 'status-normal'; }
-                else if (statusRaw !== 'ativo') { statusLabel = statusRaw.toUpperCase(); statusClass = 'status-normal'; }
 
                 let riscoLabel = 'BAIXO';
                 let riscoClass = 'risco-baixo';
@@ -320,135 +357,124 @@
                 <div>
                     <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
+                <button class="btn-back" onclick="window.history.back()"
+                    style="margin-left: auto; padding: 8px 16px; font-size: 16px; background: white; border: 1px solid #cbd5e1 !important;">
+                    <i class=></i> VOLTAR
+                </button>
             </header>
 
             <div class="page-container">
 
-            <section class="cabecalho-pagina">
-                <div>
-                    <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>ALUNOS</span></div>
-                    <h1>Gestão de Alunos</h1>
-                </div>
-                <div>
-                    <a href="novo-aluno.html" class="btn-solid"><i class='bx bx-user-plus'></i> Novo Aluno</a>
-                </div>
-            </section>
-
-            <section class="kpi-row">
-                <div class="kpi-card-kpi">
-                    <span class="kpi-kpi-titulo">TOTAL DE ALUNOS</span>
-                    <div class="kpi-kpi-valor-row">
-                        <h2 id="kpi-total">0</h2>
+                <section class="cabecalho-pagina">
+                    <div>
+                        <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>ALUNOS</span></div>
+                        <h1>Gestão de Alunos</h1>
                     </div>
-                    <span class="badge-kpi badge-verde-subir">
-                        <i class='bx bx-trending-up'></i> Atualizado agora
-                    </span>
-                </div>
-
-                <div class="kpi-card-kpi">
-                    <span class="kpi-kpi-titulo">MATRÍCULAS ATIVAS</span>
-                    <div class="kpi-kpi-valor-row">
-                        <h2 id="kpi-ativas">0</h2>
+                    <div>
+                        <a href="novo-aluno.html" class="btn-solid"><i class='bx bx-user-plus'></i> Novo Aluno</a>
                     </div>
-                    <span class="badge-kpi badge-cinza-claro-kpi">
-                        Filtro ativo
-                    </span>
-                </div>
+                </section>
 
-                <div class="card-analise-performance">
-                    <div class="perf-left">
-                        <h3>Análise de Performance</h3>
-                        <p>Indicadores de engajamento baseados na média de notas dos alunos matriculados.</p>
-                        <a href="#" class="btn-perf-ver-relatorio">Ver Relatório Completo</a>
+                <section class="kpi-row">
+                    <div class="kpi-card-kpi">
+                        <span class="kpi-kpi-titulo">TOTAL DE ALUNOS</span>
+                        <div class="kpi-kpi-valor-row">
+                            <h2 id="kpi-total">0</h2>
+                        </div>
+                        <span class="badge-kpi badge-verde-subir">
+                            <i class='bx bx-trending-up'></i> Atualizado agora
+                        </span>
                     </div>
-                    <div class="perf-valor-box">
-                        <span class="perf-valor" id="gpa-medio">8.4</span>
-                        <span class="perf-valor-label">GPA MÉDIO</span>
-                    </div>
-                </div>
-            </section>
 
-            <section class="cartao-tabela-container">
-                <div class="filtros-barra">
-                    <div class="grupo-filtro-linha">
-                        <div class="select-wrapper">
-                            <i class='bx bx-search select-icon'></i>
-                            <input type="text" class="caixa-busca-input select-filtro-compact" placeholder="Buscar aluno..." style="padding-left:32px; min-width:200px;">
+                    <div class="kpi-card-kpi">
+                        <span class="kpi-kpi-titulo">MATRÍCULAS ATIVAS</span>
+                        <div class="kpi-kpi-valor-row">
+                            <h2 id="kpi-ativas">0</h2>
                         </div>
-                        <div class="select-wrapper">
-                            <i class='bx bx-filter-alt select-icon'></i>
-                            <select id="select-curso" class="select-filtro-compact">
-                                <option value="">Todos os Cursos</option>
-                            </select>
+                        <span class="badge-kpi badge-cinza-claro-kpi">
+                            Filtro ativo
+                        </span>
+                    </div>
+
+                    <div class="card-analise-performance">
+                        <div class="perf-left">
+                            <h3>Análise de Performance</h3>
+                            <p>Indicadores de engajamento baseados na média de notas dos alunos matriculados.</p>
+                            <a href="#" class="btn-perf-ver-relatorio">Ver Relatório Completo</a>
                         </div>
-                        <div class="select-wrapper">
-                            <i class='bx bx-check-circle select-icon'></i>
-                            <select id="select-status" class="select-filtro-compact">
-                                <option value="">Todos os Status</option>
-                                <option value="ativo" selected>Ativo</option>
-                                <option value="trancado">Trancado</option>
-                                <option value="pendente_financeiro">Pendente Financeiro</option>
-                            </select>
-                        </div>
-                        <div class="select-wrapper">
-                            <i class='bx bx-calendar select-icon'></i>
-                            <select id="select-periodo" class="select-filtro-compact">
-                                <option value="">Todos os Semestres</option>
-                                <option value="1">1º Semestre</option>
-                                <option value="2">2º Semestre</option>
-                                <option value="3">3º Semestre</option>
-                                <option value="4">4º Semestre</option>
-                                <option value="5">5º Semestre</option>
-                                <option value="6">6º Semestre</option>
-                                <option value="7">7º Semestre</option>
-                                <option value="8">8º Semestre</option>
-                            </select>
-                        </div>
-                        <div class="select-wrapper">
-                            <i class='bx bx-error-circle select-icon'></i>
-                            <select id="select-risco" class="select-filtro-compact">
-                                <option value="">Qualquer Risco</option>
-                                <option value="alto">Alto</option>
-                                <option value="medio">Médio</option>
-                                <option value="baixo">Baixo</option>
-                            </select>
+                        <div class="perf-valor-box">
+                            <span class="perf-valor" id="gpa-medio">8.4</span>
+                            <span class="perf-valor-label">GPA MÉDIO</span>
                         </div>
                     </div>
-                    <div class="info-listagem">
-                        <span id="info-total-alunos">Carregando...</span>
-                        <i class='bx bx-chevron-left' onclick="mudarPag(paginaAtual-1)"></i>
-                        <i class='bx bx-chevron-right' onclick="mudarPag(paginaAtual+1)"></i>
+                </section>
+
+                <section class="cartao-tabela-container">
+                    <div class="filtros-barra">
+                        <div class="grupo-filtro-linha">
+                            <div class="select-wrapper">
+                                <i class='bx bx-search select-icon'></i>
+                                <input type="text" class="caixa-busca-input select-filtro-compact"
+                                    placeholder="Buscar aluno..." style="padding-left:32px; min-width:200px;">
+                            </div>
+                            <div class="select-wrapper">
+                                <i class='bx bx-filter-alt select-icon'></i>
+                                <select id="select-curso" class="select-filtro-compact">
+                                    <option value="">Todos os Cursos</option>
+                                </select>
+                            </div>
+                            <div class="select-wrapper">
+                                <i class='bx bx-check-circle select-icon'></i>
+                                <select id="select-status" class="select-filtro-compact">
+                                    <option value="">Todos os Status</option>
+                                    <option value="ativo">Ativo</option>
+                                    <option value="trancado">Trancado</option>
+                                    <option value="pendente_financeiro">Pendente Financeiro</option>
+                                </select>
+                            </div>
+                            <div class="select-wrapper">
+                                <i class='bx bx-calendar select-icon'></i>
+                                <select id="select-periodo" class="select-filtro-compact">
+                                    <option value="">Todos os Semestres</option>
+                                    <!-- Opções geradas dinamicamente pelo JS com base nos semestres do curso -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="info-listagem">
+                            <span id="info-total-alunos">Carregando...</span>
+                            <i class='bx bx-chevron-left' onclick="mudarPag(paginaAtual-1)"></i>
+                            <i class='bx bx-chevron-right' onclick="mudarPag(paginaAtual+1)"></i>
+                        </div>
                     </div>
-                </div>
 
-                <table class="tabela-alunos">
-                    <thead>
-                        <tr>
-                            <th>NOME DO ALUNO</th>
-                            <th>RA (REGISTRO)</th>
-                            <th>CURSO ACADÊMICO</th>
-                            <th>SEMESTRE</th>
-                            <th>RISCO</th>
-                            <th>STATUS MATRÍCULA</th>
-                            <th></th>
-                        </tr>
-                    </thead>
-                    <tbody id="tbody-alunos">
-                        <!-- Preenchido via JS -->
-                    </tbody>
-                </table>
+                    <table class="tabela-alunos">
+                        <thead>
+                            <tr>
+                                <th>NOME DO ALUNO</th>
+                                <th>RA (REGISTRO)</th>
+                                <th>CURSO ACADÊMICO</th>
+                                <th>SEMESTRE</th>
+                                <th>RISCO</th>
+                                <th>STATUS MATRÍCULA</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="tbody-alunos">
+                            <!-- Preenchido via JS -->
+                        </tbody>
+                    </table>
 
-                <div class="rodape-tabela">
-                    <div class="paginacao-botoes" id="paginacao-container">
-                        <!-- Preenchido via JS -->
+                    <div class="rodape-tabela">
+                        <div class="paginacao-botoes" id="paginacao-container">
+                            <!-- Preenchido via JS -->
+                        </div>
+                        <span class="info-paginacao" id="info-paginacao-texto">PÁGINA 1 DE 129</span>
                     </div>
-                    <span class="info-paginacao" id="info-paginacao-texto">PÁGINA 1 DE 129</span>
-                </div>
-            </section>
+                </section>
 
-                    <footer class="rodape-dashboard" style="text-align: center; margin-top: 40px; padding-bottom: 20px; color: var(--texto-light); font-size: 13px;">
-                        <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
-                    </footer>
+                <footer class="rodape-dashboard" style="text-align: center;">
+                    <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+                </footer>
             </div><!-- /.page-container -->
         </main>
 

@@ -1,0 +1,291 @@
+/* Stylesheet para a Tela de Seleção de Curso do Coordenador */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1e293b;
+    overflow-x: hidden;
+}
+
+.container-selecao {
+    width: 100%;
+    max-width: 1200px;
+    padding: 40px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Ícone central do chapéu de formatura */
+.logo-box {
+    margin-bottom: 24px;
+}
+
+.logo-circle {
+    background: #ffffff;
+    width: 72px;
+    height: 72px;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 20px rgba(15, 42, 74, 0.05);
+}
+
+.logo-circle i {
+    font-size: 36px;
+    color: #0f2c59;
+    /* Senac Blue */
+}
+
+/* Cabeçalho */
+.header-selecao {
+    text-align: center;
+    margin-bottom: 48px;
+}
+
+.header-selecao h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0f2c59;
+    letter-spacing: -0.5px;
+    margin-bottom: 8px;
+}
+
+.header-selecao p {
+    font-family: 'Inter', sans-serif;
+    font-size: 1rem;
+    color: #64748b;
+    font-weight: 500;
+}
+
+/* Grid de Cursos */
+.grid-cursos {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 30px;
+    width: 100%;
+    margin-bottom: 48px;
+}
+
+/* Card Individual de Curso */
+.card-curso {
+    background: #ffffff;
+    border-radius: 24px;
+    width: 320px;
+    height: 250px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    box-shadow: 0 10px 25px rgba(15, 42, 74, 0.02);
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+}
+
+.card-curso:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 35px rgba(15, 42, 74, 0.07);
+    border-color: rgba(15, 44, 89, 0.15);
+}
+
+/* Linha superior do card */
+.card-curso-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.curso-icon-box {
+    background: #eff6ff;
+    /* Light Blue */
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.curso-icon-box i {
+    font-size: 24px;
+    color: #0f2c59;
+}
+
+/* Selo de pendências */
+.badge-pendencias {
+    background: #ffedd5;
+    /* Light Orange */
+    color: #ea580c;
+    /* Senac Orange */
+    padding: 6px 14px;
+    border-radius: 30px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.dot-badge {
+    width: 6px;
+    height: 6px;
+    background-color: #ea580c;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* Linha inferior do card */
+.card-curso-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.curso-categoria {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    color: #94a3b8;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+}
+
+.curso-titulo {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f2c59;
+    line-height: 1.25;
+}
+
+/* Rodapé e Botões */
+.footer-selecao {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
+.btn-sair-portal {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #64748b;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    padding: 8px 16px;
+}
+
+.btn-sair-portal:hover {
+    color: #ea580c;
+}
+
+.btn-sair-portal i {
+    font-size: 16px;
+}
+
+.senac-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 320px;
+    margin-top: 24px;
+    gap: 15px;
+}
+
+.divider-line {
+    height: 1px;
+    background: rgba(148, 163, 184, 0.3);
+    flex: 1;
+}
+
+.divider-text {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    color: #94a3b8;
+    letter-spacing: 2.5px;
+}
+
+/* Animações e Estados Auxiliares */
+.carregando {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    color: #64748b;
+    font-size: 14px;
+    padding: 60px;
+}
+
+.spin-animation {
+    font-size: 36px;
+    color: #0f2c59;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.erro-mensagem {
+    text-align: center;
+    color: #ef4444;
+    padding: 40px;
+}
+
+.erro-mensagem i {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .header-selecao h1 {
+        font-size: 2rem;
+    }
+
+    .grid-cursos {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .card-curso {
+        width: 100%;
+        max-width: 340px;
+    }
+}

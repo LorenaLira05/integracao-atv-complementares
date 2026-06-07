@@ -11,7 +11,9 @@
     <script src="/services/apiHelper.js"></script>
     <script src="/services/script.js"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'
+        rel='stylesheet'>
 </head>
 
 <body>
@@ -23,7 +25,7 @@
             const filtroCurso = document.getElementById('filtroCurso');
             const filtroPeriodo = document.getElementById('filtroPeriodo');
             const btnToggles = document.querySelectorAll('.btn-toggle');
-            
+
             let statusAtual = 'PENDENTE'; // Inicia com pendentes (submitted + returned)
             let cursoAtual = '';
 
@@ -71,12 +73,12 @@
             // ── Função Principal de Carga ──
             async function carregarDados() {
                 if (gridCards) gridCards.innerHTML = '<p style="padding:20px;">Atualizando...</p>';
-                
+
                 try {
                     let url = '';
                     if (isAdminOuCoord) {
                         const cursoId = (cursoAtual && cursoAtual !== 'all' && cursoAtual !== 'Todos os Cursos') ? cursoAtual : null;
-                        url = cursoId 
+                        url = cursoId
                             ? `/coordenador/submissoes/${cursoId}?status=${statusAtual}`
                             : `/coordenador/submissoes?status=${statusAtual}`;
                     } else {
@@ -93,7 +95,7 @@
                     const subs = Array.isArray(resposta) ? resposta : (resposta.submissoes || []);
                     window.currentSubs = subs; // For export
                     const contadores = resposta.contadores || null;
-                    
+
                     renderGrid(subs);
                     if (contadores) atualizarKpis(contadores);
                     else if (!isAdminOuCoord) atualizarKpisAluno(subs);
@@ -118,7 +120,7 @@
                 subs.forEach((s, idx) => {
                     const statusStr = (s.status || 'submitted').toLowerCase();
                     const nome = s.student_name || s.nome_aluno || 'Aluno';
-                    
+
                     // Lógica da Miniatura normalizada
                     let path = '/assets/placeholder-cert.png';
                     if (s.storage_path) {
@@ -129,19 +131,55 @@
                         path = (typeof API !== 'undefined' && API) ? API + path : path;
                     }
 
-                    const dataStr = (typeof formatarData === 'function') 
+                    const dataStr = (typeof formatarData === 'function')
                         ? formatarData(s.submitted_at || s.created_at)
                         : (s.submitted_at || '—');
 
                     const card = document.createElement('div');
                     card.className = 'cert-card';
+                    
+                    // Render dynamically based on whether user is admin/coord or student
+                    let coverBtnHtml = '';
+                    let footerHtml = '';
+                    if (isAdminOuCoord) {
+                        coverBtnHtml = `
+                            <button class="btn-preview" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'">
+                                <i class='bx bx-show'></i>
+                            </button>
+                        `;
+                        footerHtml = `
+                            <div class="cert-footer">
+                                <button class="btn-download" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'">
+                                    <i class='bx bx-search-alt'></i> ANALISAR DOCUMENTO
+                                </button>
+                                <button class="btn-share"><i class='bx bx-share-alt'></i></button>
+                            </div>
+                        `;
+                    } else {
+                        coverBtnHtml = `
+                            <button class="btn-preview" onclick="window.open('${path}', '_blank')">
+                                <i class='bx bx-show'></i>
+                            </button>
+                        `;
+                        footerHtml = `
+                            <div class="cert-footer" style="gap: 8px; display: flex; width: 100%;">
+                                <button class="btn-download" onclick="window.open('${path}', '_blank')" style="flex: 1; justify-content: center;">
+                                    <i class='bx bx-show'></i> VISUALIZAR ARQUIVO
+                                </button>
+                                ${(statusStr === 'submitted' || statusStr === 'pendente') ? `
+                                <button class="btn-excluir" onclick="confirmarExclusao(${s.submission_id || s.id})">
+                                    <i class='bx bx-trash'></i> Excluir
+                                </button>
+                                ` : ''}
+                            </div>
+                        `;
+                    }
+
                     card.innerHTML = `
                         <div class="cert-cover">
                             <img src="${path}" class="cert-img" onerror="this.src='https://placehold.co/400x300?text=Certificado'">
                             <span class="badge-id">ID: #${s.submission_id || s.id}</span>
-                            <button class="btn-preview" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'">
-                                <i class='bx bx-show'></i>
-                            </button>
+                            ${coverBtnHtml}
                         </div>
                         <div class="cert-info">
                             <div class="cert-curso">
@@ -156,12 +194,7 @@
                                 <span><i class='bx bx-calendar'></i> ${formatarData(s.submitted_at)}</span>
                                 <span><i class='bx bx-time'></i> ${s.requested_hours}h</span>
                             </div>
-                            <div class="cert-footer">
-                                <button class="btn-download" onclick="window.location.href='analise_certificado.html?id=${s.submission_id || s.id}'">
-                                    <i class='bx bx-search-alt'></i> ANALISAR DOCUMENTO
-                                </button>
-                                <button class="btn-share"><i class='bx bx-share-alt'></i></button>
-                            </div>
+                            ${footerHtml}
                         </div>
                     `;
                     gridCards.appendChild(card);
@@ -174,7 +207,7 @@
                     kpiValues[0].textContent = contadores.total || 0;
                     kpiValues[1].textContent = contadores.aprovadas || 0;
                     kpiValues[2].textContent = contadores.total_cursos || (filtroCurso?.options.length - 1) || 0;
-                    kpiValues[3].textContent = '3.2 MB'; 
+                    kpiValues[3].textContent = '3.2 MB';
                 }
             }
 
@@ -191,13 +224,11 @@
             function fallbackGrid() {
                 if (gridCards) {
                     gridCards.innerHTML = `
-                        <tr>
-                            <td colspan="7" style="padding:60px; text-align:center;">
-                                <i class='bx bx-error-circle' style="font-size:40px; color:#ef4444; margin-bottom:15px; display:block;"></i>
-                                <div style="color:#ef4444; font-weight:700;">Erro ao carregar dados do servidor.</div>
-                                <p style="color:#64748b; font-size:12px; margin-top:5px;">Verifique sua conexão ou tente novamente mais tarde.</p>
-                            </td>
-                        </tr>`;
+                        <div style="grid-column: 1/-1; padding:60px; text-align:center; color:#ef4444; background:white; border-radius:14px; border:1px solid #fee2e2;">
+                            <i class='bx bx-error-circle' style="font-size:40px; color:#ef4444; margin-bottom:15px; display:block;"></i>
+                            <div style="font-weight:700;">Erro ao carregar dados do servidor.</div>
+                            <p style="color:#64748b; font-size:12px; margin-top:5px;">Verifique sua conexão ou tente novamente mais tarde.</p>
+                        </div>`;
                 }
             }
 
@@ -223,7 +254,7 @@
         function exportarListaCSV() {
             const dados = getDadosExportacaoSubmissoes();
             if (dados) {
-                exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0,10)}`, dados.cabecalho, dados.linhas);
+                exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0, 10)}`, dados.cabecalho, dados.linhas);
             } else {
                 alert("Nenhuma submissão para exportar.");
             }
@@ -232,9 +263,26 @@
         async function exportarListaPDF() {
             const dados = getDadosExportacaoSubmissoes();
             if (dados) {
-                await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0,10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
+                await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0, 10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
             } else {
                 alert("Nenhuma submissão para exportar.");
+            }
+        }
+
+        async function confirmarExclusao(id) {
+            if (confirm("Tem certeza que deseja excluir esta submissão? Esta ação excluirá permanentemente o registro e o arquivo correspondente e não poderá ser desfeita.")) {
+                try {
+                    const res = await apiDelete(`/aluno/submissao/${id}`);
+                    if (res && !res.erro) {
+                        alert(res.mensagem || res.mensagem || "Submissão deletada com sucesso!");
+                        window.location.reload();
+                    } else {
+                        alert(res?.erro || "Erro ao excluir submissão.");
+                    }
+                } catch (err) {
+                    console.error("Erro na exclusão:", err);
+                    alert("Ocorreu um erro ao excluir a submissão.");
+                }
             }
         }
     </script>
@@ -273,17 +321,17 @@
             document.addEventListener('DOMContentLoaded', () => {
                 // O link ativo na sidebar agora é gerenciado centralmente pelo script.js
 
-            if (localStorage.getItem('nome')) {
-                const nomeEl = document.getElementById('sidebar-nome-global');
-                if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
+                if (localStorage.getItem('nome')) {
+                    const nomeEl = document.getElementById('sidebar-nome-global');
+                    if (nomeEl) nomeEl.textContent = localStorage.getItem('nome');
 
-                const avatarEl = document.getElementById('sidebar-avatar-global');
-                if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
-            }
-            if (localStorage.getItem('perfil')) {
-                const roleEl = document.getElementById('sidebar-role-global');
-                if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
-            }
+                    const avatarEl = document.getElementById('sidebar-avatar-global');
+                    if (avatarEl) avatarEl.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(localStorage.getItem('nome')) + '&background=0056b3&color=fff';
+                }
+                if (localStorage.getItem('perfil')) {
+                    const roleEl = document.getElementById('sidebar-role-global');
+                    if (roleEl) roleEl.textContent = localStorage.getItem('perfil');
+                }
             });
         </script>
 
@@ -294,121 +342,125 @@
                     <a href="submissoes.html" class="active">Repositório de Certificados</a>
                     <a href="extrato_certificado.html">Extrato de Horas</a>
                 </div>
-                <button class="btn-back" onclick="window.history.back()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                <button class="btn-back" onclick="window.history.back()"
+                    style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
                     <i class='bx bx-arrow-back'></i> VOLTAR
                 </button>
             </header>
 
             <div class="page-container">
                 <div class="breadcrumb">PORTAL<i class='bx bx-chevron-right'></i> <span>Repositório</span></div>
-            <section class="secao-titulo-submissoes">
-                <div class="titulo-page">
-                    <h1>Repositório <span class="titulo-muted" style="font-weight: 400; font-size: 14px; color: #64748b;">| VALIDADOS</span></h1>
-                </div>
+                <section class="secao-titulo-submissoes">
+                    <div class="titulo-page">
+                        <h1>Repositório <span class="titulo-muted"
+                                style="font-weight: 400; font-size: 14px; color: #64748b;">| VALIDADOS</span></h1>
+                    </div>
 
 
-            </section>
+                </section>
 
-            <!-- KPIs -->
-            <section class="kpis-row">
-                <div class="kpi-box">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <span class="kpi-label">TOTAL DE CERTIFICADOS</span>
-                            <div class="kpi-value" id="kpi-total">--</div>
-                        </div>
-                        <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-file text-blue'></i></div>
-                    </div>
-                    <div class="kpi-bottom text-green">
-                        <i class='bx bx-trending-up'></i> +12% este mês
-                    </div>
-                </div>
-                <div class="kpi-box">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <span class="kpi-label">TOTAL VALIDADOS</span>
-                            <div class="kpi-value" id="kpi-hoje">--</div>
-                        </div>
-                        <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-time-five text-blue'></i></div>
-                    </div>
-                    <div class="kpi-bottom text-gray">
-                         Processamento médio: 4h
-                    </div>
-                </div>
-                <div class="kpi-box">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <span class="kpi-label">CURSOS ATIVOS</span>
-                            <div class="kpi-value" id="kpi-cursos">--</div>
-                        </div>
-                        <div class="kpi-icon-wrap bg-yellow-light"><i class='bx bx-map-pin text-yellow'></i></div>
-                    </div>
-                    <div class="kpi-bottom text-gray">
-                        Unidades Senac/PE
-                    </div>
-                </div>
-                <div class="kpi-box">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-                        <div>
-                            <span class="kpi-label">ESPAÇO UTILIZADO</span>
-                            <div class="kpi-value" id="kpi-espaco">--</div>
-                        </div>
-                        <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-hdd text-blue'></i></div>
-                    </div>
-                    <div class="progress-bar-container">
-                        <div class="progress-bar-fill" id="kpi-espaco-fill" style="width: 65%;"></div>
-                    </div>
-                </div>
-            </section>
-
-            <div class="main-split">
-                <div class="left-content">
-                    <!-- Filters Panel (Agora no Topo) -->
-                    <div class="filters-panel">
-                        <div class="filters-fields">
-                            <div class="field-box">
-                                <label>CURSO</label>
-                                <select id="filtroCurso">
-                                    <option value="">Todos os Cursos</option>
-                                </select>
+                <!-- KPIs -->
+                <section class="kpis-row">
+                    <div class="kpi-box">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <span class="kpi-label">TOTAL DE CERTIFICADOS</span>
+                                <div class="kpi-value" id="kpi-total">--</div>
                             </div>
-                            <div class="field-box">
-                                <label>PERÍODO</label>
-                                <select id="filtroPeriodo">
-                                    <option>Últimos 30 dias</option>
-                                </select>
+                            <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-file text-blue'></i></div>
+                        </div>
+                        <div class="kpi-bottom text-green">
+                            <i class='bx bx-trending-up'></i> +12% este mês
+                        </div>
+                    </div>
+                    <div class="kpi-box">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <span class="kpi-label">TOTAL VALIDADOS</span>
+                                <div class="kpi-value" id="kpi-hoje">--</div>
                             </div>
-                            <div class="field-box">
-                                <label>STATUS DE VALIDAÇÃO</label>
-                                <div class="toggle-status">
-                                    <button class="btn-toggle active" id="btn-pending">PENDENTES</button>
-                                    <button class="btn-toggle" id="btn-approved">APROVADAS</button>
-                                    <button class="btn-toggle" id="btn-rejected">REJEITADAS</button>
-                                    <button class="btn-toggle" id="btn-all">TODAS</button>
+                            <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-time-five text-blue'></i></div>
+                        </div>
+                        <div class="kpi-bottom text-gray">
+                            Processamento médio: 4h
+                        </div>
+                    </div>
+                    <div class="kpi-box">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <span class="kpi-label">CURSOS ATIVOS</span>
+                                <div class="kpi-value" id="kpi-cursos">--</div>
+                            </div>
+                            <div class="kpi-icon-wrap bg-yellow-light"><i class='bx bx-map-pin text-yellow'></i></div>
+                        </div>
+                        <div class="kpi-bottom text-gray">
+                            Unidades Senac/PE
+                        </div>
+                    </div>
+                    <div class="kpi-box">
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <span class="kpi-label">ESPAÇO UTILIZADO</span>
+                                <div class="kpi-value" id="kpi-espaco">--</div>
+                            </div>
+                            <div class="kpi-icon-wrap bg-blue-light"><i class='bx bx-hdd text-blue'></i></div>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar-fill" id="kpi-espaco-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="main-split">
+                    <div class="left-content">
+                        <!-- Filters Panel (Agora no Topo) -->
+                        <div class="filters-panel">
+                            <div class="filters-fields">
+                                <div class="field-box">
+                                    <label>CURSO</label>
+                                    <select id="filtroCurso">
+                                        <option value="">Todos os Cursos</option>
+                                    </select>
+                                </div>
+                                <div class="field-box">
+                                    <label>PERÍODO</label>
+                                    <select id="filtroPeriodo">
+                                        <option>Últimos 30 dias</option>
+                                    </select>
+                                </div>
+                                <div class="field-box">
+                                    <label>STATUS DE VALIDAÇÃO</label>
+                                    <div class="toggle-status">
+                                        <button class="btn-toggle active" id="btn-pending">PENDENTES</button>
+                                        <button class="btn-toggle" id="btn-approved">APROVADAS</button>
+                                        <button class="btn-toggle" id="btn-rejected">REJEITADAS</button>
+                                        <button class="btn-toggle" id="btn-all">TODAS</button>
+                                    </div>
                                 </div>
                             </div>
+
+                            <div class="filters-buttons">
+                                <button class="btn-adv-filters"><i class='bx bx-filter'></i> FILTROS AVANÇADOS</button>
+                                <button class="btn-export" onclick="exportarListaPDF()"><i class='bx bx-file'></i>
+                                    PDF</button>
+                                <button class="btn-export" onclick="exportarListaCSV()"><i class='bx bx-download'></i>
+                                    CSV</button>
+                            </div>
                         </div>
 
-                        <div class="filters-buttons">
-                            <button class="btn-adv-filters"><i class='bx bx-filter'></i> FILTROS AVANÇADOS</button>
-                            <button class="btn-export" onclick="exportarListaPDF()"><i class='bx bx-file'></i> PDF</button>
-                            <button class="btn-export" onclick="exportarListaCSV()"><i class='bx bx-download'></i> CSV</button>
+                        <!-- Grid de Cards -->
+                        <div id="certificadosGrid" class="certificados-grid">
+                            <!-- Injetado via JS -->
                         </div>
                     </div>
-
-                    <!-- Grid de Cards -->
-                    <div id="certificadosGrid" class="certificados-grid">
-                        <!-- Injetado via JS -->
-                    </div>
                 </div>
-                </div>
-                    <footer class="rodape-dashboard" style="text-align: center;">
-                        <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
-                    </footer>
+                <footer class="rodape-dashboard" style="text-align: center;">
+                    <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+                </footer>
             </div>
 
-            </div><!-- /.page-container -->
-        </main>
+    </div><!-- /.page-container -->
+    </main>
     </div>
 </body>
 

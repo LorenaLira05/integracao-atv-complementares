@@ -615,41 +615,17 @@
             btn.style.opacity = '0.7';
 
             try {
-                const token = localStorage.getItem('token');
-                const response = await fetch(`${window.API}/admin/exportar-cursos-resumo`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (response.status === 401) {
-                    if (typeof logout === 'function') logout();
-                    else window.location.href = 'index.html';
-                    return;
-                }
-
-                if (!response.ok) {
-                    throw new Error('Falha ao baixar o relatório.');
-                }
-
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = 'resumo-cursos.csv';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                // Como não há endpoint específico de resumo, exportamos os dados gerais em CSV
+                exportarGeralCSV();
             } catch (err) {
                 console.error(err);
                 alert('Erro ao exportar o relatório rápido: ' + err.message);
             } finally {
-                btn.innerHTML = originalText;
-                btn.style.pointerEvents = 'auto';
-                btn.style.opacity = '1';
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.style.pointerEvents = 'auto';
+                    btn.style.opacity = '1';
+                }, 1000);
             }
         }
     </script>

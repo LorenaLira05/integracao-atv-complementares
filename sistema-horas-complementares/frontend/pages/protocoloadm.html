@@ -10,7 +10,9 @@
     <script src="/services/apiHelper.js?v=2.1"></script>
     <script src="/services/script.js?v=2.1"></script>
     <link rel="stylesheet" href="/styles/sidebar.css">
-    <link href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap' rel='stylesheet'>
+    <link
+        href='https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap'
+        rel='stylesheet'>
     <style>
         /* === FLOATING BANNER LOTE === */
         .floating-banner-lote {
@@ -22,7 +24,7 @@
             color: white;
             padding: 15px 30px;
             border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -34,11 +36,13 @@
             width: 90%;
             max-width: 800px;
         }
+
         .floating-banner-lote.show {
             bottom: 30px;
             opacity: 1;
             pointer-events: auto;
         }
+
         .lote-info-wrap {
             display: flex;
             align-items: center;
@@ -46,6 +50,7 @@
             font-weight: 700;
             font-size: 13px;
         }
+
         .lote-count-badge {
             background: #f6821f;
             color: white;
@@ -54,11 +59,13 @@
             font-size: 14px;
             font-weight: 800;
         }
+
         .lote-actions-btns {
             display: flex;
             gap: 10px;
             align-items: center;
         }
+
         .btn-lote-acao {
             border: none;
             padding: 8px 16px;
@@ -71,25 +78,31 @@
             gap: 6px;
             transition: 0.2s;
         }
+
         .btn-lote-aprovar {
             background: #10b981;
             color: white;
         }
+
         .btn-lote-aprovar:hover {
             background: #059669;
         }
+
         .btn-lote-reprovar {
             background: #ef4444;
             color: white;
         }
+
         .btn-lote-reprovar:hover {
             background: #dc2626;
         }
+
         .btn-lote-cancelar {
             background: transparent;
             color: #94a3b8;
             border: 1px solid #475569;
         }
+
         .btn-lote-cancelar:hover {
             color: white;
             border-color: white;
@@ -113,15 +126,18 @@
             background: white;
             position: relative;
         }
+
         input[type="checkbox"].check-submissao:hover:not(:disabled),
         input[type="checkbox"]#check-all-submissoes:hover {
             border-color: #f6821f;
         }
+
         input[type="checkbox"].check-submissao:checked,
         input[type="checkbox"]#check-all-submissoes:checked {
             background: #f6821f;
             border-color: #f6821f;
         }
+
         input[type="checkbox"].check-submissao:checked::before,
         input[type="checkbox"]#check-all-submissoes:checked::before {
             content: '\2714';
@@ -129,6 +145,7 @@
             font-size: 11px;
             font-weight: bold;
         }
+
         input[type="checkbox"].check-submissao:disabled {
             background: #f1f5f9;
             border-color: #e2e8f0;
@@ -153,10 +170,12 @@
             pointer-events: none;
             transition: opacity 0.2s ease;
         }
+
         .modal-lote-overlay.show {
             opacity: 1;
             pointer-events: auto;
         }
+
         .modal-lote-card {
             background: white;
             border-radius: 12px;
@@ -167,9 +186,11 @@
             transform: scale(0.95);
             transition: transform 0.2s ease;
         }
+
         .modal-lote-overlay.show .modal-lote-card {
             transform: scale(1);
         }
+
         .modal-lote-header {
             padding: 20px 24px;
             border-bottom: 1px solid #e2e8f0;
@@ -177,12 +198,14 @@
             align-items: center;
             justify-content: space-between;
         }
+
         .modal-lote-header h3 {
             font-size: 18px;
             font-weight: 700;
             color: #002b5e;
             margin: 0;
         }
+
         .modal-lote-close {
             background: none;
             border: none;
@@ -191,28 +214,34 @@
             cursor: pointer;
             transition: color 0.2s;
         }
+
         .modal-lote-close:hover {
             color: #64748b;
         }
+
         .modal-lote-body {
             padding: 24px;
         }
+
         .modal-lote-body p {
             font-size: 14px;
             color: #475569;
             margin-bottom: 16px;
             line-height: 1.5;
         }
+
         .modal-lote-textarea-wrap {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
+
         .modal-lote-textarea-wrap label {
             font-size: 12px;
             font-weight: 700;
             color: #334155;
         }
+
         .modal-lote-textarea-wrap textarea {
             width: 100%;
             height: 100px;
@@ -224,9 +253,11 @@
             resize: none;
             transition: border-color 0.2s;
         }
+
         .modal-lote-textarea-wrap textarea:focus {
             border-color: #f6821f;
         }
+
         .modal-lote-footer {
             padding: 16px 24px;
             background: #f8fafc;
@@ -235,6 +266,7 @@
             justify-content: flex-end;
             gap: 12px;
         }
+
         .btn-modal-cancel {
             background: white;
             border: 1px solid #cbd5e1;
@@ -246,9 +278,11 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .btn-modal-cancel:hover {
             background: #f1f5f9;
         }
+
         .btn-modal-confirm {
             border: none;
             color: white;
@@ -259,15 +293,19 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+
         .btn-modal-confirm.btn-aprovar {
             background: #10b981;
         }
+
         .btn-modal-confirm.btn-aprovar:hover {
             background: #059669;
         }
+
         .btn-modal-confirm.btn-reprovar {
             background: #ef4444;
         }
+
         .btn-modal-confirm.btn-reprovar:hover {
             background: #dc2626;
         }
@@ -293,10 +331,40 @@
             // ── Cursos removidos do filtro a pedido do usuário ──
             const selectPeriodo = document.getElementById('select-periodo');
 
+            // ── Popula as opções do filtro de período com base nos semestres do curso ──
+            function populatePeriodoFiltro(semestres) {
+                if (!selectPeriodo) return;
+                const maxSem = (semestres && semestres > 0) ? semestres : 8;
+                const valorAtual = selectPeriodo.value;
+                selectPeriodo.innerHTML = '<option value="all">Todos os Períodos</option>';
+                for (let i = maxSem; i >= 1; i--) {
+                    const opt = document.createElement('option');
+                    opt.value = String(i);
+                    opt.textContent = `${i}º Período`;
+                    selectPeriodo.appendChild(opt);
+                }
+                // Restaura seleção anterior se ainda válida; senão default = Todos
+                if (valorAtual && valorAtual !== 'all' && parseInt(valorAtual) <= maxSem) {
+                    selectPeriodo.value = valorAtual;
+                } else {
+                    selectPeriodo.value = 'all';
+                }
+            }
+
+            // Carrega cursos do coordenador para sincronizar semestres
+            apiGet('/coordenador/meus-cursos').then(meusCursos => {
+                const cursos = Array.isArray(meusCursos) ? meusCursos : [];
+                const activeCourseId = localStorage.getItem('selectedCourseId');
+                const cursoAtivo = activeCourseId
+                    ? cursos.find(c => String(c.id) === String(activeCourseId))
+                    : (cursos.length === 1 ? cursos[0] : null);
+                populatePeriodoFiltro(cursoAtivo ? cursoAtivo.semestres : null);
+            }).catch(() => populatePeriodoFiltro(null));
+
             // ── Carregar Dados ──
             async function carregarDados() {
                 if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:20px;">Atualizando...</td></tr>';
-                
+
                 const cursoVal = selectCurso ? selectCurso.value : 'all';
                 const tabAtiva = document.querySelector('.tab-link.active');
                 const statusMap = {
@@ -310,7 +378,7 @@
 
                 try {
                     let url = '/coordenador/submissoes';
-                    
+
                     url += `?status=${status}`;
 
                     const resposta = await apiGet(url);
@@ -319,10 +387,14 @@
 
                     const selectOrdem = document.getElementById('filtro-ordem-coord');
                     const ordem = selectOrdem ? selectOrdem.value : 'desc';
-                    
+
                     subs.sort((a, b) => {
-                        const da = new Date(a.updated_at || a.submitted_at || a.data_envio || a.created_at || 0);
-                        const db = new Date(b.updated_at || b.submitted_at || b.data_envio || b.created_at || 0);
+                        // Ordena: semestre DESC (primário), data DESC (secundário)
+                        const semB = parseInt(b.semestre) || 0;
+                        const semA = parseInt(a.semestre) || 0;
+                        if (semB !== semA) return semB - semA;
+                        const da = new Date(a.updated_at || a.submitted_at || a.created_at || 0);
+                        const db = new Date(b.updated_at || b.submitted_at || b.created_at || 0);
                         return ordem === 'desc' ? db - da : da - db;
                     });
 
@@ -351,11 +423,10 @@
 
             function renderTable() {
                 let subs = [...todasSubmissoes];
-                const contadores = ultimoContadores;
 
                 const periodo = selectPeriodo ? selectPeriodo.value : 'all';
                 if (periodo !== 'all') {
-                    subs = subs.filter(s => String(s.current_semester) === String(periodo));
+                    subs = subs.filter(s => String(s.semestre) === String(periodo));
                 }
 
                 const kpiPendentes = document.getElementById('val-pendentes');
@@ -364,6 +435,8 @@
                 const tabPendentes = document.getElementById('tab-pendentes');
                 const tabelaInfo = document.getElementById('tabela-info');
                 const rodapeTabela = document.querySelector('.rodape-tabela');
+
+                const contadores = ultimoContadores;
 
                 if (contadores) {
                     if (kpiPendentes) kpiPendentes.textContent = contadores.pendentes || 0;
@@ -385,7 +458,7 @@
                 const paginados = subs.slice(inicio, inicio + POR_PAGINA);
 
                 if (total === 0) {
-                    tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--texto-light);">Nenhum protocolo encontrado.</td></tr>';
+                    tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:var(--texto-light);">Nenhum protocolo encontrado.</td></tr>';
                     if (tabelaInfo) tabelaInfo.textContent = 'Mostrando 0 de 0 submissões';
                     if (rodapeTabela) rodapeTabela.style.display = 'none';
                     return;
@@ -425,9 +498,14 @@
                                 <img src="https://ui-avatars.com/api/?name=${encodeURIComponent(s.student_name || 'A')}&background=random&color=fff" class="avatar-aluno" alt="Avatar">
                                 <div class="aluno-info">
                                     <strong>${s.student_name || 'Aluno'}</strong>
-                                    <small>RA: ${s.student_ra || '20230011'} • ${s.course_name ? s.course_name.substring(0, 3).toUpperCase() : 'CUR'}</small>
+                                    <small>RA: ${s.ra || s.student_ra || '---'} • ${s.course_name ? s.course_name.substring(0, 3).toUpperCase() : 'CUR'}</small>
                                 </div>
                             </div>
+                        </td>
+                        <td style="text-align:center;">
+                            <span style="display:inline-block;background:#e8f0fe;color:#1a56db;font-weight:700;font-size:11px;padding:3px 8px;border-radius:20px;white-space:nowrap;">
+                                ${s.semestre ? s.semestre + 'º' : '--'}
+                            </span>
                         </td>
                         <td>
                             <div class="td-atividade">
@@ -455,7 +533,7 @@
 
             function fallbackTable() {
                 const tabelaBody = document.getElementById('tabela-body');
-                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="7" style="text-align:center; padding:40px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
+                if (tabelaBody) tabelaBody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:40px; color:#ef4444;">Erro ao carregar dados.</td></tr>';
             }
 
             // ── Funções de Lote ──
@@ -475,7 +553,7 @@
                 const checks = document.querySelectorAll('.check-submissao:checked');
                 const banner = document.getElementById('floating-banner-lote');
                 const countEl = document.getElementById('lote-selecionados-count');
-                
+
                 if (checks.length > 0) {
                     if (countEl) countEl.textContent = checks.length;
                     if (banner) banner.classList.add('show');
@@ -492,7 +570,7 @@
                 if (ids.length === 0) return;
 
                 acaoLotePendente = statusFinal;
-                
+
                 const modal = document.getElementById('modal-lote');
                 const title = document.getElementById('modal-lote-title');
                 const text = document.getElementById('modal-lote-text');
@@ -526,7 +604,7 @@
 
             async function confirmarAcaoLote() {
                 if (!acaoLotePendente) return;
-                
+
                 const checks = document.querySelectorAll('.check-submissao:checked');
                 const ids = Array.from(checks).map(c => parseInt(c.dataset.id));
                 if (ids.length === 0) return;
@@ -538,15 +616,15 @@
                     return;
                 }
 
-            const acao = acaoLotePendente;
-            fecharModalLote();
+                const acao = acaoLotePendente;
+                fecharModalLote();
 
-            try {
-                const resp = await apiPatch('/coordenador/validar-lote', {
-                    ids,
-                    status_final: acao,
-                    comment: comment || (acao === 'approved' ? 'Aprovação em lote' : '')
-                });
+                try {
+                    const resp = await apiPatch('/coordenador/validar-lote', {
+                        ids,
+                        status_final: acao,
+                        comment: comment || (acao === 'approved' ? 'Aprovação em lote' : '')
+                    });
 
                     if (resp && !resp.erro) {
                         alert(resp.mensagem || 'Operação realizada com sucesso!');
@@ -603,9 +681,9 @@
             window.mudarPagina = mudarPagina;
 
             function getDadosExportacaoSubmissoes() {
-                if (!todasAsSubmissoes || todasAsSubmissoes.length === 0) return null;
+                if (!todasSubmissoes || todasSubmissoes.length === 0) return null;
                 const cabecalho = ['ID', 'Estudante', 'RA', 'Categoria', 'Horas', 'Status', 'Data'];
-                const linhas = todasAsSubmissoes.map(s => [
+                const linhas = todasSubmissoes.map(s => [
                     s.id || s.submission_id,
                     s.student_name || s.nome_aluno || 'Aluno',
                     s.ra || 'N/A',
@@ -617,19 +695,19 @@
                 return { cabecalho, linhas };
             }
 
-            window.exportarListaCSV = function() {
+            window.exportarListaCSV = function () {
                 const dados = getDadosExportacaoSubmissoes();
                 if (dados) {
-                    exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0,10)}`, dados.cabecalho, dados.linhas);
+                    exportarDadosParaCSV(`submissoes_${new Date().toISOString().slice(0, 10)}`, dados.cabecalho, dados.linhas);
                 } else {
                     alert("Nenhuma submissão para exportar.");
                 }
             };
 
-            window.exportarListaPDF = async function() {
+            window.exportarListaPDF = async function () {
                 const dados = getDadosExportacaoSubmissoes();
                 if (dados) {
-                    await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0,10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
+                    await exportarDadosParaPDF(`submissoes_${new Date().toISOString().slice(0, 10)}`, 'Relatório de Submissões', dados.cabecalho, dados.linhas);
                 } else {
                     alert("Nenhuma submissão para exportar.");
                 }
@@ -637,6 +715,13 @@
 
             // --- INICIALIZAÇÃO ---
             carregarDados();
+
+            // Recarrega dados ao voltar via botão "Voltar" do navegador (back/forward cache)
+            window.addEventListener('pageshow', (event) => {
+                if (event.persisted) {
+                    carregarDados();
+                }
+            });
         });
     </script>
 
@@ -644,7 +729,8 @@
         <!-- Sidebar -->
         <aside class="sidebar-dark">
             <div class="logo-secao">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac" class="logo-img">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac"
+                    class="logo-img">
                 <span class="logo-subtext">GESTÃO ACADÊMICA</span>
             </div>
             <nav class="menu-navegacao">
@@ -656,7 +742,8 @@
             </nav>
             <div class="sidebar-bottom-action">
                 <div class="perfil-sidebar">
-                    <img id="sidebar-avatar-global" src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
+                    <img id="sidebar-avatar-global"
+                        src="https://ui-avatars.com/api/?name=U+S&background=0056b3&color=fff" alt="Avatar">
                     <div class="perfil-sidebar-info">
                         <strong id="sidebar-nome-global">Usuário</strong>
                         <small id="sidebar-role-global">Gestão</small>
@@ -671,118 +758,117 @@
                 <div>
                     <span class="titulo-portal">Portal do Coordenador</span>
                 </div>
-                <button class="btn-back" onclick="window.history.back()" style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
+                <button class="btn-back" onclick="window.history.back()"
+                    style="margin-left: auto; padding: 8px 16px; font-size: 12px; background: white; border: 1px solid #cbd5e1 !important;">
                     <i class='bx bx-arrow-back'></i> VOLTAR
                 </button>
             </header>
-            
+
             <div class="page-container">
 
-            <div class="head-action-header">
-                <div class="head-title-wrap">
-                    <div class="breadcrumb">Portal<i class='bx bx-chevron-right'></i> <span>submissões</span></div>
-                    <h1>Listagem de Submissões</h1>
-                    <p>Gestão de horas complementares e atividades extracurriculares.</p>
-                </div>
-                <div class="head-btns">
-                    <button class="btn-csv" onclick="exportarListaPDF()"><i class='bx bx-file'></i> Exportar PDF</button>
-                    <button class="btn-csv" onclick="exportarListaCSV()"><i class='bx bx-download'></i> Exportar CSV</button>
-                    <button class="btn-nova-ativ" onclick="window.location.href='cadastrar_regra.html'"><i class='bx bx-plus'></i> Cadastrar Regra</button>
-                </div>
-            </div>
-
-            <!-- KPI Row -->
-            <section class="kpi-row-new">
-                <div class="kpi-card-new">
-                    <div class="kpi-card-header">
-                        <i class='bx bx-file icon-blue'></i>
-                        <span>PENDENTES</span>
+                <div class="head-action-header">
+                    <div class="head-title-wrap">
+                        <div class="breadcrumb">Portal<i class='bx bx-chevron-right'></i> <span>submissões</span></div>
+                        <h1>Listagem de Submissões</h1>
+                        <p>Gestão de horas complementares e atividades extracurriculares.</p>
                     </div>
-                    <div class="kpi-main-val">
-                        <h2 id="val-pendentes">...</h2>
-                        <span class="kpi-sub-label sub-plus">Aguardando...</span>
-                    </div>
-                </div>
-                <div class="kpi-card-new">
-                    <div class="kpi-card-header">
-                        <i class='bx bx-check-circle icon-green'></i>
-                        <span>APROVADAS</span>
-                    </div>
-                    <div class="kpi-main-val">
-                        <h2 id="val-aprovadas">...</h2>
-                        <span class="kpi-sub-label sub-month">Total acumulado</span>
-                    </div>
-                </div>
-                <div class="kpi-card-new">
-                    <div class="kpi-card-header">
-                        <i class='bx bx-x-circle icon-red'></i>
-                        <span>REPROVADAS</span>
-                    </div>
-                    <div class="kpi-main-val">
-                        <h2 id="val-reprovadas">...</h2>
-                        <span class="kpi-sub-label sub-pct">Total acumulado</span>
-                    </div>
-                </div>
-                
-            </section>
-
-            <!-- Table Card -->
-            <section class="card-tabela-avancada" style="margin: 0 2px 30px;">
-                <div class="filters-row">
-                    <div class="filters-tabs">
-                        <button class="tab-link active" id="tab-pendentes">Pendentes</button>
-                        <button class="tab-link">Aprovadas</button>
-                        <button class="tab-link">Reprovadas</button>
-                        <button class="tab-link">Todas</button>
-                    </div>
-                    <div class="filters-selects">
-                        <select class="filter-select" id="select-periodo">
-                            <option value="all">Todos os Períodos</option>
-                            <option value="8">8º Período</option>
-                            <option value="7">7º Período</option>
-                            <option value="6">6º Período</option>
-                            <option value="5">5º Período</option>
-                            <option value="4">4º Período</option>
-                            <option value="3">3º Período</option>
-                            <option value="2">2º Período</option>
-                            <option value="1">1º Período</option>
-                        </select>
-                        <select class="filter-select" id="filtro-ordem-coord">
-                            <option value="desc">Mais recentes</option>
-                            <option value="asc">Mais antigas</option>
-                        </select>
+                    <div class="head-btns">
+                        <button class="btn-csv" onclick="exportarListaPDF()"><i class='bx bx-file'></i> Exportar
+                            PDF</button>
+                        <button class="btn-csv" onclick="exportarListaCSV()"><i class='bx bx-download'></i> Exportar
+                            CSV</button>
+                        <button class="btn-nova-ativ" onclick="window.location.href='cadastrar_regra.html'"><i
+                                class='bx bx-plus'></i> Cadastrar Regra</button>
                     </div>
                 </div>
 
-                <table class="tabela-protocolos">
-                    <thead>
-                        <tr>
-                            <th style="width:40px;"><input type="checkbox" id="check-all-submissoes" onclick="toggleTodosCheckboxes(this)"></th>
-                            <th>ALUNO</th>
-                            <th>ATIVIDADE</th>
-                            <th>HORAS</th>
-                            <th>DATA DE ENVIO</th>
-                            <th>STATUS</th>
-                            <th>AÇÕES</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabela-body">
-                        <!-- JS Render -->
-                    </tbody>
-                </table>
-
-                <div class="rodape-tabela">
-                    <span class="info-paginacao" id="tabela-info">Carregando métricas...</span>
-                    <div class="paginacao" id="paginacao-controles">
-                        <!-- JS Render -->
+                <!-- KPI Row -->
+                <section class="kpi-row-new">
+                    <div class="kpi-card-new">
+                        <div class="kpi-card-header">
+                            <i class='bx bx-file icon-blue'></i>
+                            <span>PENDENTES</span>
+                        </div>
+                        <div class="kpi-main-val">
+                            <h2 id="val-pendentes">...</h2>
+                            <span class="kpi-sub-label sub-plus">Aguardando...</span>
+                        </div>
                     </div>
-                </div>
-            </section>
+                    <div class="kpi-card-new">
+                        <div class="kpi-card-header">
+                            <i class='bx bx-check-circle icon-green'></i>
+                            <span>APROVADAS</span>
+                        </div>
+                        <div class="kpi-main-val">
+                            <h2 id="val-aprovadas">...</h2>
+                            <span class="kpi-sub-label sub-month">Total acumulado</span>
+                        </div>
+                    </div>
+                    <div class="kpi-card-new">
+                        <div class="kpi-card-header">
+                            <i class='bx bx-x-circle icon-red'></i>
+                            <span>REPROVADAS</span>
+                        </div>
+                        <div class="kpi-main-val">
+                            <h2 id="val-reprovadas">...</h2>
+                            <span class="kpi-sub-label sub-pct">Total acumulado</span>
+                        </div>
+                    </div>
+
+                </section>
+
+                <!-- Table Card -->
+                <section class="card-tabela-avancada" style="margin: 0 2px 30px;">
+                    <div class="filters-row">
+                        <div class="filters-tabs">
+                            <button class="tab-link active" id="tab-pendentes">Pendentes</button>
+                            <button class="tab-link">Aprovadas</button>
+                            <button class="tab-link">Reprovadas</button>
+                            <button class="tab-link">Todas</button>
+                        </div>
+                        <div class="filters-selects">
+                            <select class="filter-select" id="select-periodo">
+                                <option value="all">Todos os Períodos</option>
+                                <!-- Opções geradas dinamicamente pelo JS com base nos semestres do curso -->
+                            </select>
+                            <select class="filter-select" id="filtro-ordem-coord">
+                                <option value="desc">Mais recentes</option>
+                                <option value="asc">Mais antigas</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <table class="tabela-protocolos">
+                        <thead>
+                            <tr>
+                                <th style="width:40px;"><input type="checkbox" id="check-all-submissoes"
+                                        onclick="toggleTodosCheckboxes(this)"></th>
+                                <th>ALUNO</th>
+                                <th style="width:80px;">PERÍODO</th>
+                                <th>ATIVIDADE</th>
+                                <th>HORAS</th>
+                                <th>DATA DE ENVIO</th>
+                                <th>STATUS</th>
+                                <th>AÇÕES</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabela-body">
+                            <!-- JS Render -->
+                        </tbody>
+                    </table>
+
+                    <div class="rodape-tabela">
+                        <span class="info-paginacao" id="tabela-info">Carregando métricas...</span>
+                        <div class="paginacao" id="paginacao-controles">
+                            <!-- JS Render -->
+                        </div>
+                    </div>
+                </section>
 
 
-            <footer class="rodape-dashboard" style="text-align: center;">
-                        <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
-            </footer>
+                <footer class="rodape-dashboard" style="text-align: center;">
+                    <p>&copy; 2026 Senac Brasil - Portal de Atividades Complementares</p>
+                </footer>
 
             </div><!-- /.page-container -->
 
@@ -824,9 +910,11 @@
             </div>
             <div class="modal-lote-footer">
                 <button class="btn-modal-cancel" onclick="fecharModalLote()">Cancelar</button>
-                <button class="btn-modal-confirm" id="btn-modal-lote-confirm" onclick="confirmarAcaoLote()">Confirmar</button>
+                <button class="btn-modal-confirm" id="btn-modal-lote-confirm"
+                    onclick="confirmarAcaoLote()">Confirmar</button>
             </div>
         </div>
     </div>
 </body>
+
 </html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senac - Selecionar Curso</title>
+    <!-- Boxicons para os ícones -->
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <!-- Google Fonts: Outfit (títulos/números) e Inter (texto corrido) -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <!-- Folha de estilo da página -->
+    <link rel="stylesheet" href="/styles/selecionar_curso.css">
+    <!-- Script utilitário central -->
+    <script src="/services/script.js"></script>
+</head>
+
+<body>
+    <script>
+        // Protege a página para que apenas coordenadores logados acessem
+        protegerPagina(['COORDENADOR', 'COORDINATOR']);
+    </script>
+
+    <div class="container-selecao">
+        <!-- Ícone centralizado do chapéu de formatura -->
+        <div class="logo-box">
+            <div class="logo-circle">
+                <i class="bx bxs-graduation"></i>
+            </div>
+        </div>
+
+        <!-- Cabeçalho de Boas-vindas -->
+        <header class="header-selecao">
+            <h1 id="boas-vindas-titulo">Bem-vindo de volta, S.R.</h1>
+            <p>Selecione o curso que deseja gerenciar hoje</p>
+        </header>
+
+        <!-- Grid de Cards dos Cursos -->
+        <main class="grid-cursos" id="grid-cursos-container">
+            <div class="carregando">
+                <i class="bx bx-loader-alt spin-animation"></i>
+                <p>Carregando seus cursos...</p>
+            </div>
+        </main>
+
+        <!-- Ações do rodapé -->
+        <footer class="footer-selecao">
+            <button class="btn-sair-portal" onclick="logout()">
+                <i class="bx bx-log-out"></i> SAIR DO PORTAL
+            </button>
+            <div class="senac-divider">
+                <span class="divider-line"></span>
+                <span class="divider-text">FACULDADE SENAC</span>
+                <span class="divider-line"></span>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const nomeUsuario = localStorage.getItem('nome') || 'Coordenador';
+
+            // Extrai o primeiro e segundo nome para ficar igual ao layout
+            const partesNome = nomeUsuario.split(' ').filter(Boolean);
+            const nomeExibir = partesNome.length > 1 ? `${partesNome[0]} ${partesNome[1]}` : nomeUsuario;
+
+            document.getElementById('boas-vindas-titulo').innerHTML = `Bem-vindo de volta, S.R. ${nomeExibir}`;
+
+            carregarCursosCoordenador();
+        });
+
+        async function carregarCursosCoordenador() {
+            const container = document.getElementById('grid-cursos-container');
+            try {
+                const cursos = await apiGet('/coordenador/meus-cursos');
+
+                if (!cursos || cursos.length === 0) {
+                    container.innerHTML = `
+                        <div class="erro-mensagem">
+                            <i class="bx bx-info-circle"></i>
+                            <p>Você não possui nenhum curso vinculado a sua coordenação no momento.</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = '';
+
+                cursos.forEach(c => {
+                    const card = document.createElement('div');
+                    card.className = 'card-curso';
+                    card.addEventListener('click', () => {
+                        selecionarCurso(c.id, c.name);
+                    });
+
+                    // Define o ícone com base no nome do curso
+                    let iconClass = 'bx-book-open'; // Padrão
+                    const nomeNormalizado = c.name.toLowerCase();
+                    if (nomeNormalizado.includes('sistemas') || nomeNormalizado.includes('análise') || nomeNormalizado.includes('desenvolvimento') || nomeNormalizado.includes('web') || nomeNormalizado.includes('mobile') || nomeNormalizado.includes('computação') || nomeNormalizado.includes('redes') || nomeNormalizado.includes('dados')) {
+                        iconClass = 'bx-code-alt';
+                    } else if (nomeNormalizado.includes('jogos') || nomeNormalizado.includes('design') || nomeNormalizado.includes('arte') || nomeNormalizado.includes('fotografia')) {
+                        iconClass = 'bx-palette';
+                    } else if (nomeNormalizado.includes('engenharia')) {
+                        iconClass = 'bx-cog';
+                    }
+
+                    // Define o tipo do curso
+                    const tipoCurso = c.modalidade ? c.modalidade.toUpperCase() : 'GRADUAÇÃO';
+
+                    // Formata o badge de pendências
+                    const pendencias = parseInt(c.pending_count || 0);
+                    const pendenciasText = pendencias === 1 ? '1 PENDÊNCIA' : `${pendencias} PENDÊNCIAS`;
+
+                    card.innerHTML = `
+                        <div class="card-curso-top">
+                            <div class="curso-icon-box">
+                                <i class="bx ${iconClass}"></i>
+                            </div>
+                            <div class="badge-pendencias">
+                                <span class="dot-badge"></span> ${pendenciasText}
+                            </div>
+                        </div>
+                        <div class="card-curso-bottom">
+                            <span class="curso-categoria">${tipoCurso}</span>
+                            <h2 class="curso-titulo">${c.name}</h2>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = `
+                    <div class="erro-mensagem">
+                        <i class="bx bx-error-circle"></i>
+                        <p>Ocorreu um erro ao carregar os cursos. Por favor, verifique se o servidor está ativo.</p>
+                    </div>`;
+            }
+        }
+
+        function selecionarCurso(id, nome) {
+            localStorage.setItem('selectedCourseId', id);
+            localStorage.setItem('selectedCourseName', nome);
+            window.location.href = '/pages/dashboardadm.html';
+        }
+    </script>
+</body>
+
+</html>

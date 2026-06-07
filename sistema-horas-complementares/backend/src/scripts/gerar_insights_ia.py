@@ -4,6 +4,9 @@ import time
 from groq import Groq
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+# ──────────────────────────────────────────────
+#  INSIGHT 1: Análise geral do curso
+# ──────────────────────────────────────────────
 def processar_curso_individual(client, ins_curso):
     course_id = ins_curso.get('referencia_id')
     titulo_curso = ins_curso.get('titulo', f'Curso {course_id}')
@@ -66,8 +69,74 @@ def processar_curso_individual(client, ins_curso):
             else:
                 print(f"[IA] Erro Groq no curso {course_id}: {e}")
                 break
-                
+
     return None
+
+
+# ──────────────────────────────────────────────
+#  INSIGHT 2: Análise do último período
+# ──────────────────────────────────────────────
+def processar_ultimo_periodo(client, course_id, titulo_curso, resumo_periodo, numero_semestre):
+    prompt = (
+        f"Você é um Especialista em Análise Acadêmica. Analise os dados do {numero_semestre}º período do curso '{titulo_curso}':\n"
+        f"{resumo_periodo}\n\n"
+        f"Com base nesses dados do último período, elabore exatamente 3 insights diagnósticos e acionáveis para o Coordenador:\n"
+        f"- Sobre o risco de conclusão: quantos alunos estão em risco de não cumprir a carga horária mínima.\n"
+        f"- Sobre a média de horas: se está adequada para o estágio do curso ou se requer intervenção urgente.\n"
+        f"- Sobre ação imediata: uma ação concreta e específica que o coordenador deve tomar agora.\n\n"
+        f"REGRAS DE FORMATO CRÍTICAS E OBRIGATÓRIAS:\n"
+        f"1. NÃO inclua preâmbulos, títulos, markdown (asteriscos, hashtags) ou conclusões.\n"
+        f"2. Escreva exatamente 3 itens. Cada um deve iniciar com '• '.\n"
+        f"3. Separe os 3 itens exclusivamente com '<br>'. Não use quebras de linha normais.\n"
+        f"4. Cada item deve ter entre 12 e 25 palavras. Seja direto e profissional.\n\n"
+        f"Exemplo:\n"
+        f"• 18 dos 24 alunos do {numero_semestre}º período estão em risco crítico de não atingir a carga mínima exigida.<br>"
+        f"• A média de 31% das horas acumuladas indica necessidade urgente de campanhas de envio de certificados.<br>"
+        f"• Agendar reunião coletiva com alunos do {numero_semestre}º período até o fim do mês para orientar sobre prazos."
+    )
+
+    tentativas = 3
+    tempo_espera = 2.5
+
+    for tentativa in range(tentativas):
+        try:
+            completion = client.chat.completions.create(
+                messages=[
+                    {
+                        "role": "system",
+                        "content": "Você é um Analista Acadêmico Sênior especializado em gestão de conclusão de curso. Escreva em português do Brasil de forma direta e executiva."
+                    },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    }
+                ],
+                model="llama-3.1-8b-instant",
+                temperature=0.35,
+            )
+
+            return {
+                'perfil_destino': 'coordenador',
+                'referencia_tipo': 'periodo_final',
+                'referencia_id': course_id,
+                'tipo_insight': 'ia_periodo_final',
+                'titulo': f'Análise do {numero_semestre}º Período - IA',
+                'descricao': completion.choices[0].message.content.strip(),
+                'nivel_alerta': 'alto',
+                'valor_numerico': numero_semestre
+            }
+
+        except Exception as e:
+            erro_str = str(e)
+            if "429" in erro_str or "rate_limit" in erro_str:
+                time.sleep(tempo_espera)
+                tempo_espera *= 1.5
+            else:
+                print(f"[IA] Erro Groq no insight de período {course_id}: {e}")
+                break
+
+    return None
+
 
 def gerar_e_salvar_insights_ia(lista_insights_cursos):
     api_key = os.environ.get("GROQ_API_KEY")
@@ -94,7 +163,7 @@ def gerar_e_salvar_insights_ia(lista_insights_cursos):
     print(f"\n[IA] Processando lote de {len(insights_curso_pandas)} cursos em paralelo...")
     with ThreadPoolExecutor(max_workers=2) as executor:
         futuros = {
-            executor.submit(processar_curso_individual, client, curso): curso 
+            executor.submit(processar_curso_individual, client, curso): curso
             for curso in insights_curso_pandas
         }
         for futuro in as_completed(futuros):
@@ -105,6 +174,7 @@ def gerar_e_salvar_insights_ia(lista_insights_cursos):
 
     return novos_insights_ia
 
+
 def salvar_insights_no_postgres(resultados):
     """
     Função dedicada a persistir o insight sob demanda direto no banco
@@ -112,34 +182,31 @@ def salvar_insights_no_postgres(resultados):
     try:
         import psycopg2
         import psycopg2.extensions
-        
+
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODE)
         psycopg2.extensions.register_type(psycopg2.extensions.UNICODEARRAY)
 
         DATABASE_URL = os.environ.get("DATABASE_URL")
         if not DATABASE_URL:
             raise ValueError("[Python] Erro crítico: A variável DATABASE_URL não foi fornecida pelo sistema.")
-        
+
         conexao = psycopg2.connect(DATABASE_URL)
         conexao.set_client_encoding('UTF8')
         cursor = conexao.cursor()
-        
+
         query_delete = """
-            DELETE FROM insights 
+            DELETE FROM insights
             WHERE referencia_tipo = %s AND referencia_id = %s;
         """
-        
+
         query_insert = """
             INSERT INTO insights (perfil_destino, referencia_tipo, referencia_id, tipo_insight, titulo, descricao, nivel_alerta, valor_numerico, data_geracao)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, NOW());
         """
-        
+
         for r in resultados:
             desc_texto = str(r['descricao'])
-            
-            # deleta registros duplicados anteriores para o curso (limpa o banco)
             cursor.execute(query_delete, (r['referencia_tipo'], r['referencia_id']))
-            
             cursor.execute(query_insert, (
                 r['perfil_destino'],
                 r['referencia_tipo'],
@@ -154,14 +221,15 @@ def salvar_insights_no_postgres(resultados):
         cursor.close()
         conexao.close()
         print("[Python] Sucesso: Dados gravados com sucesso no banco.")
-        
+
     except Exception as e:
         try:
             erro_msg = str(e)
         except UnicodeDecodeError:
             erro_msg = repr(e)
-            
+
         print(f"[Python] Erro ao gravar dados no banco: {erro_msg}")
+
 
 if __name__ == "__main__":
     if sys.stdout.encoding != 'utf-8':
@@ -169,26 +237,30 @@ if __name__ == "__main__":
         sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
         sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
 
-    # Valores padrão de contingência (caso o script seja executado manualmente sem o Node)
-    id_arg = 1 
-    titulo_arg = "Curso ID 1"
-    descricao_arg = "Metricas de submissoes pendentes e analise de carga de validacao corrente."
+    # Valores padrão de contingência
+    id_arg           = 1
+    titulo_arg       = "Curso ID 1"
+    descricao_arg    = "Metricas de submissoes pendentes e analise de carga de validacao corrente."
+    resumo_periodo   = ""
+    numero_semestre  = 1
 
-    
     if len(sys.argv) > 3:
         try:
-            id_arg = int(sys.argv[1])
-            titulo_arg = sys.argv[2]
+            id_arg        = int(sys.argv[1])
+            titulo_arg    = sys.argv[2]
             descricao_arg = sys.argv[3]
             print(f"[Python] Executando atualizacao sob demanda para o curso ID: {id_arg}")
         except ValueError:
             print(f"[Python] Aviso: Falha ao converter argumentos. Usando padrões de contingência.")
-    elif len(sys.argv) > 1:
+
+    # Recebe dados do último período (argumentos 4 e 5, opcionais)
+    if len(sys.argv) > 4:
+        resumo_periodo = sys.argv[4]
+    if len(sys.argv) > 5:
         try:
-            id_arg = int(sys.argv[1])
-            print(f"[Python] Executando atualizacao parcial apenas para o ID: {id_arg}")
+            numero_semestre = int(sys.argv[5])
         except ValueError:
-            pass
+            numero_semestre = 1
 
     dados_reais_curso = [{
         "referencia_tipo": "curso",
@@ -198,9 +270,25 @@ if __name__ == "__main__":
         "nivel_alerta": "medio",
         "valor_numerico": 0
     }]
-    
+
     resultados = gerar_e_salvar_insights_ia(dados_reais_curso)
-    
+
+    # Gera também o insight do último período, se os dados foram fornecidos
+    if resumo_periodo:
+        print(f"[Python] Gerando insight do {numero_semestre}º período...")
+        try:
+            api_key = os.environ.get("GROQ_API_KEY")
+            if api_key:
+                client = Groq(api_key=api_key)
+                resultado_periodo = processar_ultimo_periodo(
+                    client, id_arg, titulo_arg, resumo_periodo, numero_semestre
+                )
+                if resultado_periodo:
+                    resultados.append(resultado_periodo)
+                    print(f"[Python] Insight do {numero_semestre}º período gerado com sucesso.")
+        except Exception as e:
+            print(f"[Python] Erro ao gerar insight do período: {e}")
+
     if resultados:
         salvar_insights_no_postgres(resultados)
         print("[Python] Fluxo encerrado.")

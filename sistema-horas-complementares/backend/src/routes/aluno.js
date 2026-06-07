@@ -15,7 +15,7 @@ router.post(
 );
 
 router.put('/submissao/:id', authMiddleware(['student', 'coordinator']), alunoController.putEditarSubmissao);
-router.delete('/submissao/:id', authMiddleware(['student', 'coordinator']), alunoController.deleteSubmissao);
+router.delete('/submissao/:id', authMiddleware(['student']), alunoController.deleteSubmissao);
 router.get('/submissoes', authMiddleware(['student', 'coordinator']), alunoController.getMinhasSubmissoes);
 router.get('/resumo-horas', authMiddleware(['student', 'coordinator']), alunoController.getResumoHoras);
 router.get('/resumo-horas', (req, res, next) => {

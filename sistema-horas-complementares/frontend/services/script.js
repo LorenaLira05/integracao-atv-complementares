@@ -63,8 +63,8 @@ function acessarPortal() {
 
             if (perfilUpper === 'STUDENT' || perfilUpper === 'STUDENT') {
                 window.location.href = '/pages/Dasboard.html';
-            } else if (perfilUpper === 'COORDINATOR' || perfilUpper === 'COORDINATOR') {
-                window.location.href = '/pages/dashboardadm.html';
+            } else if (perfilUpper === 'COORDINATOR') {
+                window.location.href = '/pages/selecionar_curso.html';
             } else if (perfilUpper === 'ADMIN' || perfilUpper === 'SUPER_ADMIN') {
                 window.location.href = '/pages/cursosuperadm.html';
             } else {
@@ -90,7 +90,7 @@ function protegerPagina(perfisPermitidos) {
 
     // Normaliza para comparação e adiciona alias de nomenclatura (inglês/pt)
     let perfilAtual = perfil.toUpperCase();
-    
+
     // Tratamento de aliases para que o GUARD permita acesso a palavras equivalentes
     if (perfilAtual === 'COORDINATOR') perfilAtual = 'COORDENADOR';
     if (perfilAtual === 'ADMIN') perfilAtual = 'SUPER_ADMIN';
@@ -161,6 +161,9 @@ if (typeof apiPost === 'undefined') {
 if (typeof apiPatch === 'undefined') {
     window.apiPatch = (endpoint, body) => apiFetch(endpoint, { method: 'PATCH', body });
 }
+if (typeof apiDelete === 'undefined') {
+    window.apiDelete = (endpoint) => apiFetch(endpoint, { method: 'DELETE' });
+}
 
 /* ========== UTILS (Formatação e UI) ========== */
 
@@ -210,12 +213,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const perfil = localStorage.getItem('perfil') ? localStorage.getItem('perfil').toUpperCase() : '';
     const isSuperAdmin = perfil === 'SUPER_ADMIN' || perfil === 'ADMIN';
     const isCoordenador = perfil === 'COORDINATOR' || perfil === 'COORDENADOR';
-    
+
     const menuNav = document.querySelector('.menu-navegacao');
     if (menuNav && (isSuperAdmin || isCoordenador)) {
         menuNav.innerHTML = '';
         const currentPage = window.location.pathname.split('/').pop() || '';
-        
+
         let links = [];
         if (isSuperAdmin) {
             links = [
@@ -227,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
             ];
         } else if (isCoordenador) {
             links = [
+                { href: 'selecionar_curso.html', icon: 'bx-transfer-alt', text: 'Selecionar Curso' },
                 { href: 'dashboardadm.html', icon: 'bx-grid-alt', text: 'Dashboard' },
                 { href: 'alunos.html', icon: 'bx-group', text: 'Alunos' },
                 { href: 'protocoloadm.html', icon: 'bx-upload', text: 'Submissões' },
@@ -239,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
         links.forEach(l => {
             // Ajuste para manter o menu lateral sincronizado com a página atual
             let targetActive = currentPage;
-            
+
             // Submissões e Análise ativam o item "Submissões" (protocoloadm.html)
             if (['protocoloadm.html', 'analise_certificado.html'].includes(currentPage)) {
                 targetActive = 'protocoloadm.html';
@@ -256,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
             else if (['cadastrar_coordenador.html', 'editar_coordenador.html'].includes(currentPage)) {
                 targetActive = 'coordenadores.html';
             }
-            
+
             const isActive = targetActive === l.href ? 'active' : '';
             menuNav.innerHTML += `<a href="${l.href}" class="link-menu ${isActive}"><i class='bx ${l.icon}'></i> ${l.text}</a>`;
         });
@@ -264,30 +268,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── Perfil dinâmico da sidebar ───
     const roleMap = {
-        'super_admin':  'Super Admin',
-        'admin':        'Super Admin',
-        'coordinator':  'Coordenador',
-        'coordenador':  'Coordenador',
-        'student':      'Aluno'
+        'super_admin': 'Super Admin',
+        'admin': 'Super Admin',
+        'coordinator': 'Coordenador',
+        'coordenador': 'Coordenador',
+        'student': 'Aluno'
     };
 
     function preencherSidebar(nome, perfil) {
         const roleTexto = roleMap[perfil.toLowerCase()] || perfil;
-        const elNome   = document.getElementById('sidebar-nome-global');
-        const elRole   = document.getElementById('sidebar-role-global');
+        const elNome = document.getElementById('sidebar-nome-global');
+        const elRole = document.getElementById('sidebar-role-global');
         const elAvatar = document.getElementById('sidebar-avatar-global');
-        if (elNome)   elNome.textContent = nome;
-        if (elRole)   elRole.textContent = roleTexto;
+        if (elNome) elNome.textContent = nome;
+        if (elRole) elRole.textContent = roleTexto;
         if (elAvatar) elAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nome)}&background=0056b3&color=fff&bold=true`;
 
         // --- ADICIONADO: Preenchimento do Header também (se existir) ---
         const elHeaderNome = document.getElementById('header-nome-usuario');
         const elHeaderRole = document.getElementById('header-role-usuario');
         const elHeaderAvatar = document.getElementById('header-avatar-img') || document.getElementById('header-avatar-box');
-        
+
         if (elHeaderNome) elHeaderNome.textContent = nome;
         if (elHeaderRole) elHeaderRole.textContent = roleTexto;
-        
+
         if (elHeaderAvatar) {
             if (elHeaderAvatar.id === 'header-avatar-box') {
                 elHeaderAvatar.textContent = nome.split(' ').filter(Boolean).slice(0, 2).map(n => n[0]).join('').toUpperCase();
@@ -300,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    const nomeSalvo   = localStorage.getItem('nome');
+    const nomeSalvo = localStorage.getItem('nome');
     const perfilSalvo = localStorage.getItem('perfil') || '';
 
     if (nomeSalvo) {
@@ -313,17 +317,17 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('/auth/me', {
                 headers: { 'Authorization': `Bearer ${token}` }
             })
-            .then(r => r.ok ? r.json() : null)
-            .then(data => {
-                if (data && (data.full_name || data.nome)) {
-                    const nome = data.full_name || data.nome;
-                    localStorage.setItem('nome', nome);
-                    preencherSidebar(nome, perfilSalvo);
-                } else {
-                    preencherSidebar('Usuário', perfilSalvo);
-                }
-            })
-            .catch(() => preencherSidebar('Usuário', perfilSalvo));
+                .then(r => r.ok ? r.json() : null)
+                .then(data => {
+                    if (data && (data.full_name || data.nome)) {
+                        const nome = data.full_name || data.nome;
+                        localStorage.setItem('nome', nome);
+                        preencherSidebar(nome, perfilSalvo);
+                    } else {
+                        preencherSidebar('Usuário', perfilSalvo);
+                    }
+                })
+                .catch(() => preencherSidebar('Usuário', perfilSalvo));
         }
     }
 });
@@ -332,165 +336,120 @@ function abrirAnalise(id) {
     window.location.href = `analise_certificado.html?id=${id}`;
 }
 
-/* ========== EXPORTAÇÃO (PDF / CSV) ========== */
+/* ========== EXPORTAÇÕES (CSV / PDF) ========== */
 
-function carregarBiblioteca(src) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${src}"]`)) {
-            resolve();
-            return;
-        }
-        const script = document.createElement('script');
-        script.src = src;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
-
-async function exportarDadosParaPDF(nomeArquivo, tituloRelatorio, cabecalhos, dados) {
-    try {
-        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js');
-        
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF(cabecalhos.length > 6 ? 'landscape' : 'portrait');
-        
-        doc.setFontSize(16);
-        doc.text(tituloRelatorio, 14, 15);
-        doc.setFontSize(10);
-        doc.text(`Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}`, 14, 22);
-
-        doc.autoTable({
-            startY: 28,
-            head: [cabecalhos],
-            body: dados,
-            theme: 'striped',
-            headStyles: { fillColor: [0, 77, 153] },
-            styles: { fontSize: 8, cellPadding: 3 }
-        });
-
-        doc.save(`${nomeArquivo}.pdf`);
-    } catch (e) {
-        console.error("Erro ao gerar PDF:", e);
-        alert("Erro ao gerar PDF.");
+window.exportarDadosParaCSV = function (nomeArquivo, cabecalho, linhas) {
+    if (!linhas || linhas.length === 0) {
+        alert("Nenhum dado para exportar.");
+        return;
     }
-}
 
-function exportarDadosParaCSV(nomeArquivo, cabecalhos, dados) {
-    const escapeCSV = (value) => {
-        if (value === null || value === undefined) return '""';
-        const str = String(value);
-        if (str.includes(',') || str.includes('"') || str.includes('\\n')) {
-            return `"${str.replace(/"/g, '""')}"`;
-        }
-        return str;
-    };
-
-    const rows = dados.map(row => row.map(escapeCSV).join(','));
-    const csvContent = "\uFEFF" + [cabecalhos.join(','), ...rows].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${nomeArquivo}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-}
-
-function carregarBiblioteca(url) {
-    return new Promise((resolve, reject) => {
-        if (document.querySelector(`script[src="${url}"]`)) {
-            return resolve();
-        }
-        const script = document.createElement('script');
-        script.src = url;
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
+    let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+    csvContent += cabecalho.join(";") + "\n";
+    linhas.forEach(row => {
+        let rowStr = row.map(v => {
+            if (v === null || v === undefined) return '""';
+            return `"${String(v).replace(/"/g, '""')}"`;
+        }).join(";");
+        csvContent += rowStr + "\n";
     });
-}
 
-async function carregarImagem(url) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.crossOrigin = 'Anonymous';
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.width;
-            canvas.height = img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => resolve(null);
-        img.src = url;
-    });
-}
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", nomeArquivo + ".csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
 
-async function exportarDadosParaPDF(nomeArquivo, tituloStr, cabecalhos, dados) {
-    try {
-        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js');
-        
-        const { jsPDF } = window.jspdf;
-        const orientacao = cabecalhos.length > 6 ? 'landscape' : 'portrait';
-        const doc = new jsPDF(orientacao, 'pt', 'A4');
-        
-        // Logo
-        const logoData = await carregarImagem('https://logodownload.org/wp-content/uploads/2014/10/senac-logo-2.png');
-        if (logoData) {
-            doc.addImage(logoData, 'PNG', 40, 30, 80, 40);
-            doc.setFontSize(18);
-            doc.text(tituloStr, 130, 55);
-        } else {
-            doc.setFontSize(18);
-            doc.text(tituloStr, 40, 50);
-        }
-        
-        doc.autoTable({
-            head: [cabecalhos],
-            body: dados,
-            startY: 80,
-            theme: 'striped',
-            headStyles: { fillColor: [0, 77, 153] }
-        });
-        
-        doc.save(`${nomeArquivo}.pdf`);
-    } catch(e) {
-        console.error(e);
-        alert('Erro ao gerar PDF: ' + e.message);
+window.exportarDadosParaPDF = async function (nomeArquivo, titulo, cabecalho, linhas) {
+    if (!linhas || linhas.length === 0) {
+        alert("Nenhum dado para exportar.");
+        return;
     }
-}
 
-async function exportarTelaParaPDF(elementId, nomeArquivo) {
+    // Carregar dinamicamente jsPDF se não estiver presente
+    if (typeof window.jspdf === 'undefined') {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Falha ao carregar jsPDF'));
+            document.head.appendChild(script);
+        });
+    }
+
+    // Carregar dinamicamente jsPDF-AutoTable se não estiver presente
+    if (typeof window.jspdf.jsPDF.API.autoTable === 'undefined') {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js';
+            script.onload = resolve;
+            script.onerror = () => reject(new Error('Falha ao carregar jsPDF-AutoTable'));
+            document.head.appendChild(script);
+        });
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('landscape'); // Landscape melhor para tabelas largas
+
+    doc.setFontSize(16);
+    doc.text(titulo, 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, 14, 22);
+
+    doc.autoTable({
+        startY: 28,
+        head: [cabecalho],
+        body: linhas,
+        theme: 'striped',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [0, 71, 143] } // Cor azul do Senac
+    });
+
+    doc.save(nomeArquivo + ".pdf");
+};
+
+window.exportarTelaParaPDF = async function (elementId, nomeArquivo) {
+    const el = document.getElementById(elementId);
+    if (!el) {
+        alert("Elemento não encontrado para exportar.");
+        return;
+    }
+
+    // Carregar jsPDF
+    if (typeof window.jspdf === 'undefined') {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            script.onload = resolve;
+            document.head.appendChild(script);
+        });
+    }
+    // Carregar html2canvas
+    if (typeof window.html2canvas === 'undefined') {
+        await new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+            script.onload = resolve;
+            document.head.appendChild(script);
+        });
+    }
+
     try {
-        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-        await carregarBiblioteca('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-        
-        const element = document.getElementById(elementId);
-        if (!element) throw new Error("Elemento não encontrado");
-
-        const btnContainer = element.querySelector('.header-info-badges');
-        if (btnContainer) btnContainer.style.visibility = 'hidden'; 
-        
-        const canvas = await html2canvas(element, { scale: 2, useCORS: true });
-        
-        if (btnContainer) btnContainer.style.visibility = 'visible'; 
-        
-        const imgData = canvas.toDataURL('image/jpeg', 1.0);
+        const canvas = await window.html2canvas(el, { scale: 2 });
+        const imgData = canvas.toDataURL('image/png');
         
         const { jsPDF } = window.jspdf;
-        const pdf = new jsPDF('p', 'pt', 'A4');
+        const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
         
-        pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save(`${nomeArquivo}.pdf`);
-    } catch (e) {
-        console.error("Erro ao exportar tela:", e);
-        alert("Erro ao gerar PDF da tela.");
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save(nomeArquivo + ".pdf");
+    } catch (err) {
+        console.error("Erro ao gerar PDF da tela:", err);
+        alert("Falha ao gerar o PDF da tela.");
     }
-}
+};
