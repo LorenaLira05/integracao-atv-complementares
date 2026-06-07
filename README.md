@@ -1,4 +1,3 @@
-<div align="center">
   <img src="https://upload.wikimedia.org/wikipedia/commons/8/86/Senac_logo.svg" alt="Senac Logo" width="150" />
   <h1>Sistema de Gestão Acadêmica SENAC</h1>
   <p><strong>Plataforma Completa para Gestão de Atividades Complementares e Protocolos</strong></p>
