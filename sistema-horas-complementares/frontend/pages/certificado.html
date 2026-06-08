@@ -112,7 +112,7 @@
             <div class="detalhes-carga" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                 <div class="campo-form">
                     <label>CARGA HORÁRIA</label>
-                    <input type="number" placeholder="0" class="input-horas">
+                    <input type="number" placeholder="0" class="input-horas" onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault()">
                 </div>
                 <div class="campo-form">
                     <label>DATA DE CONCLUSÃO</label>

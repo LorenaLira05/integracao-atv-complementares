@@ -297,11 +297,11 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div class="form-group">
                             <label class="form-label">H. Mínimas</label>
-                            <input type="number" id="input-min-horas" class="form-control" value="0">
+                            <input type="number" id="input-min-horas" class="form-control" value="0" onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault()">
                         </div>
                         <div class="form-group">
                             <label class="form-label">H. Máximas</label>
-                            <input type="number" id="input-max-horas" class="form-control" value="40">
+                            <input type="number" id="input-max-horas" class="form-control" value="40" onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault()">
                         </div>
                     </div>
 
