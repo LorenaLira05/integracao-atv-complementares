@@ -125,7 +125,7 @@
                             <div class="kpi-campo">
                                 <label class="form-label">Carga Horária Total <span class="req">*</span></label>
                                 <div class="kpi-input-wrap">
-                                    <input type="number" id="input-horas" placeholder="0" min="0">
+                                    <input type="number" id="input-horas" placeholder="0" min="0" onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault()">
                                     <span class="unidade">horas</span>
                                 </div>
                             </div>
@@ -133,7 +133,7 @@
                             <div class="kpi-campo">
                                 <label class="form-label">Semestres</label>
                                 <div class="kpi-input-wrap">
-                                    <input type="number" id="input-semestres" placeholder="0" min="1" max="20">
+                                    <input type="number" id="input-semestres" placeholder="0" min="1" max="20" onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault()">
                                     <span class="unidade">sem.</span>
                                 </div>
                             </div>

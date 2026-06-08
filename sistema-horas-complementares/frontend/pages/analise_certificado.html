@@ -221,7 +221,7 @@
                         </div>
                         <div class="input-wrapper">
                             <label>CARGA HORÁRIA DEFERIDA (HORAS)</label>
-                            <input type="number" id="input-horas" class="input-horas" value="0" min="0" max="999" placeholder="Escolher carga horaria">
+                            <input type="number" id="input-horas" class="input-horas" value="0" min="0" max="999" placeholder="Escolher carga horaria" onkeydown="if(['.', ',', 'e', 'E', '+', '-'].includes(event.key)) event.preventDefault()">
                             <small class="hint-text" id="hint-limite">O limite institucional para esta categoria é definido pelas regras do curso.</small>
                         </div>
                         <div class="input-wrapper">
