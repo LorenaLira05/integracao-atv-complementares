@@ -11,6 +11,114 @@ if (typeof API === 'undefined') {
 
 /* ========== LOGIN ========== */
 
+function concluirLogin(data) {
+    const perfilReal = (data.perfis && data.perfis.length > 0) ? data.perfis[0] : null;
+
+    if (!perfilReal || !data.token) {
+        alert('Erro: Dados de autenticação incompletos vindos do servidor.');
+        return;
+    }
+
+    // Salva os dados da sessão
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('perfil', perfilReal);
+    if (data.nome) localStorage.setItem('nome', data.nome);
+    if (data.email) localStorage.setItem('email', data.email);
+
+    // --- REDIRECIONAMENTO PARA PRIMEIRO ACESSO ---
+    if (data.primeiroAcesso === true) {
+        window.location.href = '/pages/primeiro_acesso.html';
+        return;
+    }
+
+    // --- REDIRECIONAMENTO CORRIGIDO ---
+    const perfilUpper = perfilReal.toUpperCase();
+
+    if (perfilUpper === 'STUDENT' || perfilUpper === 'STUDENT') {
+        window.location.href = '/pages/Dasboard.html';
+    } else if (perfilUpper === 'COORDINATOR' || perfilUpper === 'COORDENADOR') {
+        window.location.href = '/pages/selecionar_curso.html';
+    } else if (perfilUpper === 'ADMIN' || perfilUpper === 'SUPER_ADMIN') {
+        window.location.href = '/pages/cursosuperadm.html';
+    } else {
+        alert('Perfil não reconhecido pelo sistema: ' + perfilReal);
+    }
+}
+
+function show2FAModal(mensagem, tokenTemp) {
+    const overlay = document.createElement('div');
+    overlay.style.position = 'fixed';
+    overlay.style.top = '0'; overlay.style.left = '0';
+    overlay.style.width = '100%'; overlay.style.height = '100%';
+    overlay.style.background = 'rgba(0,0,0,0.5)';
+    overlay.style.display = 'flex';
+    overlay.style.alignItems = 'center';
+    overlay.style.justifyContent = 'center';
+    overlay.style.zIndex = '9999';
+
+    const modal = document.createElement('div');
+    modal.style.background = '#fff';
+    modal.style.padding = '30px';
+    modal.style.borderRadius = '8px';
+    modal.style.width = '350px';
+    modal.style.textAlign = 'center';
+    modal.style.boxShadow = '0 4px 15px rgba(0,0,0,0.2)';
+
+    modal.innerHTML = `
+        <h2 style="margin-bottom: 15px; color: #00478f; font-family: sans-serif;">Verificação 2FA</h2>
+        <p style="margin-bottom: 20px; font-size: 14px; color: #555; font-family: sans-serif;">${mensagem}</p>
+        <div style="margin-bottom: 20px; text-align: left;">
+            <div style="border: 1px solid #ccc; border-radius: 4px; padding: 10px; display: flex; align-items: center;">
+                <i class="bx bx-key" style="margin-right: 10px; color: #888; font-size: 20px;"></i>
+                <input placeholder="Código de 6 dígitos" type="text" id="codigo2FA" maxlength="6" style="border: none; outline: none; width: 100%; font-size: 16px; font-family: sans-serif;">
+            </div>
+        </div>
+        <button id="btnVerificar2FA" style="width: 100%; padding: 12px; background: #f6821f; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-bottom: 10px; font-family: sans-serif;">Verificar</button>
+        <button id="btnCancelar2FA" style="width: 100%; padding: 12px; background: #ccc; color: #333; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; font-family: sans-serif;">Cancelar</button>
+    `;
+
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+
+    document.getElementById('btnVerificar2FA').onclick = () => {
+        const codigo = document.getElementById('codigo2FA').value.trim();
+        if (!codigo) {
+            alert('Digite o código.');
+            return;
+        }
+
+        document.getElementById('btnVerificar2FA').innerText = 'Verificando...';
+
+        fetch('/auth/verificar-2fa', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + tokenTemp
+            },
+            body: JSON.stringify({ codigo })
+        })
+        .then(res => res.json())
+        .then(data2FA => {
+            if (data2FA.erro) {
+                alert(data2FA.erro);
+                document.getElementById('btnVerificar2FA').innerText = 'Verificar';
+                return;
+            }
+            document.body.removeChild(overlay);
+            concluirLogin(data2FA);
+        })
+        .catch(err => {
+            console.error('Erro no 2FA:', err);
+            alert('Erro ao verificar o código 2FA.');
+            document.getElementById('btnVerificar2FA').innerText = 'Verificar';
+        });
+    };
+
+    document.getElementById('btnCancelar2FA').onclick = () => {
+        document.body.removeChild(overlay);
+    };
+}
+
 function acessarPortal() {
     const perfilSelecionado = document.querySelector('input[name="perfil"]:checked');
     const email = document.getElementById('usuario')?.value?.trim();
@@ -25,6 +133,15 @@ function acessarPortal() {
         return;
     }
 
+    const btnLogin = document.querySelector('.btn-login');
+    const conteudoOriginalBotao = btnLogin ? btnLogin.innerHTML : null;
+    if (btnLogin) {
+        btnLogin.innerHTML = '<i class="bx bx-loader-alt bx-spin" style="margin-right: 5px;"></i> Verificando acesso...';
+        btnLogin.disabled = true;
+        btnLogin.style.cursor = 'not-allowed';
+        btnLogin.style.opacity = '0.7';
+    }
+
     fetch('/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -32,46 +149,32 @@ function acessarPortal() {
     })
         .then(res => res.json())
         .then(data => {
+            if (btnLogin) {
+                btnLogin.innerHTML = conteudoOriginalBotao;
+                btnLogin.disabled = false;
+                btnLogin.style.cursor = 'pointer';
+                btnLogin.style.opacity = '1';
+            }
+
             if (data.erro) {
                 alert(data.erro);
                 return;
             }
 
-            // --- CORREÇÃO AQUI: Lendo o array 'perfis' que vem do seu backend ---
-            // Pegamos o primeiro perfil do array (ex: "student")
-            const perfilReal = (data.perfis && data.perfis.length > 0) ? data.perfis[0] : null;
-
-            if (!perfilReal || !data.token) {
-                alert('Erro: Dados de autenticação incompletos vindos do servidor.');
+            if (data.tokenTemp) {
+                show2FAModal(data.mensagem, data.tokenTemp);
                 return;
             }
 
-            // Salva os dados da sessão
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('perfil', perfilReal);
-            if (data.nome) localStorage.setItem('nome', data.nome);
-            if (data.email) localStorage.setItem('email', data.email);
-
-            // --- REDIRECIONAMENTO PARA PRIMEIRO ACESSO ---
-            if (data.primeiroAcesso === true) {
-                window.location.href = '/pages/primeiro_acesso.html';
-                return;
-            }
-
-            // --- REDIRECIONAMENTO CORRIGIDO (Comparando strings do print) ---
-            const perfilUpper = perfilReal.toUpperCase();
-
-            if (perfilUpper === 'STUDENT' || perfilUpper === 'STUDENT') {
-                window.location.href = '/pages/Dasboard.html';
-            } else if (perfilUpper === 'COORDINATOR') {
-                window.location.href = '/pages/selecionar_curso.html';
-            } else if (perfilUpper === 'ADMIN' || perfilUpper === 'SUPER_ADMIN') {
-                window.location.href = '/pages/cursosuperadm.html';
-            } else {
-                alert('Perfil não reconhecido pelo sistema: ' + perfilReal);
-            }
+            concluirLogin(data);
         })
         .catch(err => {
+            if (btnLogin) {
+                btnLogin.innerHTML = conteudoOriginalBotao;
+                btnLogin.disabled = false;
+                btnLogin.style.cursor = 'pointer';
+                btnLogin.style.opacity = '1';
+            }
             console.error('Erro no login:', err);
             alert('Erro na conexão com o servidor. Verifique se o backend está ligado.');
         });

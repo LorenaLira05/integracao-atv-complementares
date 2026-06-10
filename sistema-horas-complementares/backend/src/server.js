@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const path = require('path');
 const cron = require('node-cron');
 const { exec } = require('child_process');
@@ -9,6 +10,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, '..', '..', 'frontend')));
 
 // Servir arquivos de upload estáticos
@@ -29,7 +31,7 @@ app.use('/dashboard', rotasDashboard);
 app.use('/upload', rotasUpload);
 
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', '..', 'frontend','pages' ,'index.html'));
+    res.sendFile(path.join(__dirname, '..', '..', 'frontend', 'pages', 'index.html'));
 });
 
 app.use((err, req, res, next) => {
@@ -41,7 +43,7 @@ app.use((err, req, res, next) => {
 });
 
 const scriptPath = path.join(__dirname, 'scripts', 'executar_pipeline.py');
-const scriptDir  = path.join(__dirname, 'scripts');
+const scriptDir = path.join(__dirname, 'scripts');
 
 cron.schedule('0 3 * * *', () => {
     exec(`python "${scriptPath}"`, { cwd: scriptDir }, (err, stdout, stderr) => {
