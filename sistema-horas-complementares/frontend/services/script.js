@@ -4,9 +4,7 @@
  */
 
 if (typeof API === 'undefined') {
-    var API = window.location.origin.includes(':3001')
-        ? ''
-        : 'http://localhost:3001';
+    var API = 'https://sghc-backend.onrender.com';
 }
 
 /* ========== LOGIN ========== */
@@ -440,12 +438,12 @@ window.exportarTelaParaPDF = async function (elementId, nomeArquivo) {
     try {
         const canvas = await window.html2canvas(el, { scale: 2 });
         const imgData = canvas.toDataURL('image/png');
-        
+
         const { jsPDF } = window.jspdf;
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        
+
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
         pdf.save(nomeArquivo + ".pdf");
     } catch (err) {
